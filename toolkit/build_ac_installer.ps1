@@ -62,6 +62,8 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 Copy-Item -LiteralPath (Join-Path $outUninstaller "MMX-Net-Uninstaller.exe") -Destination $outInstaller -Force
 
 # FeedBaseUrl da ac_dev_publish.json: bake in ac_config overlay installer
+# Feed pubblico amici = MMX-NET (senza PAT).
+$publicFeed = "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/"
 $feedUrl = ""
 if (Test-Path -LiteralPath $devPub) {
     try {
@@ -70,7 +72,19 @@ if (Test-Path -LiteralPath $devPub) {
     }
     catch { }
 }
-
+# Legacy MMX-NET-feed → MMX-NET; mai bake URL vuoto
+if (-not $feedUrl -or ($feedUrl -match '(?i)MMX-NET-feed')) {
+    $feedUrl = $publicFeed
+    if (Test-Path -LiteralPath $devPub) {
+        try {
+            $dpFix = Get-Content -LiteralPath $devPub -Raw | ConvertFrom-Json
+            $dpFix | Add-Member -NotePropertyName FeedBaseUrl -NotePropertyValue $publicFeed -Force
+            ($dpFix | ConvertTo-Json -Depth 5) | Set-Content -LiteralPath $devPub -Encoding UTF8
+            Write-Host "FeedBaseUrl allineato a MMX-NET (pubblico)."
+        }
+        catch { }
+    }
+}
 # Overlay installer = update zip + ac_config.json utente (solo primo install)
 $overlaySrc = Join-Path $outUpdate "ac-update.zip"
 $overlayDst = Join-Path $outInstaller "ac-overlay.zip"
@@ -125,6 +139,13 @@ $readmeLines = @(
     "MMX-Net - pacchetto installer",
     "==================================",
     "",
+    "*** NON SCARICARE DA GITHUB. USA LO ZIP. GLI UPDATE ARRIVANO DA SOLI. ***",
+    "",
+    "L'amico NON usa la repo GitHub MMX-NET (e' PUBBLICA per raw update, write solo Logan).",
+    "Ricevi questo zip (MmxNet-Download.zip) da Logan (Drive / Discord / USB).",
+    "Dopo l'install, gli aggiornamenti arrivano DA SOLI dal launcher (popup AGGIORNA).",
+    "Nessun account GitHub, nessun PAT, nessun Collaborator.",
+    "",
     "1. Tieni MMX-Net-Installer.exe e ac-overlay.zip nella STESSA cartella.",
     "2. Esegui MMX-Net-Installer.exe",
     "3. Installa nella cartella Anomaly Coop (base Anomaly gia presente li).",
@@ -141,24 +162,24 @@ $readmeLines = @(
     "",
     "Requisiti: Anomaly 1.5.3 coop, Steam, Call of Pripyat (41700) per inviti.",
     "Se HEALTH ha FATAL su DLL/script coop = install incompleta (solo overlay).",
-    "Aggiornamenti: nel launcher icona download / AGGIORNA (serve updateFeedUrl).",
     "",
-    "CoP vanilla: le Launch Options CoP puntano al bridge Anomaly. Per tornare",
-    "a CoP originale crea ac_steam_redirect.off e svuota le Launch Options CoP.",
-    "",
-    "URL feed (updateFeedUrl):",
+    "URL feed automatico (updateFeedUrl, gia' nello zip):",
     "  $feedHint",
+    "Feed pubblico: https://github.com/LOGANFOREWORD/MMX-NET",
+    "(raw HTTP 200 senza Authorization - updateFeedToken vuoto)",
     "",
-    "Feed pubblico (MMX-NET-feed) - solo artefatti update:",
-    "  - Codice/mod restano su MMX-NET privata (solo Logan write)",
+    "Feed pubblico (MMX-NET) - artefatti update su raw GitHub:",
+    "  - Repo MMX-NET pubblica per feed raw; write solo Logan",
     "  - Amici: basta updateFeedUrl (nessun PAT / Collaborator)",
+    "  - Token forever NON serve e NON va nello zip",
     "  - raw.githubusercontent.com risponde HTTP 200 senza token",
+    "  - Install vecchi su MMX-NET-feed: il launcher migra a MMX-NET all avvio",
     "",
     "Disinstalla: MMX-Net-Uninstaller.exe (copiato in root Anomaly Coop + scorciatoia Desktop).",
     "",
     "Logan (dev):",
     "  1) MMX-Net-Launcher-dev.exe -> CARICA AGGIORNAMENTO (genera dist/update/)",
-    "  2) toolkit\push_update_feed.ps1 (push su GitHub MMX-NET-feed)",
+    "  2) toolkit\push_update_feed.ps1 (push su GitHub MMX-NET)",
     "  3) Amici con updateFeedUrl vedono il popup all avvio (senza PAT)",
     "  Vedi toolkit/pack/UPDATE_FEED.md"
 )

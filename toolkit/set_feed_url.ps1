@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 param(
   [Parameter(Mandatory=$true)][string]$GitHubUser,
-  [string]$RepoName = "MMX-NET-feed"
+  [string]$RepoName = "MMX-NET"
 )
 $ErrorActionPreference = "Stop"
 $Root = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
@@ -19,7 +19,7 @@ $cfg = [ordered]@{
   PublishTarget = $cloneDir
   OutDir = "dist\update"
   AbsolutePackageUrl = $true
-  AutoBumpPatch = $true
+  AutoBumpPatch = $false
 }
 ($cfg | ConvertTo-Json) | Set-Content (Join-Path $Root "ac_dev_publish.json") -Encoding UTF8
 foreach ($p in @((Join-Path $Root "ac_config.json"), (Join-Path $Root "toolkit\pack\ac_config.user.json"))) {

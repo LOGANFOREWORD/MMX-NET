@@ -8,6 +8,10 @@ namespace MmxNetLauncher;
 
 public static class UpdateService
 {
+    // Feed pubblico: raw LOGANFOREWORD/MMX-NET/main (repo pubblica). Nessun PAT.
+    public const string PublicFeedUrlDefault =
+        "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/";
+
     private static readonly HttpClient Http = CreateHttp();
 
     private static HttpClient CreateHttp()
@@ -26,8 +30,49 @@ public static class UpdateService
         public UpdateManifest? Remote { get; init; }
     }
 
+    /// <summary>Feed pubblico MMX-NET (o legacy *-feed). Nessun PAT.</summary>
+    public static bool IsPublicUpdateFeed(string? feedUrl)
+    {
+        var u = (feedUrl ?? "").Trim();
+        if (string.IsNullOrEmpty(u)) return false;
+        if (u.Contains("/LOGANFOREWORD/MMX-NET/", StringComparison.OrdinalIgnoreCase) || u.Contains("MMX-NET-feed", StringComparison.OrdinalIgnoreCase)) return true;
+        return System.Text.RegularExpressions.Regex.IsMatch(
+            u,
+            @"github(?:usercontent)?\.com/[^/\s]+/[A-Za-z0-9_.-]+-feed(/|\?|$)",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    }
+
+    /// <summary>Old installs pointing at MMX-NET-feed → migrate to MMX-NET.</summary>
+    public static bool TryMigrateLegacyPrivateFeedUrl(Install inst, out string? fromUrl, out string? toUrl)
+    {
+        fromUrl = null;
+        toUrl = null;
+        var url = (inst.GetConfigString("updateFeedUrl", "") ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(url)) return false;
+        if (!url.Contains("MMX-NET-feed", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var migrated = url.Replace("MMX-NET-feed", "MMX-NET", StringComparison.OrdinalIgnoreCase);
+        if (string.Equals(url, migrated, StringComparison.OrdinalIgnoreCase))
+            migrated = PublicFeedUrlDefault;
+        if (!migrated.EndsWith('/') && !LooksLikeJsonFile(migrated) &&
+            !migrated.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+            migrated = migrated.TrimEnd('/') + "/";
+
+        inst.SetConfigString("updateFeedUrl", migrated);
+        if (!string.IsNullOrWhiteSpace(inst.GetConfigString("updateFeedToken", "")))
+            inst.SetConfigString("updateFeedToken", "");
+
+        fromUrl = url;
+        toUrl = migrated;
+        return true;
+    }
+
     public static string ResolveFeedToken(Install? inst)
     {
+        var feedUrl = inst?.GetConfigString("updateFeedUrl", "") ?? "";
+        if (IsPublicUpdateFeed(feedUrl)) return "";
+
         var fromCfg = inst?.GetConfigString("updateFeedToken", "")?.Trim() ?? "";
         if (!string.IsNullOrWhiteSpace(fromCfg)) return fromCfg;
         var env =
@@ -36,7 +81,6 @@ public static class UpdateService
         var legacy = (Environment.GetEnvironmentVariable("AC_UPDATE_FEED_TOKEN") ?? "").Trim();
         if (!string.IsNullOrWhiteSpace(legacy)) return legacy;
 #if DEVKIT
-        // Solo DEVKIT/locale: riusa il login `gh` di Logan senza scrivere PAT in ac_config.
         var gh = TryReadGhAuthToken();
         if (!string.IsNullOrWhiteSpace(gh)) return gh;
 #endif
@@ -44,7 +88,6 @@ public static class UpdateService
     }
 
 #if DEVKIT
-    /// <summary>Legge il token da `gh auth token` (Keyring). Mai per build utente.</summary>
     public static string? TryReadGhAuthToken()
     {
         try
@@ -66,17 +109,11 @@ public static class UpdateService
             var tok = (stdout ?? "").Trim();
             return string.IsNullOrWhiteSpace(tok) ? null : tok;
         }
-        catch
-        {
-            return null;
-        }
+        catch { return null; }
     }
 #endif
 
-    /// <summary>
-    /// Messaggio calmo per amici: repo privata → 404 senza PAT. Evita dump tecnici lunghi.
-    /// </summary>
-    private static string BuildAuthHint(string httpMessage, bool hadToken)
+    private static string BuildAuthHint(string httpMessage, bool hadToken, string feedUrl)
     {
         var msg = httpMessage ?? "";
         var is404 = msg.Contains("404", StringComparison.Ordinal);
@@ -84,33 +121,36 @@ public static class UpdateService
                      msg.Contains("403", StringComparison.Ordinal);
         if (!is404 && !isAuth) return "";
 
+        if (IsPublicUpdateFeed(feedUrl) && (is404 || isAuth))
+        {
+            return
+                "Feed pubblico non raggiungibile.\n\n" +
+                "Nessun PAT necessario: MMX-NET e pubblica.\n" +
+                "Probabile: push mancante, oppure chiedi lo zip.\n\n" +
+                "URL: " + PublicFeedUrlDefault + "\n\n" +
+                "Guida: FEED_PRIVATO_AMICI.md";
+        }
+
         if (is404 && !hadToken)
         {
             return
                 "Feed non raggiungibile (HTTP 404).\n\n" +
-                "Controlla updateFeedUrl: deve puntare a MMX-NET-feed (pubblico), es.\n" +
-                "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/\n\n" +
-                "Se punta ancora a MMX-NET (privata) → 404 senza token.\n" +
-                "Altrimenti Logan non ha ancora pushato il feed, oppure chiedi lo zip.\n\n" +
-                "Guida: FEED_PRIVATO_AMICI.md" +
-#if DEVKIT
-                "\n\nDEVKIT: verifica FeedBaseUrl → MMX-NET-feed e push_update_feed.ps1.";
-#else
-                "";
-#endif
+                "Usa il feed pubblico (nessun token):\n" + PublicFeedUrlDefault + "\n\n" +
+                "Token forever NON serve e non va nello zip.\n" +
+                "Se punta ancora a MMX-NET-feed, il launcher migra a MMX-NET all'avvio.\n" +
+                "Guida: FEED_PRIVATO_AMICI.md";
         }
 
         if (hadToken && (is404 || isAuth))
         {
             return
-                "Token presente ma il feed non è leggibile.\n\n" +
-                "Preferisci il feed pubblico MMX-NET-feed (updateFeedToken vuoto).\n" +
-                "Altrimenti chiedi a Logan lo zip.";
+                "Token presente ma feed non leggibile.\n\n" +
+                "Con MMX-NET lascia updateFeedToken vuoto (PAT forever non serve).\n" +
+                "Altrimenti chiedi lo zip a Logan.";
         }
 
         return
-            "Feed non leggibile. updateFeedUrl tipico:\n" +
-            "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/\n" +
+            "Feed non leggibile. URL tipico:\n" + PublicFeedUrlDefault + "\n" +
             "Vedi FEED_PRIVATO_AMICI.md.";
     }
 
@@ -131,13 +171,12 @@ public static class UpdateService
             return new CheckResult
             {
                 Ok = false,
-                Message = "Nessun URL feed configurato (ac_config.json → updateFeedUrl). " +
-                          "Logan: imposta FeedBaseUrl in ac_dev_publish.json, pubblica e carica dist\\update\\ online.",
+                Message = "Nessun URL feed (ac_config.json -> updateFeedUrl). Default amici: " + PublicFeedUrlDefault,
                 Local = local,
             };
         }
 
-        var token = ResolveFeedToken(inst);
+        var token = IsPublicUpdateFeed(url) ? "" : ResolveFeedToken(inst);
         try
         {
             var remote = await FetchManifestAsync(url, token, ct).ConfigureAwait(false);
@@ -151,7 +190,7 @@ public static class UpdateService
                 {
                     Ok = true,
                     UpdateAvailable = false,
-                    Message = $"Feed channel '{remote.Channel}' ≠ locale '{channel}'.",
+                    Message = $"Feed channel '{remote.Channel}' != locale '{channel}'.",
                     Local = local,
                     Remote = remote,
                 };
@@ -173,8 +212,7 @@ public static class UpdateService
         {
             var msg = ex.Message ?? "";
             var hadToken = !string.IsNullOrWhiteSpace(token);
-            var hint = BuildAuthHint(msg, hadToken);
-            // 404/401/403 su privata: messaggio guidato, senza stack tecnico lungo
+            var hint = BuildAuthHint(msg, hadToken, url);
             var friendly = IsFeedAuthFailure(msg) && !string.IsNullOrEmpty(hint)
                 ? "Aggiornamenti non disponibili al momento.\n\n" + hint.TrimStart()
                 : "Check aggiornamenti non riuscito." +
@@ -192,12 +230,9 @@ public static class UpdateService
         FetchManifestAsync(feedUrl, token: null, ct);
 
     public static async Task<UpdateManifest> FetchManifestAsync(
-        string feedUrl,
-        string? token,
-        CancellationToken ct = default)
+        string feedUrl, string? token, CancellationToken ct = default)
     {
         feedUrl = feedUrl.Trim();
-
         if (TryGetLocalFeedDir(feedUrl, out var localDir))
             return await Task.Run(() => ReadLocalManifest(localDir), ct).ConfigureAwait(false);
 
@@ -236,13 +271,11 @@ public static class UpdateService
 
         var m = JsonSerializer.Deserialize<UpdateManifest>(json)
                 ?? throw new InvalidOperationException("Manifest vuoto.");
-
         var baseForPackage = BaseDirectoryUrl(LooksLikeJsonFile(feedUrl) ? feedUrl : resolvedUrl);
         if (string.IsNullOrWhiteSpace(m.PackageUrl))
             m.PackageUrl = baseForPackage + PackService.ZipName;
         else if (!IsAbsoluteHttpUrl(m.PackageUrl) && !IsLocalPath(m.PackageUrl))
             m.PackageUrl = baseForPackage + m.PackageUrl.TrimStart('/');
-
         return m;
     }
 
@@ -253,7 +286,7 @@ public static class UpdateService
         if (!resp.IsSuccessStatusCode)
         {
             var body = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            var shortBody = body.Length > 180 ? body[..180] + "…" : body;
+            var shortBody = body.Length > 180 ? body[..180] + "..." : body;
             throw new HttpRequestException(
                 $"HTTP {(int)resp.StatusCode} su {url}" +
                 (string.IsNullOrWhiteSpace(shortBody) ? "" : ": " + shortBody.Trim()));
@@ -266,9 +299,7 @@ public static class UpdateService
         using var req = CreateFeedRequest(HttpMethod.Get, url, token);
         using var resp = await Http.SendAsync(req, ct).ConfigureAwait(false);
         if (!resp.IsSuccessStatusCode)
-        {
             throw new HttpRequestException($"HTTP {(int)resp.StatusCode} download {url}");
-        }
         return await resp.Content.ReadAsByteArrayAsync(ct).ConfigureAwait(false);
     }
 
@@ -276,9 +307,7 @@ public static class UpdateService
     {
         var effectiveUrl = url;
         var effectiveToken = (token ?? "").Trim();
-
-        if (Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
-            !string.IsNullOrEmpty(uri.UserInfo))
+        if (Uri.TryCreate(url, UriKind.Absolute, out var uri) && !string.IsNullOrEmpty(uri.UserInfo))
         {
             var userInfo = uri.UserInfo;
             var colon = userInfo.IndexOf(':');
@@ -288,7 +317,6 @@ public static class UpdateService
             var b = new UriBuilder(uri) { UserName = "", Password = "" };
             effectiveUrl = b.Uri.ToString();
         }
-
         var req = new HttpRequestMessage(method, effectiveUrl);
         if (!string.IsNullOrWhiteSpace(effectiveToken))
         {
@@ -303,7 +331,6 @@ public static class UpdateService
         var manifestPath = Path.Combine(dir, PackService.ManifestName);
         var versionPath = Path.Combine(dir, "ac_version.json");
         var zipPath = Path.Combine(dir, PackService.ZipName);
-
         if (File.Exists(manifestPath))
         {
             var m = JsonSerializer.Deserialize<UpdateManifest>(File.ReadAllText(manifestPath))
@@ -318,25 +345,15 @@ public static class UpdateService
                 m.PackageUrl = Path.GetFullPath(Path.Combine(dir, m.PackageUrl));
             return m;
         }
-
         if (!File.Exists(versionPath))
-            throw new FileNotFoundException(
-                "Feed locale senza ac_update_manifest.json né ac_version.json: " + dir);
-
-        var ver = JsonSerializer.Deserialize<PackVersion>(File.ReadAllText(versionPath))
-                  ?? PackVersion.Default;
+            throw new FileNotFoundException("Feed locale senza manifest/version: " + dir);
+        var ver = JsonSerializer.Deserialize<PackVersion>(File.ReadAllText(versionPath)) ?? PackVersion.Default;
         if (!File.Exists(zipPath))
             throw new FileNotFoundException("Manca ac-update.zip nel feed locale.", zipPath);
-
         return new UpdateManifest
         {
-            Name = ver.Name,
-            Version = ver.Version,
-            Channel = ver.Channel,
-            Protocol = ver.Protocol,
-            Engine = ver.Engine,
-            Notes = ver.Notes,
-            PackageUrl = zipPath,
+            Name = ver.Name, Version = ver.Version, Channel = ver.Channel,
+            Protocol = ver.Protocol, Engine = ver.Engine, Notes = ver.Notes, PackageUrl = zipPath,
         };
     }
 
@@ -355,9 +372,7 @@ public static class UpdateService
             }
             catch { return false; }
         }
-
         if (!IsLocalPath(raw)) return false;
-
         try
         {
             var full = Path.GetFullPath(raw);
@@ -366,13 +381,9 @@ public static class UpdateService
                 dir = Path.GetDirectoryName(full) ?? "";
                 return !string.IsNullOrWhiteSpace(dir);
             }
-            if (Directory.Exists(full))
-            {
-                dir = full;
-                return true;
-            }
+            if (Directory.Exists(full)) { dir = full; return true; }
         }
-        catch { /* ignore */ }
+        catch { }
         return false;
     }
 
@@ -402,34 +413,26 @@ public static class UpdateService
         url.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
 
     public static async Task<PackVersion> DownloadAndApplyAsync(
-        Install inst,
-        UpdateManifest remote,
-        IProgress<string>? progress = null,
-        CancellationToken ct = default)
+        Install inst, UpdateManifest remote, IProgress<string>? progress = null, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(remote.PackageUrl))
             throw new InvalidOperationException("Manifest senza PackageUrl.");
-
-        progress?.Report("Download pacchetto…");
-        var token = ResolveFeedToken(inst);
+        progress?.Report("Download pacchetto...");
+        var feedUrl = inst.GetConfigString("updateFeedUrl", "");
+        var token = IsPublicUpdateFeed(feedUrl) ? "" : ResolveFeedToken(inst);
         byte[] bytes;
         if (IsAbsoluteHttpUrl(remote.PackageUrl))
-        {
             bytes = await HttpGetBytesAsync(remote.PackageUrl, token, ct).ConfigureAwait(false);
-        }
         else if (File.Exists(remote.PackageUrl))
-        {
             bytes = await File.ReadAllBytesAsync(remote.PackageUrl, ct).ConfigureAwait(false);
-        }
         else
             throw new FileNotFoundException("Pacchetto aggiornamento non trovato.", remote.PackageUrl);
 
         if (!string.IsNullOrWhiteSpace(remote.PackageSha256))
         {
-            progress?.Report("Verifica SHA-256…");
+            progress?.Report("Verifica SHA-256...");
             var hash = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
-            var expect = remote.PackageSha256.Trim().ToLowerInvariant();
-            if (!hash.Equals(expect, StringComparison.Ordinal))
+            if (!hash.Equals(remote.PackageSha256.Trim().ToLowerInvariant(), StringComparison.Ordinal))
                 throw new InvalidOperationException("SHA-256 del pacchetto non corrisponde.");
         }
 
@@ -437,13 +440,10 @@ public static class UpdateService
         await File.WriteAllBytesAsync(tmp, bytes, ct).ConfigureAwait(false);
         try
         {
-            progress?.Report("Applicazione overlay…");
+            progress?.Report("Applicazione overlay...");
             return PackService.ApplyUpdate(inst, tmp, s => progress?.Report(s));
         }
-        finally
-        {
-            try { File.Delete(tmp); } catch { /* ignore */ }
-        }
+        finally { try { File.Delete(tmp); } catch { } }
     }
 
     public static int CompareVersions(string a, string b)
@@ -453,9 +453,7 @@ public static class UpdateService
             var clean = (s ?? "0").Split(new[] { '-', '+' }, 2)[0];
             return clean.Split('.').Select(p => int.TryParse(p, out var n) ? n : 0).ToArray();
         }
-
-        var pa = Parts(a);
-        var pb = Parts(b);
+        var pa = Parts(a); var pb = Parts(b);
         var len = Math.Max(pa.Length, pb.Length);
         for (var i = 0; i < len; i++)
         {

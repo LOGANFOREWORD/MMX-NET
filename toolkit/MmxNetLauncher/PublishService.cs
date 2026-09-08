@@ -16,7 +16,7 @@ public sealed class DevPublishConfig
 
     public bool AbsolutePackageUrl { get; set; } = true;
 
-    public bool AutoBumpPatch { get; set; } = true;
+    public bool AutoBumpPatch { get; set; } = false;
 }
 
 public sealed class PublishResult
@@ -46,18 +46,45 @@ public static class PublishService
             var path = ConfigPath(inst);
             if (File.Exists(path))
             {
-                return JsonSerializer.Deserialize<DevPublishConfig>(File.ReadAllText(path))
+                var cfg = JsonSerializer.Deserialize<DevPublishConfig>(File.ReadAllText(path))
                        ?? new DevPublishConfig();
+                EnsurePublicFeedBaseUrl(cfg);
+                return cfg;
             }
         }
         catch { /* ignore */ }
-        return new DevPublishConfig();
+        return new DevPublishConfig { FeedBaseUrl = UpdateService.PublicFeedUrlDefault };
     }
 
     public static void Save(Install inst, DevPublishConfig cfg)
     {
+        EnsurePublicFeedBaseUrl(cfg);
         var json = JsonSerializer.Serialize(cfg, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(ConfigPath(inst), json);
+    }
+
+    /// <summary>
+    /// Feed amici = MMX-NET pubblico. Legacy MMX-NET-feed → riscritto a MMX-NET.
+    /// </summary>
+    public static void EnsurePublicFeedBaseUrl(DevPublishConfig cfg)
+    {
+        var u = (cfg.FeedBaseUrl ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(u))
+        {
+            cfg.FeedBaseUrl = UpdateService.PublicFeedUrlDefault;
+            return;
+        }
+        if (u.Contains("MMX-NET-feed", StringComparison.OrdinalIgnoreCase))
+        {
+            cfg.FeedBaseUrl = UpdateService.PublicFeedUrlDefault;
+            return;
+        }
+        if (UpdateService.IsPublicUpdateFeed(u))
+        {
+            cfg.FeedBaseUrl = NormalizeFeedUrl(u);
+            return;
+        }
+        cfg.FeedBaseUrl = UpdateService.PublicFeedUrlDefault;
     }
 
     public static string ResolveOutDir(Install inst, DevPublishConfig cfg)
@@ -77,6 +104,8 @@ public static class PublishService
         version.Version = (version.Version ?? "").Trim();
         if (string.IsNullOrWhiteSpace(version.Version))
             throw new InvalidOperationException("Indica una versione (es. 0.1.1).");
+
+        EnsurePublicFeedBaseUrl(cfg);
 
         var outDir = ResolveOutDir(inst, cfg);
         Directory.CreateDirectory(outDir);
@@ -379,8 +408,8 @@ public static class PublishService
                     var code = (int)resp.StatusCode;
                     var privHint = code is 401 or 403 or 404
                         ? (string.IsNullOrWhiteSpace(tok)
-                            ? " Se il feed e' MMX-NET-feed (pubblico) e 404: push mancante. Se punta a MMX-NET privata: cambia FeedBaseUrl."
-                            : " Token presente ma HTTP " + code + " — preferisci feed pubblico MMX-NET-feed (token vuoto), o push mancante.")
+                            ? " Se il feed e' MMX-NET (pubblico) e 404: push mancante. Se punta a MMX-NET privata: cambia FeedBaseUrl."
+                            : " Token presente ma HTTP " + code + " — preferisci feed pubblico MMX-NET (token vuoto), o push mancante.")
                         : "";
                     return "URL feed impostato (" + feed + "). Manifest non ancora online (HTTP " +
                            code + ") — dopo CARICA serve push del feed (auto se PublishTarget è clone)." + privHint;
@@ -446,10 +475,13 @@ public static class PublishService
                     "================================\r\n\r\n" +
                     "URL da mettere in ac_config.json → updateFeedUrl (amici):\r\n" +
                     feed + "\r\n\r\n" +
-                    "Repo PUBBLICA solo-feed (MMX-NET-feed): nessun PAT.\r\n" +
-                    "  Codice/prodotto resta su MMX-NET privata (solo owner write).\r\n" +
+                    "Repo PUBBLICA MMX-NET: nessun PAT.\r\n" +
+                    "  Un token «che non scade mai» NON serve e NON va messo nello zip.\r\n" +
+                    "  Write solo owner LOGANFOREWORD.\r\n" +
                     "  Dopo CARICA: push automatico se PublishTarget e' il clone feed,\r\n" +
                     "  oppure toolkit\\push_update_feed.ps1\r\n\r\n" +
+                    "Launcher: se updateFeedUrl punta ancora a MMX-NET-feed,\r\n" +
+                    "all'avvio migra a MMX-NET e salva ac_config.\r\n\r\n" +
                     "Solo LOGANFOREWORD puo' pushare. Vedi FEED_PRIVATO_AMICI.md\r\n\r\n" +
                     "Il launcher utente all'avvio (checkUpdatesOnStart: true) mostra il popup\r\n" +
                     "se ac_update_manifest.json ha Version maggiore della locale.\r\n");

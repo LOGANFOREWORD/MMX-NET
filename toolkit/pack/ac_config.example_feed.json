@@ -1,10 +1,10 @@
-﻿{
-  "useSteam": true,
-  "friendsProfile": true,
-  "autoUpdateGame": false,
-  "preferDirectSteam": false,
-  "checkUpdatesOnStart": true,
-  "updateChannel": "dev",
-  "updateFeedUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/",
-  "updateFeedToken": ""
-}
+{
+    "useSteam": true,
+    "friendsProfile": true,
+    "autoUpdateGame": false,
+    "preferDirectSteam": false,
+    "checkUpdatesOnStart": true,
+    "updateChannel": "dev",
+    "updateFeedToken": "",
+    "updateFeedUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/"
+}

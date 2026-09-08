@@ -31,8 +31,8 @@ Produce `MMX-Net-Launcher.exe` (user) e `MMX-Net-Launcher-dev.exe` (devkit publi
 ## Feed aggiornamenti
 
 - **Prodotto:** [LOGANFOREWORD/MMX-NET](https://github.com/LOGANFOREWORD/MMX-NET) **privata** (solo owner write)
-- **Feed update:** [LOGANFOREWORD/MMX-NET-feed](https://github.com/LOGANFOREWORD/MMX-NET-feed) **pubblica** (solo manifest + zip; nessun source)
-- `updateFeedUrl`: `https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/` — amici **senza PAT**
+- **Feed update:** [LOGANFOREWORD/MMX-NET](https://github.com/LOGANFOREWORD/MMX-NET) **pubblica** (solo manifest + zip; nessun source)
+- `updateFeedUrl`: `https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/` — amici **senza PAT**
 - Setup: `toolkit\setup_update_feed_repo.ps1` · push: `toolkit\push_update_feed.ps1`
 - Istruzioni: `FEED_PRIVATO_AMICI.md` · dettagli: `toolkit/pack/FEED_GITHUB_PRIVATO.md`
 - Non dare write a nessuno su nessuna repo; non rimettere MMX-NET pubblica

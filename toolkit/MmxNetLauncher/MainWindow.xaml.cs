@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -56,6 +56,13 @@ public partial class MainWindow : Window
 
         Loaded += async (_, _) =>
         {
+            // Amici vecchi: updateFeedUrl su MMX-NET-feed -> migra a MMX-NET pubblico.
+            if (UpdateService.TryMigrateLegacyPrivateFeedUrl(_inst, out var fromFeed, out var toFeed))
+            {
+                Log($"Feed migrato (legacy feed -> MMX-NET): {fromFeed} -> {toFeed}");
+                StatusLine.Text = "Feed aggiornato a MMX-NET (pubblico, senza PAT).";
+            }
+
             if (_inst.GetConfigBool("checkUpdatesOnStart", true))
                 await CheckUpdatesAsync(promptIfAvailable: true, silentIfCurrent: true);
         };
@@ -143,9 +150,9 @@ public partial class MainWindow : Window
         var ask = MessageBox.Show(
             "Mancano destinazioni publish.\n\n" +
             "Serve almeno uno tra:\n" +
-            "• FeedBaseUrl — URL feed pubblico (raw …/MMX-NET-feed/main/)\n" +
-            "• PublishTarget — clone locale MMX-NET-feed (dopo CARICA: auto-push se c'è .git)\n\n" +
-            "Codice su MMX-NET privata; update zip su MMX-NET-feed pubblica (amici senza PAT).\n" +
+            "• FeedBaseUrl — URL feed pubblico (raw …/MMX-NET/main/)\n" +
+            "• PublishTarget — clone locale MMX-NET (dopo CARICA: auto-push se c'è .git)\n\n" +
+            "Repo MMX-NET pubblica; update senza PAT; write solo owner.\n" +
             "Solo owner write su entrambe. Setup: toolkit\\setup_update_feed_repo.ps1\n\n" +
             "Vuoi inserirli ora? (verranno salvati in ac_dev_publish.json)",
             "Devkit — Configura feed",
@@ -157,7 +164,7 @@ public partial class MainWindow : Window
 
         var feed = PromptSimple(
             "URL feed (updateFeedUrl amici)\n" +
-            "Es. https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/\n" +
+            "Es. https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/\n" +
             "Pubblico: nessun PAT. Lascia vuoto se solo sync locale.",
             DevFeedUrlBox.Text);
         if (feed == null) return false;
@@ -328,6 +335,8 @@ public partial class MainWindow : Window
             RefreshDevChangesUi();
 
             var feedUrl = result.SuggestedFeedUrl;
+            if (!string.IsNullOrWhiteSpace(feedUrl))
+                DevFeedUrlBox.Text = feedUrl;
             DevPublishStatus.Text =
                 $"Pubblicato {result.Version.Version} → {result.OutDir}\n" +
                 $"SHA-256: {result.Sha256}\n" +
@@ -345,7 +354,7 @@ public partial class MainWindow : Window
 
             MessageBox.Show(
                 $"Pubblicato. Gli amici con updateFeedUrl={feedUrl}\n" +
-                "(feed pubblico MMX-NET-feed, senza PAT) vedranno il popup all'avvio.\n\n" +
+                "(feed pubblico MMX-NET, senza PAT) vedranno il popup all'avvio.\n\n" +
                 $"Versione: {result.Version.Version}\n" +
                 $"Cartella: {result.OutDir}" +
                 (result.SyncTarget != null ? "\nSync: " + result.SyncTarget : "") +
@@ -537,12 +546,22 @@ public partial class MainWindow : Window
 
             if (!result.Ok)
             {
-                // silentIfCurrent nasconde solo "sei aggiornato"; errori feed privato
-                // (404 senza PAT) vanno comunque spiegati con passi chiari.
+                // silentIfCurrent nasconde solo "sei aggiornato"; errori feed
+                // (404 / URL sbagliato) vanno spiegati. Su feed pubblico non spingere PAT.
+                var feedNow = _inst.GetConfigString("updateFeedUrl", "");
+                var publicFeed = UpdateService.IsPublicUpdateFeed(feedNow);
                 var showErr = !silentIfCurrent ||
-                    result.Message.Contains("updateFeedToken", StringComparison.OrdinalIgnoreCase) ||
-                    result.Message.Contains("repo GitHub privata", StringComparison.OrdinalIgnoreCase) ||
-                    result.Message.Contains("FEED_PRIVATO", StringComparison.OrdinalIgnoreCase);
+                    result.Message.Contains("FEED_PRIVATO", StringComparison.OrdinalIgnoreCase) ||
+                    result.Message.Contains("MMX-NET", StringComparison.OrdinalIgnoreCase) ||
+                    (!publicFeed && (
+                        result.Message.Contains("updateFeedToken", StringComparison.OrdinalIgnoreCase) ||
+                        result.Message.Contains("repo GitHub privata", StringComparison.OrdinalIgnoreCase)));
+                // Feed pubblico: mostra errore solo se non silent, o se 404 (push mancante)
+                if (publicFeed && silentIfCurrent &&
+                    (result.Message.Contains("404", StringComparison.Ordinal) ||
+                     result.Message.Contains("non raggiungibile", StringComparison.OrdinalIgnoreCase) ||
+                     result.Message.Contains("non disponibili", StringComparison.OrdinalIgnoreCase)))
+                    showErr = true;
                 if (showErr)
                 {
                     MessageBox.Show(

@@ -1,6 +1,6 @@
 # MMX-Net — aggiornamenti amici
 
-Feed pubblico (nessun PAT):
+**Token forever / PAT nello zip: non serve.** Serve solo il feed pubblico.
 
 ```json
 {
@@ -11,6 +11,7 @@ Feed pubblico (nessun PAT):
 }
 ```
 
-Il codice resta su repo privata `MMX-NET`. La repo `MMX-NET-feed` esiste **solo** per gli update raw senza token.
+- `MMX-NET` = codice (dovrebbe restare **privata**)
+- `MMX-NET-feed` = **pubblica**, solo zip/manifest
 
-All’avvio del launcher, se c’è una versione più nuova, compare il popup AGGIORNA.
+Se un install punta ancora a `.../MMX-NET/main/`, il launcher all'avvio migra da solo a `MMX-NET-feed`.

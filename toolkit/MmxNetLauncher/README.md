@@ -11,12 +11,13 @@ cd "F:\Anomaly Coop\toolkit"
 .\build_ac_installer.ps1
 ```
 
-Feed update: repo **pubblica** `LOGANFOREWORD/MMX-NET-feed` (solo manifest + zip)  
-`FeedBaseUrl` = `https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/`  
+Feed update: repo **pubblica** `LOGANFOREWORD/MMX-NET` (solo manifest + zip)  
+`FeedBaseUrl` = `https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/`  
 Prodotto: `MMX-NET` **privata**. Solo owner write su entrambe. Amici: nessun PAT.
 
 Dopo CARICA: auto-push se PublishTarget è clone git; altrimenti `.\push_update_feed.ps1`.  
-Setup feed: `.\setup_update_feed_repo.ps1`
+Setup feed: `.\setup_update_feed_repo.ps1`  
+Versione: la setti tu (`ac_version.json`); auto-bump DEVKIT default **off**. Pack amici = solo `MMX-Net-Launcher.exe` (mai `-dev`).
 
 **Popup + AGGIORNA giallo:** all'avvio (o su AGGIORNA), se remoto > locale → MessageBox; poi AGGIORNA resta stile accent (giallo come PLAY) finché non applichi.  
 Test UI senza abbassare `ac_version`: in PowerShell DEVKIT  

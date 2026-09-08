@@ -101,6 +101,8 @@ $sha = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvari
 Copy-Item -LiteralPath $verFile -Destination (Join-Path $outUpdate "ac_version.json") -Force
 
 # FeedBaseUrl / PublishTarget da ac_dev_publish.json
+# Feed pubblico amici = MMX-NET (repo pubblica).
+$publicFeed = "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/"
 $feedBase = ""
 $syncTarget = ""
 if (Test-Path -LiteralPath $devPub) {
@@ -111,6 +113,17 @@ if (Test-Path -LiteralPath $devPub) {
     }
     catch {
         Write-Host ("Nota: ac_dev_publish.json non letto: {0}" -f $_.Exception.Message)
+    }
+}
+if (-not $feedBase -or ($feedBase -match '(?i)MMX-NET-feed')) {
+    $feedBase = $publicFeed
+    Write-Host "FeedBaseUrl allineato a MMX-NET (pubblico)."
+    if (Test-Path -LiteralPath $devPub) {
+        try {
+            $dpFix = Get-Content -LiteralPath $devPub -Raw | ConvertFrom-Json
+            $dpFix | Add-Member -NotePropertyName FeedBaseUrl -NotePropertyValue $publicFeed -Force
+            ($dpFix | ConvertTo-Json -Depth 5) | Set-Content -LiteralPath $devPub -Encoding UTF8
+        } catch { }
     }
 }
 

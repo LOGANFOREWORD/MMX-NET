@@ -1,12 +1,12 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.1.11",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "Feed pubblico MMX-NET-feed + uninstaller via installer; codice su MMX-NET privata",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/ac-update.zip",
-    "PackageSha256":  "6814216e4ecb24b6445fcad43d5d54586aeb17ae903eed7902ee4e40d566297a",
-    "PublishedUtc":  "2026-09-08T20:32:50.7127026Z",
-    "MinLauncherVersion":  "0.1.0"
+{
+    "Name": "MMX-Net",
+    "Version": "0.1.15",
+    "Channel": "dev",
+    "Protocol": "89",
+    "Engine": "ST",
+    "Notes": "Feed pubblico MMX-NET; update senza PAT; write solo owner",
+    "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
+    "PackageSha256": "26285a707fd00aff188a1711d4e1b1f433d63e9f21c2496edf78ef9c5b309089",
+    "PublishedUtc": "2026-09-08T21:41:59.5998222Z",
+    "MinLauncherVersion": "0.1.0"
 }
