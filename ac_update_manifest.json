@@ -1,12 +1,12 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.1.8",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "Steam HOST/PLAY = applaunch 41700 + Launch Options bridge %command% (presence CoP, Join≠vanilla)",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
-    "PackageSha256":  "2423eccb93320cf3965cc25f4fcccbbb4914256f9ba1683746c70fa06723d350",
-    "PublishedUtc":  "2026-09-08T19:42:02.3812733Z",
-    "MinLauncherVersion":  "0.1.0"
+{
+  "Name": "MMX-Net",
+  "Version": "0.1.9",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "Steam HOST/PLAY = applaunch 41700 \u002B Launch Options bridge %command% (presence CoP, Join\u2260vanilla)",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
+  "PackageSha256": "4542da09ec298a3870135733e6eddf0c6cd31528b026050b0a309a8844641345",
+  "PublishedUtc": "2026-09-08T19:48:19.7010430Z",
+  "MinLauncherVersion": "0.1.0"
 }
