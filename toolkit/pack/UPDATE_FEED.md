@@ -8,122 +8,70 @@ Il launcher legge `updateFeedUrl` da `ac_config.json` e confronta la versione re
 {
   "checkUpdatesOnStart": true,
   "updateChannel": "dev",
-  "updateFeedUrl": "https://raw.githubusercontent.com/OWNER/mmx-net-updates/main/",
+  "updateFeedUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/anomaly-coop-updates/main/",
   "updateFeedToken": ""
 }
 ```
 
 - `updateFeedUrl`: URL del **manifest** (`.json`) **oppure** cartella base che contiene i file sotto.
-- `updateFeedToken`: **PAT GitHub read-only** obbligatorio se il feed è su **repo privata** (`raw.githubusercontent.com` senza auth risponde 404). Non committare il token. Alternativa: env `MMX_NET_UPDATE_FEED_TOKEN` (legacy: `AC_UPDATE_FEED_TOKEN`).
-- `updateChannel`: `dev` / `release` / `any` (se diverso dal channel del feed, l’update viene ignorato salvo `any`).
+- `updateFeedToken`: **PAT GitHub read-only** obbligatorio se il feed è su **repo privata**. Non committare il token. Alternativa: env `MMX_NET_UPDATE_FEED_TOKEN` (legacy: `AC_UPDATE_FEED_TOKEN`).
+- `updateChannel`: `dev` / `release` / `any`.
 - `checkUpdatesOnStart`: popup automatico all’avvio se c’è una versione più nuova.
 
-Template per pack installer: `toolkit/pack/ac_config.user.json`  
-Esempio con feed già valorizzato: `toolkit/pack/ac_config.example_feed.json`  
-Dopo publish, Logan mette l’URL del feed in `updateFeedUrl` (o in `ac_dev_publish.json` → `FeedBaseUrl` così l’installer lo precompila).
+Template installer: `toolkit/pack/ac_config.user.json`  
+Dopo publish, `FeedBaseUrl` in `ac_dev_publish.json` bake `updateFeedUrl` nel template.
 
-### Repo GitHub privata (consigliato per amici)
+### Repo GitHub privata
 
-1. Repo dedicata **privata** (solo feed: manifest + zip), non tutto Anomaly.
-2. Logan invita gli amici come **Collaborators** (permesso Read).
-3. Ogni amico crea un PAT fine-grained con **Contents: Read** solo su quella repo e lo mette in `updateFeedToken`.
-4. Il launcher invia `Authorization: Bearer <token>` su download manifest e zip.
-5. Dopo **CARICA AGGIORNAMENTO**, Logan esegue `toolkit\push_update_feed.ps1` (commit+push della cartella `PublishTarget`).
+1. Usa la repo esistente **`anomaly-coop-updates`** (solo feed: manifest + zip).
+2. Logan invita gli amici come **Collaborators** (Read).
+3. Ogni amico crea un PAT fine-grained (Contents: Read) → `updateFeedToken`.
+4. Dopo **CARICA AGGIORNAMENTO**, Logan esegue `toolkit\push_update_feed.ps1`.
 
-Vedi anche `toolkit/pack/FEED_GITHUB_PRIVATO.md`.
+Vedi `toolkit/pack/FEED_GITHUB_PRIVATO.md`.
 
-### Test locale (senza hosting)
+### Test locale
 
-1. `publish_ac_update.ps1` (o Devkit → Pubblica) genera `dist\update\`.
-2. Nell’`ac_config.json` di test metti un path assoluto, es.:
-   `"updateFeedUrl": "F:\\Anomaly Coop\\dist\\update\\"`
-3. Abbassa la versione locale in `ac_version.json` (es. `0.1.0`) e riavvia il launcher → popup.
-4. Per gli amici serve un URL **https** pubblico della stessa cartella (non file:// in produzione).
+1. `publish_ac_update.ps1` genera `dist\update\`.
+2. In `ac_config.json`: `"updateFeedUrl": "F:\\Anomaly Coop\\dist\\update\\"`
+3. Abbassa la versione locale e riavvia → popup.
 
 ## Formato manifest (`ac_update_manifest.json`)
 
 ```json
 {
   "Name": "MMX-Net",
-  "Version": "0.1.1",
+  "Version": "0.1.2",
   "Channel": "dev",
   "Protocol": "89",
   "Engine": "ST",
-  "Notes": "Fix bridge Steam + health.",
-  "PackageUrl": "https://ESEMPIO/raw/main/dist/update/ac-update.zip",
+  "Notes": "…",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/anomaly-coop-updates/main/ac-update.zip",
   "PackageSha256": "",
-  "PublishedUtc": "2026-09-07T20:00:00.0000000Z",
+  "PublishedUtc": "2026-09-08T00:00:00.0000000Z",
   "MinLauncherVersion": "0.1.0"
 }
 ```
 
-| Campo | Obbligatorio | Note |
-|-------|--------------|------|
-| `Version` | sì | Semver `major.minor.patch` — deve essere **maggiore** della locale |
-| `Channel` | consigliato | Allineato a `updateChannel` client |
-| `PackageUrl` | sì* | URL diretto dello zip overlay |
-| `PackageSha256` | no | Se valorizzato, verifica SHA-256 (hex) |
-| `Notes` | no | Mostrate nel popup |
-
-\*Se `updateFeedUrl` punta a una **cartella** (senza `.json`) e manca `PackageUrl`, il client prova `…/ac-update.zip`.
-
-## Layout cartella feed (stile MMX)
-
-```
-dist/update/
-  ac_update_manifest.json
-  ac_version.json          (opzionale, utile in fallback)
-  ac-update.zip            (overlay: launcher utente + ac_* + gamedata elencati)
-```
-
-`updateFeedUrl` può essere:
-1. `https://…/ac_update_manifest.json`
-2. `https://…/dist/update/` (il client aggiunge `ac_update_manifest.json`)
-
-Fallback: se il manifest non c’è, il client prova `ac_version.json` + `ac-update.zip` nella stessa cartella.
-
 ## Contenuto dello zip
 
-Solo **parti nostre**, non redistribuisce `db\` / Anomaly intero:
+Solo **parti nostre**:
 
-- `ac_version.json` (non `ac_config.json` negli update — preserva `updateFeedUrl` amici)
-- `ac_steam_cop_bridge.cmd`, `ac_steam_launch.args`, `steam_appid.txt`
-- `MMX-Net-Launcher.exe` (**solo user**, mai `-dev`)
-- file elencati in `toolkit/pack/ac_pack_include.txt` (inclusi, se presenti: script xrr_* minimi, `xrRazom-release.txt`, `bin\steam_api64.dll`, `GameNetworkingSockets.dll` per riparare install incomplete)
+- `ac_version.json` (non `ac_config.json` negli update)
+- bridge Steam + `steam_appid.txt`
+- `MMX-Net-Launcher.exe` (solo user)
+- file in `toolkit/pack/ac_pack_include.txt` (xrr_* minimi, DLL net se presenti)
 
-## Flusso client (amico)
-
-1. All’avvio (o click ⬇ / AGGIORNA) → fetch manifest  
-2. Se remoto > locale → popup «Nuovo aggiornamento — Installare?»  
-3. Se Anomaly è aperto → avvisa di chiudere  
-4. Download zip → applica overlay → aggiorna `ac_version.json` → chiede riavvio launcher  
+Runtime `xrr_*` / DLL `xr*` restano con nomi engine.
 
 ## Pubblicare (Logan)
 
-**Consigliato:** `MMX-Net-Launcher-dev.exe` → pannello **CARICA AGGIORNAMENTO** (one-click).
+`MMX-Net-Launcher-dev.exe` → **CARICA AGGIORNAMENTO**, poi `push_update_feed.ps1`.
 
-Il devkit:
-1. Rileva modifiche vs `ac_dev_last_publish.json` (badge + REFRESH)
-2. Propone bump patch se serve (Version remota deve essere **>** locale amici)
-3. Scrive `dist\update\`, copia su `PublishTarget`, bake `FeedBaseUrl` nel template user
-
-### Prima volta
-
-Imposta in `ac_dev_publish.json` (o nel dialog al primo Carica):
-
-- `FeedBaseUrl` — es. GitHub raw della cartella `dist/update/`
-- e/o `PublishTarget` — cartella sync condivisa
-
-### Checklist popup amici
-
-1. **Carica** → `dist\update\` fresco con Version bumpata  
-2. File online/sync sulla destinazione del feed  
-3. Amici con `updateFeedUrl` = quel feed e `checkUpdatesOnStart: true`  
-4. All’avvio: popup se Version remota > locale  
-
-Da script:
+Oppure:
 
 ```powershell
-cd "<root>\toolkit"
+cd "F:\Anomaly Coop\toolkit"
 .\publish_ac_update.ps1 -Version 0.1.2 -Notes "Descrizione breve"
+.\push_update_feed.ps1
 ```

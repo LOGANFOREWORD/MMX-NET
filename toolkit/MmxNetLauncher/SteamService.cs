@@ -6,13 +6,6 @@ using Microsoft.Win32;
 
 namespace MmxNetLauncher;
 
-/// <summary>
-/// Overlay Steam (Shift+Tab) si aggancia SOLO se Steam avvia DIRETTAMENTE l'exe Anomaly.
-/// Avvio "diretto" dal launcher = niente overlay (ecco il bug inviti).
-///
-/// Metodo: shortcut Non-Steam in libreria Steam → Exe = AnomalyDX11AVX.exe
-/// → steam://rungameid/... così Steam CreateProcess(Anomaly) + overlay + AppID 41700.
-/// </summary>
 public static class SteamService
 {
     public const string AppId = Install.SteamAppId;
@@ -124,9 +117,6 @@ public static class SteamService
         }
     }
 
-    /// <summary>
-    /// Unico metodo affidabile per Shift+Tab: Steam deve avviare Anomaly.exe.
-    /// </summary>
     public static string LaunchAnomalyAsCallOfPripyat(
         string exePath,
         IReadOnlyList<string> args,
@@ -141,14 +131,12 @@ public static class SteamService
             ?? throw new InvalidOperationException("steam.exe non trovato.");
 
         var launchOpts = string.Join(' ', args);
-        // 1) CoP Launch Options → Anomaly DIRETTA (niente .cmd + start: quello spezza l'overlay)
         try
         {
             EnsureCopLaunchOptionsPointToAnomaly(exePath, launchOpts);
         }
         catch { /* CoP assente ok */ }
 
-        // 2) Shortcut libreria: Steam CreateProcess(Anomaly) = overlay
         var id = RegisterSteamLibraryShortcut(exePath, startDir, launchOpts, inst);
         var marker = Path.Combine(inst.Root, "ac_steam_library_ok.txt");
         if (!File.Exists(marker))
@@ -174,15 +162,11 @@ public static class SteamService
             }
         }
 
-        // Ultimo fallback: diretto (overlay probabilmente assente — avvisa)
         StartDirectLikeXrMpe(exePath, args, startDir);
         OpenFriends();
         return "fallback diretto -steam (overlay può mancare: in Steam cerca «Call of Pripyat — MMX-Net» e avvialo da lì)";
     }
 
-    /// <summary>
-    /// Launch Options CoP = Anomaly.exe DIRETTA (Steam inietta overlay su Anomaly).
-    /// </summary>
     public static void EnsureCopLaunchOptionsPointToAnomaly(string anomalyExe, string launchOpts)
     {
         if (FindCallOfPripyatManifest() == null) return;

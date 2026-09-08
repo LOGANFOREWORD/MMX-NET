@@ -9,14 +9,14 @@ Il launcher supporta `updateFeedToken` (header `Authorization: Bearer …`) su m
 
 ## Una tantum (Logan)
 
-1. Crea/usa la repo privata `mmx-net-updates`.
-2. Clone locale → cartella sync, es. `F:\Anomaly Coop\dist\update-feed`  
-   (è il `PublishTarget` in `ac_dev_publish.json`).
+1. Usa la repo privata esistente `anomaly-coop-updates` (non crearne un’altra).
+2. Clone locale → `F:\Anomaly Coop\dist\update-feed` (`PublishTarget`).
 3. Imposta `FeedBaseUrl` a:
-   `https://raw.githubusercontent.com/<TUO_USER>/mmx-net-updates/main/`
-4. Invita gli amici: repo → **Settings → Collaborators** → Add (accesso Read).
-5. Crea un PAT fine-grained (Contents: Read sulla repo) e condividilo **in privato** con gli amici
-   (o ogni amico crea il proprio PAT dopo accettazione invito).
+   `https://raw.githubusercontent.com/LOGANFOREWORD/anomaly-coop-updates/main/`
+4. Invita gli amici: **Settings → Collaborators** (Read).
+5. PAT fine-grained (Contents: Read) condiviso in privato, o ogni amico crea il proprio.
+
+Oppure: `toolkit\setup_update_feed_repo.ps1` (collega la repo esistente).
 
 ## Una tantum (amico)
 
@@ -26,30 +26,22 @@ In `ac_config.json` nella root MMX-Net:
 {
   "checkUpdatesOnStart": true,
   "updateChannel": "dev",
-  "updateFeedUrl": "https://raw.githubusercontent.com/<USER>/mmx-net-updates/main/",
+  "updateFeedUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/anomaly-coop-updates/main/",
   "updateFeedToken": "github_pat_…"
 }
 ```
 
-Oppure senza scrivere il token nel file: variabile d’ambiente `AC_UPDATE_FEED_TOKEN`.
+Oppure env `MMX_NET_UPDATE_FEED_TOKEN` / `AC_UPDATE_FEED_TOKEN`.
 
-`ac_config.json` **non** viene sovrascritto dagli update overlay (il token resta).
+`ac_config.json` **non** viene sovrascritto dagli update overlay.
 
 ## Ogni release (Logan)
 
-1. Apri `MMX-Net-Launcher-dev.exe` → **CARICA AGGIORNAMENTO**  
-   (scrive `dist\update\` e copia su `PublishTarget`).
-2. Esegui:
-
-```powershell
-cd "F:\Anomaly Coop\toolkit"
-.\push_update_feed.ps1
-```
-
-3. Gli amici all’avvio vedono il popup se la Version remota è maggiore.
+1. `MMX-Net-Launcher-dev.exe` → **CARICA AGGIORNAMENTO**
+2. `toolkit\push_update_feed.ps1`
+3. Gli amici vedono il popup se Version remota > locale.
 
 ## Sicurezza
 
 - Mai commitare PAT / `.env` / `updateFeedToken` nella repo del feed.
-- Preferire PAT fine-grained limitato a quella sola repo, scadenza breve.
-- Revocare il PAT se un amico esce dal gruppo.
+- Preferire PAT fine-grained limitato a quella sola repo.

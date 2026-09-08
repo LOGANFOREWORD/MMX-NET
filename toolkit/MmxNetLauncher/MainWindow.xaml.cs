@@ -26,7 +26,6 @@ public partial class MainWindow : Window
         UseSteamBox.Checked += (_, _) => _inst.SetConfigBool("useSteam", true);
         UseSteamBox.Unchecked += (_, _) => _inst.SetConfigBool("useSteam", false);
 
-        // Allinea subito Steam CoP + profilo amici (no DBG / no EA backpack)
         try
         {
             _game.PrepareSteamAsCallOfPripyat(UseSteamBox.IsChecked == true);
@@ -131,7 +130,6 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>Chiede FeedBaseUrl e/o PublishTarget una volta se entrambi mancano.</summary>
     private bool EnsurePublishDestinations()
     {
         _pubCfg.FeedBaseUrl = DevFeedUrlBox.Text.Trim();
@@ -142,7 +140,7 @@ public partial class MainWindow : Window
         var ask = MessageBox.Show(
             "Mancano destinazioni publish.\n\n" +
             "Serve almeno uno tra:\n" +
-            "• FeedBaseUrl — URL feed (es. raw …/mmx-net-updates/main/)\n" +
+            "• FeedBaseUrl — URL feed (es. raw …/anomaly-coop-updates/main/)\n" +
             "• PublishTarget — clone locale del feed (poi push_update_feed.ps1)\n\n" +
             "Repo privata: amici usano updateFeedToken (PAT read-only) in ac_config.json.\n\n" +
             "Vuoi inserirli ora? (verranno salvati in ac_dev_publish.json)",
@@ -155,14 +153,14 @@ public partial class MainWindow : Window
 
         var feed = PromptSimple(
             "URL feed (updateFeedUrl amici)\n" +
-            "Es. https://raw.githubusercontent.com/USER/mmx-net-updates/main/\n" +
+            "Es. https://raw.githubusercontent.com/LOGANFOREWORD/anomaly-coop-updates/main/\n" +
             "Repo privata: amici usano anche updateFeedToken. Lascia vuoto se solo sync locale.",
             DevFeedUrlBox.Text);
         if (feed == null) return false;
 
         var sync = PromptSimple(
             "Clone feed / cartella sync (PublishTarget)\n" +
-            "Es. F:\\MMX-Net\\dist\\update-feed — poi toolkit\\push_update_feed.ps1\n" +
+            "Es. F:\\Anomaly Coop\\dist\\update-feed — poi toolkit\\push_update_feed.ps1\n" +
             "Lascia vuoto se usi solo URL online.",
             DevSyncBox.Text);
         if (sync == null) return false;
@@ -255,7 +253,6 @@ public partial class MainWindow : Window
             {
                 var suggested = DevChangeDetectService.SuggestPatchBump(
                     string.IsNullOrWhiteSpace(versionText) ? local.Version : versionText);
-                // Se l'utente non ha già bumpato, oppure il box è ancora = locale
                 if (UpdateService.CompareVersions(suggested, local.Version) > 0 &&
                     UpdateService.CompareVersions(versionText, local.Version) <= 0)
                 {
@@ -279,7 +276,6 @@ public partial class MainWindow : Window
             if (string.IsNullOrWhiteSpace(versionText))
                 throw new InvalidOperationException("Indica una versione (es. 0.1.2).");
 
-            // Gli amici vedono il popup solo se Version remota > locale
             if (UpdateService.CompareVersions(versionText, local.Version) <= 0 && detect.HasChanges)
             {
                 var force = MessageBox.Show(

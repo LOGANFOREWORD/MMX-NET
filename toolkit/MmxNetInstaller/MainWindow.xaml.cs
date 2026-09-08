@@ -156,7 +156,6 @@ public partial class MainWindow : Window
         var name = Path.GetFileName(path);
         if (name.Equals("MMX-Net", StringComparison.OrdinalIgnoreCase))
             return path;
-        // Se l'utente sceglie un parent (es. C:\Games), crea MMX-Net sotto
         if (!Directory.Exists(path) || !File.Exists(Path.Combine(path, "fsgame.ltx")))
             return Path.Combine(path, "MMX-Net");
         return path;
@@ -261,7 +260,6 @@ public partial class MainWindow : Window
         var cfg = Path.Combine(dest, "ac_config.json");
         if (File.Exists(cfg)) return;
 
-        // Template accanto all'installer (ac_config.user.json) se presente
         var exeDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
         var template = Path.Combine(exeDir, "ac_config.user.json");
         if (File.Exists(template))
@@ -284,7 +282,6 @@ public partial class MainWindow : Window
             """);
     }
 
-    /// <summary>File tipici della base Anomaly+xrRazom — se mancano l'overlay da solo non basta.</summary>
     private static List<string> GetIncompleteBaseWarnings(string dest)
     {
         var missing = new List<string>();

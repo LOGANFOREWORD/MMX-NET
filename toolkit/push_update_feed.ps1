@@ -24,7 +24,7 @@ if ([string]::IsNullOrWhiteSpace($target)) {
 $target = [System.IO.Path]::GetFullPath($target)
 
 if (-not (Test-Path (Join-Path $target ".git"))) {
-    throw "PublishTarget non e' un clone git: $target`nClona la repo mmx-net-updates li' oppure imposta PublishTarget."
+    throw "PublishTarget non e' un clone git: $target`nClona la repo anomaly-coop-updates li' oppure imposta PublishTarget."
 }
 
 # Copia fresca da dist\update se presente (CARICA puo' aver gia' syncato)

@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Crea la repo GitHub PRIVATA mmx-net-updates e collega PublishTarget + FeedBaseUrl.
+  Collega PublishTarget + FeedBaseUrl alla repo GitHub PRIVATA esistente anomaly-coop-updates.
 #>
 $ErrorActionPreference = "Stop"
 $git = "C:\Program Files\Git\cmd\git.exe"
@@ -10,7 +10,7 @@ $env:Path = "C:\Program Files\Git\cmd;C:\Program Files\GitHub CLI;" + $env:Path
 
 $toolkit = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Root = Split-Path -Parent $toolkit
-$repoName = "mmx-net-updates"
+$repoName = "anomaly-coop-updates"
 $cloneDir = Join-Path $Root "dist\update-feed"
 
 Write-Host "Check gh auth..."
@@ -34,12 +34,10 @@ if ($LASTEXITCODE -eq 0) { $exists = $true }
 $ErrorActionPreference = $prevEap
 
 if (-not $exists) {
-    Write-Host "Creo repo privata $user/$repoName ..."
-    gh repo create $repoName --private --description "MMX-Net update feed (manifest + zip)" --confirm
-    if ($LASTEXITCODE -ne 0) { throw "gh repo create fallito" }
-} else {
-    Write-Host "Repo gia esistente: https://github.com/$user/$repoName"
+    throw "Repo $user/$repoName non trovata. Creala su GitHub (privata) o correggi il nome — non inventare una repo nuova da questo script."
 }
+
+Write-Host "Repo: https://github.com/$user/$repoName"
 
 New-Item -ItemType Directory -Force -Path (Split-Path $cloneDir) | Out-Null
 if (-not (Test-Path (Join-Path $cloneDir ".git"))) {
@@ -52,17 +50,14 @@ if (-not (Test-Path (Join-Path $cloneDir ".git"))) {
     Pop-Location
 }
 
-# Seed minimo se vuota
 $readme = Join-Path $cloneDir "README.md"
-if (-not (Test-Path $readme)) {
-    @"
-# mmx-net-updates
+@"
+# anomaly-coop-updates
 
-Feed privato MMX-Net (solo ``ac_update_manifest.json``, ``ac_version.json``, ``ac-update.zip``).
+Feed privato **MMX-Net** (``ac_update_manifest.json``, ``ac_version.json``, ``ac-update.zip``).
 
 Non mettere PAT o secret in questo repository.
 "@ | Set-Content -LiteralPath $readme -Encoding UTF8
-}
 
 $gitignore = Join-Path $cloneDir ".gitignore"
 if (-not (Test-Path $gitignore)) {
@@ -73,7 +68,6 @@ if (-not (Test-Path $gitignore)) {
 "@ | Set-Content -LiteralPath $gitignore -Encoding UTF8
 }
 
-# Copia feed corrente se presente
 $src = Join-Path $Root "dist\update"
 if (Test-Path $src) {
     foreach ($name in @("ac_update_manifest.json", "ac_version.json", "ac-update.zip", "LEGGIMI_FEED.txt")) {
@@ -89,10 +83,10 @@ try {
     & $git add -A
     $st = & $git status --porcelain
     if ($st) {
-        & $git commit -m "Initial update feed"
+        & $git commit -m "sync feed MMX-Net"
         & $git branch -M main
         & $git push -u origin main
-        if ($LASTEXITCODE -ne 0) { throw "push iniziale fallito" }
+        if ($LASTEXITCODE -ne 0) { throw "push fallito" }
     } else {
         Write-Host "Clone gia allineato, niente da commitare."
     }
@@ -102,15 +96,14 @@ finally { Pop-Location }
 $feedUrl = "https://raw.githubusercontent.com/$user/$repoName/main/"
 $devPubPath = Join-Path $Root "ac_dev_publish.json"
 $cfg = [ordered]@{
-    FeedBaseUrl       = $feedUrl
-    PublishTarget     = $cloneDir
-    OutDir            = "dist\update"
+    FeedBaseUrl        = $feedUrl
+    PublishTarget      = $cloneDir
+    OutDir             = "dist\update"
     AbsolutePackageUrl = $true
-    AutoBumpPatch     = $true
+    AutoBumpPatch      = $true
 }
 ($cfg | ConvertTo-Json -Depth 5) | Set-Content -LiteralPath $devPubPath -Encoding UTF8
 
-# Bake updateFeedUrl (senza token) in template user + ac_config locale
 foreach ($cfgPath in @(
     (Join-Path $Root "ac_config.json"),
     (Join-Path $Root "toolkit\pack\ac_config.user.json")

@@ -18,11 +18,6 @@ public sealed class HealthReport
         $"PASS {Items.Count(i => i.Pass)}/{Items.Count} · FATAL {FatalFails} · PROBLEM {ProblemFails} · DESYNC {DesyncFails}";
 }
 
-/// <summary>
-/// Preflight Anomaly + xrRazom.
-/// Anomaly non espone xrGame/xrCore/xrRender come DLL libere (sono nell'exe) —
-/// stack net reale: steam_api64 + GameNetworkingSockets.
-/// </summary>
 public static class HealthCheckService
 {
     private static readonly string[] RazomScripts =
@@ -33,7 +28,6 @@ public static class HealthCheckService
         @"scripts\xrr_callbacks.script",
     };
 
-    /// <summary>DLL davvero in bin\ Anomaly (non lo stack CoP/xrMPE).</summary>
     private static readonly string[] NetStack =
     {
         "steam_api64.dll",
@@ -42,7 +36,7 @@ public static class HealthCheckService
 
     public const string IncompleteBaseHint =
         "Serve base Anomaly 1.5.3 + xrRazom nella stessa cartella MMX-Net " +
-        "(bin + gamedata + xrRazom-release.txt). Usa Installer con «Copia da Anomaly+xrRazom» " +
+        "(bin + gamedata + xrRazom-release.txt). Usa Installer con "Copia da Anomaly+xrRazom" +
         "oppure copia quelle cartelle. L'overlay da solo non basta.";
 
     // MMX-Net: messaggio chiaro su fingerprint desync (join rifiutato)
@@ -65,7 +59,6 @@ public static class HealthCheckService
         Add(CheckSev.Fatal, Directory.Exists(inst.Bin), "cartella bin\\");
         Add(CheckSev.Fatal, Directory.Exists(inst.Gamedata), "cartella gamedata\\");
 
-        // Steam App ID (root + bin) — obbligatorio per Shift+Tab / inviti come CoP
         var binId = File.Exists(inst.SteamAppIdFile) ? SafeRead(inst.SteamAppIdFile) : "";
         var rootIdFile = Path.Combine(inst.Root, "steam_appid.txt");
         var rootId = File.Exists(rootIdFile) ? SafeRead(rootIdFile) : "";
@@ -187,7 +180,6 @@ public static class HealthCheckService
 
         Add(CheckSev.Info, SteamService.IsSteamRunning(), SteamService.StatusText());
 
-        // Flusso inviti (guida xrRazom): host_steam on; host_session on solo sul PC host
         try
         {
             var user = Path.Combine(inst.AppData, "user.ltx");

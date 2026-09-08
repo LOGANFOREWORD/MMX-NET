@@ -6,24 +6,16 @@ using System.Text.Json;
 
 namespace MmxNetLauncher;
 
-/// <summary>
-/// Config e flusso publish del devkit (Logan): zip + manifest + copia sync opzionale.
-/// </summary>
 public sealed class DevPublishConfig
 {
-    /// <summary>URL pubblico della cartella feed (es. https://…/dist/update/). Va in updateFeedUrl amici.</summary>
     public string FeedBaseUrl { get; set; } = "";
 
-    /// <summary>Cartella locale di sync (Dropbox/OneDrive/…) dove copiare i file del feed dopo il pack.</summary>
     public string PublishTarget { get; set; } = "";
 
-    /// <summary>Output pack relativo alla root install (default dist/update).</summary>
     public string OutDir { get; set; } = @"dist\update";
 
-    /// <summary>Se true e FeedBaseUrl valorizzato, PackageUrl diventa URL assoluto allo zip.</summary>
     public bool AbsolutePackageUrl { get; set; } = true;
 
-    /// <summary>Se true, al Carica propone bump patch automatico quando ci sono modifiche.</summary>
     public bool AutoBumpPatch { get; set; } = true;
 }
 
@@ -75,9 +67,6 @@ public static class PublishService
             : Path.GetFullPath(Path.Combine(inst.Root, rel));
     }
 
-    /// <summary>
-    /// Scrive ac_version, genera ac-update.zip + manifest in OutDir, opzionale copia su PublishTarget.
-    /// </summary>
     public static PublishResult Publish(
         Install inst,
         PackVersion version,
@@ -114,7 +103,6 @@ public static class PublishService
         PackService.WriteManifest(manifestPath, manifest);
         File.Copy(inst.VersionJson, Path.Combine(outDir, "ac_version.json"), true);
 
-        // Copia anche nell'overlay installer se esiste dist\installer
         var installerDir = Path.Combine(inst.Root, "dist", "installer");
         if (Directory.Exists(installerDir))
         {
@@ -185,7 +173,6 @@ public static class PublishService
             if (!t.EndsWith('/')) t += "/";
             return t;
         }
-        // Path locale
         try
         {
             var full = Path.GetFullPath(t.TrimEnd('\\', '/'));
@@ -197,7 +184,6 @@ public static class PublishService
         }
     }
 
-    /// <summary>Messaggio soft: non blocca il publish se il remoto non è ancora syncato.</summary>
     public static string TryDescribeFeedReachability(string feedBaseUrl)
     {
         var feed = NormalizeFeedUrl(feedBaseUrl);
@@ -221,15 +207,18 @@ public static class PublishService
                 {
                     using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
                     http.DefaultRequestHeaders.UserAgent.ParseAdd("MmxNetLauncher/0.1");
-                    // Token opzionale: env AC_UPDATE_FEED_TOKEN (repo privata). Non leggere ac_config qui (devkit).
-                    var tok = (Environment.GetEnvironmentVariable("AC_UPDATE_FEED_TOKEN") ?? "").Trim();
+                    // MMX-Net: token env per check reachability (devkit non legge ac_config amici)
+                    var tok = (
+                        Environment.GetEnvironmentVariable("MMX_NET_UPDATE_FEED_TOKEN")
+                        ?? Environment.GetEnvironmentVariable("AC_UPDATE_FEED_TOKEN")
+                        ?? "").Trim();
                     using var req = UpdateService.CreateFeedRequest(HttpMethod.Get, manifestUrl, tok);
                     using var resp = http.SendAsync(req).GetAwaiter().GetResult();
                     if (resp.IsSuccessStatusCode)
                         return "Manifest remoto raggiungibile: " + manifestUrl;
                     var code = (int)resp.StatusCode;
                     var privHint = code is 401 or 403 or 404
-                        ? " Repo privata? Serve collaboratore + PAT in updateFeedToken / AC_UPDATE_FEED_TOKEN."
+                        ? " Repo privata? Serve collaboratore + PAT in updateFeedToken / MMX_NET_UPDATE_FEED_TOKEN."
                         : "";
                     return "URL feed impostato (" + feed + "). Manifest non ancora online (HTTP " +
                            code + ") — carica dist\\update\\ e push del feed." + privHint;
@@ -249,10 +238,6 @@ public static class PublishService
         return "URL/path feed amici: " + feed;
     }
 
-    /// <summary>
-    /// Se FeedBaseUrl è valorizzato, aggiorna toolkit/pack/ac_config.user.json
-    /// (updateFeedUrl + checkUpdatesOnStart) per i prossimi installer.
-    /// </summary>
     public static void TryBakeUserConfigTemplate(Install inst, DevPublishConfig cfg)
     {
         try
@@ -290,7 +275,6 @@ public static class PublishService
             }
             File.WriteAllBytes(template, stream.ToArray());
 
-            // Istruzioni per Logan / amici
             try
             {
                 var notePath = Path.Combine(inst.Root, "dist", "update", "LEGGIMI_FEED.txt");

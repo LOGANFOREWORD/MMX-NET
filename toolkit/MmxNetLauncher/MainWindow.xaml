@@ -125,7 +125,7 @@
                   <TextBlock Text="URL feed (updateFeedUrl; repo privata ⇒ amici usano updateFeedToken)" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,4"/>
                   <TextBox x:Name="DevFeedUrlBox" Height="28" Margin="0,0,0,8" Padding="6,4"
                            Background="{StaticResource InputBg}" Foreground="{StaticResource Text}" BorderBrush="{StaticResource Line}" FontSize="12"
-                           ToolTip="Es. https://raw.githubusercontent.com/USER/mmx-net-updates/main/ — amici: PAT in updateFeedToken"/>
+                           ToolTip="Es. https://raw.githubusercontent.com/LOGANFOREWORD/anomaly-coop-updates/main/ — amici: PAT in updateFeedToken"/>
                   <TextBlock Text="Cartella sync / clone feed (PublishTarget)" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,4"/>
                   <TextBox x:Name="DevSyncBox" Height="28" Margin="0,0,0,10" Padding="6,4"
                            Background="{StaticResource InputBg}" Foreground="{StaticResource Text}" BorderBrush="{StaticResource Line}" FontSize="12"

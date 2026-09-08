@@ -5,19 +5,11 @@ using System.Text.RegularExpressions;
 
 namespace MmxNetLauncher;
 
-/// <summary>
-/// Avvio Anomaly + xrRazom. Niente dedicated: host = giocatore in-game (Steam listen).
-/// Steam vede il processo come Call of Pripyat (App ID 41700) → Shift+Tab / inviti amici.
-/// </summary>
 public sealed class GameService
 {
     private readonly Install _inst;
     public GameService(Install inst) => _inst = inst;
 
-    /// <param name="asHost">
-    /// true = HOST: xrr_host_session + xrr_host_steam (amici entrano da Shift+Tab / Join Game).
-    /// false = PLAY/join: solo steam on, niente host auto (niente dialog IP).
-    /// </param>
     public string PlayClient(bool steam, bool stripDebug, bool asHost)
     {
         var exe = _inst.ResolveClientExe();
@@ -30,8 +22,6 @@ public sealed class GameService
             return "(già aperto — focus)";
         }
 
-        // Come MMX: Steam App ID 41700 (Call of Pripyat) + steam_api.
-        // Come guida xrRazom: host_session + host_steam → overlay invite, NON dialog IP.
         PrepareSteamAsCallOfPripyat(steam);
         if (stripDebug)
             ApplyFriendsProfile();
@@ -42,16 +32,10 @@ public sealed class GameService
             throw new InvalidOperationException(
                 "Per inviti Shift+Tab serve Steam (come xrMPE «Use Steam to connect»).");
 
-        // Come xrmpe-launcher: -steam primo + App ID 41700.
-        // Preferisce avvio da libreria Steam (overlay); fallback = diretto come xrMPE.
         var argList = BuildArgList(steam, stripDebug);
         return SteamService.LaunchAnomalyAsCallOfPripyat(exe, argList, _inst.Root, _inst);
     }
 
-    /// <summary>
-    /// Forza user.ltx: Steam P2P come CoP. HOST = sessione all'avvio partita;
-    /// PLAY = non host (l'amico entra da overlay, non da "Connect" IP).
-    /// </summary>
     public void ApplyXrRazomNetMode(bool steam, bool asHost)
     {
         var path = Path.Combine(_inst.AppData, "user.ltx");
@@ -81,10 +65,6 @@ public sealed class GameService
         lines.Add(key + " " + value);
     }
 
-    /// <summary>
-    /// steam_appid 41700 in bin\ (accanto all'exe) e in root (cwd),
-    /// così Steam Overlay / Friends vedono Call of Pripyat.
-    /// </summary>
     public void PrepareSteamAsCallOfPripyat(bool enabled)
     {
         SteamService.WriteAppId(_inst.Bin, enabled);
@@ -133,7 +113,6 @@ public sealed class GameService
         catch { /* non bloccare avvio */ }
     }
 
-    /// <summary>Spegne EA backpack (DESYNC/HUD) in axr_options senza toccare il resto.</summary>
     public void ApplyCoopSafeOptions()
     {
         try

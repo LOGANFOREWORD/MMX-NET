@@ -5,6 +5,6 @@
   "preferDirectSteam": false,
   "checkUpdatesOnStart": true,
   "updateChannel": "dev",
-  "updateFeedUrl": "https://raw.githubusercontent.com/OWNER/mmx-net-updates/main/",
+  "updateFeedUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/anomaly-coop-updates/main/",
   "updateFeedToken": ""
 }

@@ -4,15 +4,11 @@ using System.Text.Json;
 
 namespace MmxNetLauncher;
 
-/// <summary>
-/// Pack/apply overlay MMX-Net (parti nostre), non redistribuisce db/bin Anomaly interi.
-/// </summary>
 public static class PackService
 {
     public const string ZipName = "ac-update.zip";
     public const string ManifestName = "ac_update_manifest.json";
 
-    /// <summary>File root sempre inclusi nel pack aggiornamento.</summary>
     public static readonly string[] RootFiles =
     {
         "ac_version.json",
@@ -21,14 +17,9 @@ public static class PackService
         "steam_appid.txt",
     };
 
-    /// <summary>Non sovrascrivere in update (preserva updateFeedUrl dell'amico).</summary>
     private static readonly HashSet<string> PreserveExisting =
         new(StringComparer.OrdinalIgnoreCase) { "ac_config.json" };
 
-    /// <summary>
-    /// Percorsi relativi sotto gamedata da includere se esistono.
-    /// Estendere questa lista (o ac_pack_include.txt) quando Logan aggiunge overlay custom.
-    /// </summary>
     public static readonly string[] DefaultGamedataRelPaths =
     {
         @"configs\axr_options.ltx",
@@ -38,7 +29,6 @@ public static class PackService
         @"scripts\xrr_callbacks.script",
     };
 
-    /// <summary>File root / bin riparazione (inclusi se esistono).</summary>
     public static readonly string[] OptionalRepairRelPaths =
     {
         "xrRazom-release.txt",
@@ -136,7 +126,6 @@ public static class PackService
         }
     }
 
-    /// <summary>Copia file da overlay verso destinazione (non cancella file extra).</summary>
     public static void CopyTreeOverlay(string srcRoot, string dstRoot)
     {
         srcRoot = Path.GetFullPath(srcRoot);

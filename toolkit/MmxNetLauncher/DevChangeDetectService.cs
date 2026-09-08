@@ -4,9 +4,6 @@ using System.Text.Json;
 
 namespace MmxNetLauncher;
 
-/// <summary>
-/// Snapshot ultimo publish + confronto file pack/overlay (devkit).
-/// </summary>
 public sealed class FileSnapshotEntry
 {
     public string Sha256 { get; set; } = "";
@@ -77,7 +74,6 @@ public static class DevChangeDetectService
         File.WriteAllText(SnapshotPath(inst), json);
     }
 
-    /// <summary>Stesso set di percorsi relativi che PackService includerebbe nel zip.</summary>
     public static IReadOnlyList<string> EnumeratePackRelPaths(Install inst)
     {
         var rels = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -85,7 +81,6 @@ public static class DevChangeDetectService
         foreach (var name in PackService.RootFiles)
             rels.Add(NormalizeRel(name));
 
-        // Launcher user (se presente in root o dist\user)
         rels.Add("MMX-Net-Launcher.exe");
 
         foreach (var r in PackService.DefaultGamedataRelPaths)
@@ -104,7 +99,6 @@ public static class DevChangeDetectService
             }
         }
 
-        // Solo file che esistono ora + quelli nello snapshot (per rilevare removed)
         return rels.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList();
     }
 
@@ -115,7 +109,6 @@ public static class DevChangeDetectService
 
         if (snap == null || snap.Files == null || snap.Files.Count == 0)
         {
-            // Prima volta: considera "modifiche" se ci sono file pack (così Carica è evidenziata)
             var first = current.Keys
                 .Where(k => FileExists(inst, k))
                 .Select(k => new ChangedPackFile { RelPath = k, Kind = "added" })
@@ -167,12 +160,10 @@ public static class DevChangeDetectService
         };
     }
 
-    /// <summary>Salva snapshot dai file pack attuali (dopo publish riuscito).</summary>
     public static void CaptureAfterPublish(Install inst, PackVersion version, string outDir)
     {
         var paths = EnumeratePackRelPaths(inst);
         var files = BuildCurrentEntries(inst, paths);
-        // Solo file esistenti
         var existing = files
             .Where(kv => FileExists(inst, kv.Key))
             .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
@@ -222,7 +213,6 @@ public static class DevChangeDetectService
         return dict;
     }
 
-    /// <summary>Risolve path pack (launcher anche da dist\user).</summary>
     private static string? ResolvePackFile(Install inst, string rel)
     {
         var norm = NormalizeRel(rel).Replace('/', Path.DirectorySeparatorChar);

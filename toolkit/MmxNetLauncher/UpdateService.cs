@@ -6,10 +6,6 @@ using System.Text.Json;
 
 namespace MmxNetLauncher;
 
-/// <summary>
-/// Feed aggiornamenti remoto (manifest JSON + zip overlay).
-/// Formato documentato in toolkit/pack/UPDATE_FEED.md
-/// </summary>
 public static class UpdateService
 {
     private static readonly HttpClient Http = CreateHttp();
@@ -30,11 +26,6 @@ public static class UpdateService
         public UpdateManifest? Remote { get; init; }
     }
 
-    /// <summary>
-    /// MMX-Net: token read-only per feed GitHub privato (PAT).
-    /// Ordine: ac_config.json → updateFeedToken, poi env MMX_NET_UPDATE_FEED_TOKEN / AC_UPDATE_FEED_TOKEN.
-    /// Non va mai committato nel repo del feed.
-    /// </summary>
     public static string ResolveFeedToken(Install? inst)
     {
         var fromCfg = inst?.GetConfigString("updateFeedToken", "")?.Trim() ?? "";
@@ -123,11 +114,9 @@ public static class UpdateService
     {
         feedUrl = feedUrl.Trim();
 
-        // Feed locale (test / cartella publish): path Windows o file://
         if (TryGetLocalFeedDir(feedUrl, out var localDir))
             return await Task.Run(() => ReadLocalManifest(localDir), ct).ConfigureAwait(false);
 
-        // Supporta: URL diretto al manifest, oppure cartella base (MMX-style) con ac_update_manifest.json / ac_version.json
         string json;
         string resolvedUrl = feedUrl;
 
@@ -145,7 +134,6 @@ public static class UpdateService
             }
             catch
             {
-                // Fallback MMX: solo ac_version.json + zip fisso
                 resolvedUrl = baseUrl + "ac_version.json";
                 json = await HttpGetStringAsync(resolvedUrl, token, ct).ConfigureAwait(false);
                 var ver = JsonSerializer.Deserialize<PackVersion>(json) ?? PackVersion.Default;
@@ -200,16 +188,11 @@ public static class UpdateService
         return await resp.Content.ReadAsByteArrayAsync(ct).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Header Authorization Bearer per raw.githubusercontent.com / api.github.com su repo private.
-    /// Supporta anche URL https://TOKEN@host/... (sconsigliato; preferire updateFeedToken).
-    /// </summary>
     internal static HttpRequestMessage CreateFeedRequest(HttpMethod method, string url, string? token)
     {
         var effectiveUrl = url;
         var effectiveToken = (token ?? "").Trim();
 
-        // Token embedded nello userinfo (compat): https://ghp_xxx@raw.githubusercontent.com/...
         if (Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
             !string.IsNullOrEmpty(uri.UserInfo))
         {
@@ -225,9 +208,7 @@ public static class UpdateService
         var req = new HttpRequestMessage(method, effectiveUrl);
         if (!string.IsNullOrWhiteSpace(effectiveToken))
         {
-            // Fine-grained e classic PAT: Bearer funziona su raw + API
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", effectiveToken);
-            // Alcuni endpoint legacy preferiscono "token "
             req.Headers.TryAddWithoutValidation("X-GitHub-Api-Version", "2022-11-28");
         }
         return req;
@@ -318,7 +299,6 @@ public static class UpdateService
         if (s.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) return false;
         if (s.StartsWith("file://", StringComparison.OrdinalIgnoreCase)) return true;
         if (Path.IsPathRooted(s)) return true;
-        // Path relativo Windows tipo dist\update
         return s.Contains('\\') || (s.Contains('/') && !s.Contains("://"));
     }
 
@@ -382,7 +362,6 @@ public static class UpdateService
         }
     }
 
-    /// <summary>Confronto semver semplificato (major.minor.patch[.build]).</summary>
     public static int CompareVersions(string a, string b)
     {
         static int[] Parts(string s)

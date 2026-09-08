@@ -5,7 +5,6 @@ namespace MmxNetLauncher;
 
 public sealed class Install
 {
-    /// <summary>Solo fallback Logan/dev se l'exe non è in un install riconoscibile.</summary>
     public const string DefaultRoot = @"F:\Anomaly Coop";
     public const string SteamAppId = "41700";
 
@@ -28,7 +27,6 @@ public sealed class Install
 
     public string ResolveClientExe()
     {
-        // Stesso schema AnomalyLauncher.cfg: DX11+AVX → anomalydx11avx.exe
         var dx = "DX11";
         var cpu = "AVX";
         try
@@ -67,10 +65,6 @@ public sealed class Install
         }
     }
 
-    /// <summary>
-    /// Cartella MMX-Net / Anomaly riconoscibile anche se incompleta
-    /// (overlay senza base: amico con solo launcher).
-    /// </summary>
     public bool LooksLikeRoot
     {
         get
@@ -92,10 +86,6 @@ public sealed class Install
         }
     }
 
-    /// <summary>
-    /// Root = cartella dell'exe (ProcessPath) quando sembra un install;
-    /// DefaultRoot solo se l'exe non è in un install riconoscibile.
-    /// </summary>
     public static Install Discover()
     {
         var exeDir = NormDir(Path.GetDirectoryName(Environment.ProcessPath));
@@ -108,29 +98,24 @@ public sealed class Install
         }
         catch { /* ignore */ }
 
-        // 1) Preferisci cartella exe / BaseDirectory se sembrano un root MMX-Net
-        //    (anche incomplete: non ricadere su F:\ di un altro PC).
         foreach (var c in DistinctDirs(exeDir, baseDir, parentExe))
         {
             var inst = new Install(c);
             if (inst.LooksLikeRoot) return inst;
         }
 
-        // 2) Install completa tra i candidati (incluso DefaultRoot se esiste)
         foreach (var c in DistinctDirs(exeDir, baseDir, parentExe, DefaultRoot))
         {
             var inst = new Install(c);
             if (inst.IsValid) return inst;
         }
 
-        // 3) Se l'exe sta in una cartella reale, usala comunque (path dinamico amici)
         if (!string.IsNullOrWhiteSpace(exeDir) && Directory.Exists(exeDir))
             return new Install(exeDir);
 
         if (!string.IsNullOrWhiteSpace(baseDir) && Directory.Exists(baseDir))
             return new Install(baseDir);
 
-        // 4) Ultimo fallback Logan/dev
         return new Install(DefaultRoot);
     }
 

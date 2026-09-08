@@ -1,8 +1,8 @@
 ﻿{
-    "Name":  "Anomaly Coop",
-    "Version":  "0.1.1",
+    "Name":  "MMX-Net",
+    "Version":  "0.1.2",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "Path auto da cartella exe; HEALTH chiaro se manca base Anomaly+xrRazom; pack ripara script/DLL minimi; feed update."
+    "Notes":  "MMX-Net branding; launcher MMX-Net-Launcher; HEALTH/feed fix; FeedBaseUrl anomaly-coop-updates."
 }
