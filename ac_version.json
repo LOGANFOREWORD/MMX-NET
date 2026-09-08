@@ -1,8 +1,8 @@
-﻿{
+{
     "Name":  "MMX-Net",
     "Version":  "0.1.14",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "Migrazione auto MMX-NET(privata)→MMX-NET-feed; nessun PAT forever"
+    "Notes":  "Feed pubblico MMX-NET; update senza PAT; write solo owner"
 }
