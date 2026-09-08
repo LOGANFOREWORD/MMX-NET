@@ -5,7 +5,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <RootNamespace>MmxNetLauncher</RootNamespace>
+    <AssemblyName>MMX-Net-Uninstaller</AssemblyName>
+    <RootNamespace>MmxNetUninstaller</RootNamespace>
+    <Product>MMX-Net Uninstaller</Product>
     <Company>MMX-Net</Company>
     <Authors>MMX-Net</Authors>
     <Version>0.1.0</Version>
@@ -18,19 +20,6 @@
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <PublishTrimmed>false</PublishTrimmed>
-    <!-- User (default) | Dev -->
-    <BuildFlavor Condition="'$(BuildFlavor)' == ''">User</BuildFlavor>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(BuildFlavor)' != 'Dev'">
-    <AssemblyName>MMX-Net-Launcher</AssemblyName>
-    <Product>MMX-Net</Product>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(BuildFlavor)' == 'Dev'">
-    <AssemblyName>MMX-Net-Launcher-dev</AssemblyName>
-    <Product>MMX-Net Devkit</Product>
-    <DefineConstants>$(DefineConstants);DEVKIT</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

@@ -62,6 +62,8 @@ try {
         "ac_steam_launch.args",
         "steam_appid.txt",
         "MMX-Net-Launcher.exe"
+        # MMX-Net-Uninstaller.exe: solo installer/download zip (self-contained ~55MB;
+        # con launcher supera il limite 100MB di GitHub raw sul feed).
     )
     foreach ($f in $rootFiles) {
         $src = Join-Path $Root $f

@@ -21,4 +21,10 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\shared\LegacyCleanup.cs" Link="LegacyCleanup.cs" />
+    <Compile Include="..\shared\FileOverlay.cs" Link="FileOverlay.cs" />
+    <Compile Include="..\shared\ModUninstall.cs" Link="ModUninstall.cs" />
+  </ItemGroup>
 </Project>

@@ -1,7 +1,7 @@
-{
-    "FeedBaseUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/",
-    "PublishTarget": "F:\\Anomaly Coop\\dist\\update-feed",
-    "OutDir": "dist\\update",
-    "AbsolutePackageUrl": true,
-    "AutoBumpPatch": true
+﻿{
+    "AutoBumpPatch":  true,
+    "PublishTarget":  "F:\\Anomaly Coop\\dist\\update-feed",
+    "AbsolutePackageUrl":  true,
+    "OutDir":  "dist\\update",
+    "FeedBaseUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/"
 }

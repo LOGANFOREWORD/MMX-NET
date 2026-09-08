@@ -53,7 +53,7 @@
             <CheckBox x:Name="UseSteamBox" Content="Steam = Call of Pripyat (41700) — inviti Shift+Tab" IsChecked="True"
                       Foreground="{StaticResource Text}" Margin="0,8,0,0"/>
           </StackPanel>
-          <Button Grid.Column="1" Content="AGGIORNA" Style="{StaticResource OutlineBtn}" Margin="8,0"
+          <Button x:Name="ApplyUpdateBtn" Grid.Column="1" Content="AGGIORNA" Style="{StaticResource OutlineBtn}" Margin="8,0"
                   Padding="14,12" Click="Update_Click" VerticalAlignment="Center"
                   ToolTip="Scarica overlay MMX-Net se c'è una versione nuova"/>
           <Button Grid.Column="2" Content="HEALTH" Style="{StaticResource OutlineBtn}" Margin="8,0"
@@ -125,11 +125,11 @@
                   <TextBlock Text="URL feed (updateFeedUrl; repo privata ⇒ amici usano updateFeedToken)" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,4"/>
                   <TextBox x:Name="DevFeedUrlBox" Height="28" Margin="0,0,0,8" Padding="6,4"
                            Background="{StaticResource InputBg}" Foreground="{StaticResource Text}" BorderBrush="{StaticResource Line}" FontSize="12"
-                           ToolTip="Es. https://raw.githubusercontent.com/LOGANFOREWORD/anomaly-coop-updates/main/ — amici: PAT in updateFeedToken"/>
+                           ToolTip="Es. https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/ — feed pubblico (nessun PAT)"/>
                   <TextBlock Text="Cartella sync / clone feed (PublishTarget)" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,4"/>
                   <TextBox x:Name="DevSyncBox" Height="28" Margin="0,0,0,10" Padding="6,4"
                            Background="{StaticResource InputBg}" Foreground="{StaticResource Text}" BorderBrush="{StaticResource Line}" FontSize="12"
-                           ToolTip="Clone locale della repo feed (es. dist\update-feed); dopo CARICA: push_update_feed.ps1"/>
+                           ToolTip="Clone locale della repo feed (es. dist\update-feed); dopo CARICA: auto-push se c'è .git"/>
                   <StackPanel Orientation="Horizontal">
                     <Button x:Name="DevPublishBtn" Content="CARICA AGGIORNAMENTO" Style="{StaticResource OutlineAccentBtn}"
                             Padding="12,8" Margin="0,0,8,0" Click="DevPublish_Click"

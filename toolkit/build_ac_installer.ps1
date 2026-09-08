@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Build launcher utente + devkit + installer + overlay zip in dist\installer\
+  Build launcher utente + devkit + installer + uninstaller + overlay zip in dist\installer\
 #>
 param(
     [string]$Root = ""
@@ -12,7 +12,9 @@ $toolkit = Split-Path -Parent $MyInvocation.MyCommand.Path
 if (-not $Root) { $Root = Split-Path -Parent $toolkit }
 $launcherProj = Join-Path $toolkit "MmxNetLauncher\MmxNetLauncher.csproj"
 $installerProj = Join-Path $toolkit "MmxNetInstaller\MmxNetInstaller.csproj"
+$uninstallerProj = Join-Path $toolkit "MmxNetUninstaller\MmxNetUninstaller.csproj"
 $outInstaller = Join-Path $Root "dist\installer"
+$outUninstaller = Join-Path $Root "dist\uninstaller"
 $outUpdate = Join-Path $Root "dist\update"
 $outDevkit = Join-Path $Root "dist\devkit"
 $outDownload = Join-Path $Root "dist\download"
@@ -22,7 +24,7 @@ $userCfgTemplate = Join-Path $toolkit "pack\ac_config.user.json"
 Write-Host ("=== MMX-Net: build installer + launcher User/Dev ===")
 Write-Host ("Root: {0}" -f $Root)
 
-Get-Process -Name "MMX-Net-Launcher","MMX-Net-Launcher-dev","MMX-Net-Installer" -ErrorAction SilentlyContinue |
+Get-Process -Name "MMX-Net-Launcher","MMX-Net-Launcher-dev","MMX-Net-Installer","MMX-Net-Uninstaller" -ErrorAction SilentlyContinue |
     Stop-Process -Force -ErrorAction SilentlyContinue
 
 # Nota: due publish sulla stessa cartella si sovrascrivono a vicenda (clean).
@@ -43,6 +45,12 @@ Write-Host "2b) Copia entrambi gli exe in Root"
 Copy-Item -LiteralPath (Join-Path $userStage "MMX-Net-Launcher.exe") -Destination $Root -Force
 Copy-Item -LiteralPath (Join-Path $outDevkit "MMX-Net-Launcher-dev.exe") -Destination $Root -Force
 
+Write-Host ("2c) Publish uninstaller -> {0}" -f $outUninstaller)
+New-Item -ItemType Directory -Force -Path $outUninstaller | Out-Null
+dotnet publish $uninstallerProj -c Release -o $outUninstaller
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+Copy-Item -LiteralPath (Join-Path $outUninstaller "MMX-Net-Uninstaller.exe") -Destination $Root -Force
+
 Write-Host "3) Genera update pack (zip + manifest) - solo launcher utente"
 & (Join-Path $toolkit "publish_ac_update.ps1") -Root $Root -SkipLauncherPublish
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -51,6 +59,7 @@ Write-Host ("4) Publish installer -> {0}" -f $outInstaller)
 New-Item -ItemType Directory -Force -Path $outInstaller | Out-Null
 dotnet publish $installerProj -c Release -o $outInstaller
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+Copy-Item -LiteralPath (Join-Path $outUninstaller "MMX-Net-Uninstaller.exe") -Destination $outInstaller -Force
 
 # FeedBaseUrl da ac_dev_publish.json: bake in ac_config overlay installer
 $feedUrl = ""
@@ -78,6 +87,7 @@ if (Test-Path -LiteralPath $overlaySrc) {
             preferDirectSteam   = $false
             checkUpdatesOnStart = $true
             updateChannel       = "dev"
+            updateFeedToken     = ""
             updateFeedUrl       = $feedUrl
         }
         if (Test-Path -LiteralPath $userCfgTemplate) {
@@ -87,6 +97,8 @@ if (Test-Path -LiteralPath $overlaySrc) {
                 if ($null -ne $t.friendsProfile) { $cfgObj.friendsProfile = [bool]$t.friendsProfile }
                 if ($null -ne $t.checkUpdatesOnStart) { $cfgObj.checkUpdatesOnStart = [bool]$t.checkUpdatesOnStart }
                 if ($t.updateChannel) { $cfgObj.updateChannel = [string]$t.updateChannel }
+                # Mai bake di PAT reali: solo placeholder vuoto + URL feed
+                if ($null -ne $t.PSObject.Properties["updateFeedToken"]) { $cfgObj.updateFeedToken = "" }
                 if ($t.updateFeedUrl -and -not $feedUrl) { $cfgObj.updateFeedUrl = [string]$t.updateFeedUrl }
             }
             catch { }
@@ -108,37 +120,51 @@ if (Test-Path -LiteralPath $userCfgTemplate) {
     Copy-Item -LiteralPath $userCfgTemplate -Destination (Join-Path $outInstaller "ac_config.user.json") -Force
 }
 
-$feedHint = if ($feedUrl) { $feedUrl } else { "(dopo publish: URL pubblico di dist/update/ - vedi ac_dev_publish.json FeedBaseUrl)" }
+$feedHint = if ($feedUrl) { $feedUrl } else { "(dopo publish: URL raw GitHub - vedi ac_dev_publish.json FeedBaseUrl)" }
 $readmeLines = @(
     "MMX-Net - pacchetto installer",
     "==================================",
     "",
     "1. Tieni MMX-Net-Installer.exe e ac-overlay.zip nella STESSA cartella.",
     "2. Esegui MMX-Net-Installer.exe",
-    "3. Crea / scegli una cartella a parte chiamata MMX-Net",
-    "   (non usare Anomaly vanilla).",
+    "3. Installa nella cartella Anomaly Coop (base Anomaly gia presente li).",
+    "   Default: Documenti\Anomaly Coop - se scegli un altra root, viene usata",
+    "   la sottocartella Anomaly Coop (non usare Anomaly vanilla).",
     "4. Se la cartella e vuota: spunta Copia da install Anomaly coop esistente",
     "   oppure copia prima tu bin/db/gamedata/fsgame.ltx + file di release protocollo.",
-    "5. Avvia MMX-Net-Launcher.exe dalla cartella MMX-Net.",
+    "5. Apri Steam, poi avvia MMX-Net-Launcher.exe dalla cartella Anomaly Coop.",
     "   Il launcher usa SEMPRE la cartella dell exe (qualsiasi disco), non un path fisso.",
+    "6. Prima volta HOST/PLAY: Steam puo riavviarsi per scrivere le Launch Options",
+    "   di Call of Pripyat (bridge -> Anomaly). Accetta, poi ritenta HOST/PLAY.",
+    "   In Steam deve risultare Call of Pripyat in esecuzione (App ID 41700).",
+    "7. Inviti: Shift+Tab -> Friends -> Invite / Join Game (niente Connect IP).",
     "",
     "Requisiti: Anomaly 1.5.3 coop, Steam, Call of Pripyat (41700) per inviti.",
     "Se HEALTH ha FATAL su DLL/script coop = install incompleta (solo overlay).",
     "Aggiornamenti: nel launcher icona download / AGGIORNA (serve updateFeedUrl).",
     "",
+    "CoP vanilla: le Launch Options CoP puntano al bridge Anomaly. Per tornare",
+    "a CoP originale crea ac_steam_redirect.off e svuota le Launch Options CoP.",
+    "",
     "URL feed (updateFeedUrl):",
     "  $feedHint",
     "",
+    "Feed pubblico (MMX-NET-feed) - solo artefatti update:",
+    "  - Codice/mod restano su MMX-NET privata (solo Logan write)",
+    "  - Amici: basta updateFeedUrl (nessun PAT / Collaborator)",
+    "  - raw.githubusercontent.com risponde HTTP 200 senza token",
+    "",
+    "Disinstalla: MMX-Net-Uninstaller.exe (copiato in root Anomaly Coop + scorciatoia Desktop).",
+    "",
     "Logan (dev):",
-    "  1) MMX-Net-Launcher-dev.exe -> Prepara/Pubblica (genera dist/update/)",
-    "  2) Carica dist/update/ online (GitHub raw / itch / server)",
-    "  3) Incolla l URL in ac_dev_publish.json -> FeedBaseUrl",
-    "  4) Rebuild installer: amici nuovi ricevono updateFeedUrl gia settato",
+    "  1) MMX-Net-Launcher-dev.exe -> CARICA AGGIORNAMENTO (genera dist/update/)",
+    "  2) toolkit\push_update_feed.ps1 (push su GitHub MMX-NET-feed)",
+    "  3) Amici con updateFeedUrl vedono il popup all avvio (senza PAT)",
     "  Vedi toolkit/pack/UPDATE_FEED.md"
 )
 Set-Content -LiteralPath (Join-Path $outInstaller "LEGGIMI.txt") -Value $readmeLines -Encoding UTF8
 
-# Pacchetto download amici (zip con installer + overlay + leggimi)
+# Pacchetto download amici (zip con installer + overlay + leggimi + uninstaller)
 if (Test-Path -LiteralPath $outDownload) {
     Get-ChildItem -LiteralPath $outDownload -Force | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 }
@@ -147,20 +173,29 @@ Copy-Item -LiteralPath (Join-Path $outInstaller "LEGGIMI.txt") -Destination (Joi
 $downloadZip = Join-Path $outDownload "MmxNet-Download.zip"
 $packFiles = @(
     (Join-Path $outInstaller "MMX-Net-Installer.exe"),
+    (Join-Path $outInstaller "MMX-Net-Uninstaller.exe"),
     (Join-Path $outInstaller "ac-overlay.zip"),
     (Join-Path $outInstaller "LEGGIMI.txt"),
     (Join-Path $outInstaller "ac_config.user.json")
 ) | Where-Object { Test-Path -LiteralPath $_ }
 if ($packFiles.Count -gt 0) {
     Compress-Archive -LiteralPath $packFiles -DestinationPath $downloadZip -CompressionLevel Optimal
+    $legacyDl = Join-Path $outDownload "AnomalyCoop-Download.zip"
+    Copy-Item -LiteralPath $downloadZip -Destination $legacyDl -Force
+    Copy-Item -LiteralPath $downloadZip -Destination (Join-Path $Root "dist\MmxNet-Download.zip") -Force
+    Copy-Item -LiteralPath $downloadZip -Destination (Join-Path $Root "dist\AnomalyCoop-Download.zip") -Force
+    $userDl = Join-Path $env:USERPROFILE "Downloads\MmxNet-Download.zip"
+    try { Copy-Item -LiteralPath $downloadZip -Destination $userDl -Force } catch { }
 }
 
 Write-Host ""
 Write-Host "OK:"
 Write-Host ("  {0}\MMX-Net-Launcher.exe       (utente)" -f $Root)
 Write-Host ("  {0}\MMX-Net-Launcher-dev.exe   (devkit Logan)" -f $Root)
+Write-Host ("  {0}\MMX-Net-Uninstaller.exe" -f $Root)
 Write-Host ("  {0}\MMX-Net-Launcher-dev.exe" -f $outDevkit)
 Write-Host ("  {0}\MMX-Net-Installer.exe" -f $outInstaller)
+Write-Host ("  {0}\MMX-Net-Uninstaller.exe" -f $outInstaller)
 Write-Host ("  {0}\ac-overlay.zip" -f $outInstaller)
 Write-Host ("  {0}\LEGGIMI.txt" -f $outInstaller)
 Write-Host ("  {0}\  (feed da caricare online)" -f $outUpdate)

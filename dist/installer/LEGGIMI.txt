@@ -3,23 +3,37 @@
 
 1. Tieni MMX-Net-Installer.exe e ac-overlay.zip nella STESSA cartella.
 2. Esegui MMX-Net-Installer.exe
-3. Crea / scegli una cartella a parte chiamata MMX-Net
-   (non usare Anomaly vanilla).
+3. Installa nella cartella Anomaly Coop (base Anomaly gia presente li).
+   Default: Documenti\Anomaly Coop - se scegli un altra root, viene usata
+   la sottocartella Anomaly Coop (non usare Anomaly vanilla).
 4. Se la cartella e vuota: spunta Copia da install Anomaly coop esistente
    oppure copia prima tu bin/db/gamedata/fsgame.ltx + file di release protocollo.
-5. Avvia MMX-Net-Launcher.exe dalla cartella MMX-Net.
-   Il launcher usa SEMPRE la cartella dell.exe (qualsiasi disco), non un path fisso.
+5. Apri Steam, poi avvia MMX-Net-Launcher.exe dalla cartella Anomaly Coop.
+   Il launcher usa SEMPRE la cartella dell exe (qualsiasi disco), non un path fisso.
+6. Prima volta HOST/PLAY: Steam puo riavviarsi per scrivere le Launch Options
+   di Call of Pripyat (bridge -> Anomaly). Accetta, poi ritenta HOST/PLAY.
+   In Steam deve risultare Call of Pripyat in esecuzione (App ID 41700).
+7. Inviti: Shift+Tab -> Friends -> Invite / Join Game (niente Connect IP).
 
 Requisiti: Anomaly 1.5.3 coop, Steam, Call of Pripyat (41700) per inviti.
 Se HEALTH ha FATAL su DLL/script coop = install incompleta (solo overlay).
 Aggiornamenti: nel launcher icona download / AGGIORNA (serve updateFeedUrl).
 
+CoP vanilla: le Launch Options CoP puntano al bridge Anomaly. Per tornare
+a CoP originale crea ac_steam_redirect.off e svuota le Launch Options CoP.
+
 URL feed (updateFeedUrl):
-  https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/
+  https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/
+
+Feed pubblico (MMX-NET-feed) - solo artefatti update:
+  - Codice/mod restano su MMX-NET privata (solo Logan write)
+  - Amici: basta updateFeedUrl (nessun PAT / Collaborator)
+  - raw.githubusercontent.com risponde HTTP 200 senza token
+
+Disinstalla: MMX-Net-Uninstaller.exe (copiato in root Anomaly Coop + scorciatoia Desktop).
 
 Logan (dev):
-  1) MMX-Net-Launcher-dev.exe -> Prepara/Pubblica (genera dist/update/)
-  2) push_update_feed.ps1 (carica su LOGANFOREWORD/MMX-NET)
-  3) FeedBaseUrl in ac_dev_publish.json gia' settato
-  4) Rebuild installer: amici nuovi ricevono updateFeedUrl gia settato
+  1) MMX-Net-Launcher-dev.exe -> CARICA AGGIORNAMENTO (genera dist/update/)
+  2) toolkit\push_update_feed.ps1 (push su GitHub MMX-NET-feed)
+  3) Amici con updateFeedUrl vedono il popup all avvio (senza PAT)
   Vedi toolkit/pack/UPDATE_FEED.md

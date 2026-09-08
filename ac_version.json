@@ -1,8 +1,0 @@
-{
-  "Name": "MMX-Net",
-  "Version": "0.1.9",
-  "Channel": "dev",
-  "Protocol": "89",
-  "Engine": "ST",
-  "Notes": "Steam HOST/PLAY = applaunch 41700 \u002B Launch Options bridge %command% (presence CoP, Join\u2260vanilla)"
-}

@@ -178,6 +178,23 @@ public static class HealthCheckService
                 ? "Call of Pripyat (41700) in libreria Steam"
                 : "CoP 41700 assente/non attivata — se Steam chiede codice riscatto, attiva/compra CoP; intanto HOST usa avvio diretto -steam");
 
+        var bridge = Path.Combine(inst.Root, SteamService.BridgeCmdName);
+        var bridgeOk = File.Exists(bridge);
+        Add(CheckSev.Fatal, bridgeOk,
+            bridgeOk
+                ? "bridge Steam CoP presente (ac_steam_cop_bridge.cmd)"
+                : "manca ac_steam_cop_bridge.cmd — Join Game apre CoP vanilla");
+
+        var redirectOff = File.Exists(Path.Combine(inst.Root, SteamService.RedirectOffMarker));
+        var optsOk = false;
+        try { optsOk = bridgeOk && SteamService.CopLaunchOptionsLookCorrect(bridge); } catch { /* ignore */ }
+        Add(CheckSev.Problem, optsOk || redirectOff || SteamService.FindCallOfPripyatManifest() == null,
+            redirectOff
+                ? "redirect CoP DISATTIVO (ac_steam_redirect.off) — Join Game = vanilla"
+                : optsOk
+                    ? "Launch Options CoP → bridge %command% (Join Game = Anomaly)"
+                    : "Launch Options CoP non ancora scritte — fai HOST/PLAY una volta (Steam può riavviarsi)");
+
         Add(CheckSev.Info, SteamService.IsSteamRunning(), SteamService.StatusText());
 
         try

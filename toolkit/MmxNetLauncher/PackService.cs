@@ -1,6 +1,7 @@
 using System.IO;
 using System.IO.Compression;
 using System.Text.Json;
+using MmxNetShared;
 
 namespace MmxNetLauncher;
 
@@ -65,6 +66,9 @@ public static class PackService
             if (launcher != null)
                 File.Copy(launcher, Path.Combine(tmp, "MMX-Net-Launcher.exe"), true);
 
+            // Uninstaller: non nello zip update (launcher+uninstaller self-contained >100MB GitHub).
+            // Viene distribuito con installer / MmxNet-Download.zip e copiato in root all'install.
+
             var includeList = Path.Combine(inst.Root, "toolkit", "pack", "ac_pack_include.txt");
             var rels = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var r in DefaultGamedataRelPaths)
@@ -105,7 +109,7 @@ public static class PackService
         }
     }
 
-    public static PackVersion ApplyUpdate(Install inst, string zipPath)
+    public static PackVersion ApplyUpdate(Install inst, string zipPath, Action<string>? log = null)
     {
         if (!File.Exists(zipPath))
             throw new FileNotFoundException("Pacchetto aggiornamento non trovato.", zipPath);
@@ -114,10 +118,21 @@ public static class PackService
         ZipFile.ExtractToDirectory(zipPath, tmp);
         try
         {
-            CopyTreeOverlay(tmp, inst.Root);
+            var pending = CopyTreeOverlay(tmp, inst.Root);
+            foreach (var rel in pending)
+                log?.Invoke("File in uso — scritto " + rel + FileOverlay.PendingSuffix + " (si applica al riavvio).");
+
             var verFile = Path.Combine(tmp, "ac_version.json");
             if (File.Exists(verFile))
-                File.Copy(verFile, inst.VersionJson, true);
+            {
+                if (FileOverlay.CopyOverwriteOrPending(verFile, inst.VersionJson, out var verPending) && verPending != null)
+                    log?.Invoke("File in uso — scritto " + Path.GetFileName(verPending) + " (si applica al riavvio).");
+            }
+
+            // Dopo overlay: togli exe/artifact AnomalyCoop non più usati (MMX-Net)
+            foreach (var name in LegacyCleanup.RemoveFromInstallRoot(inst.Root))
+                log?.Invoke("Rimosso legacy: " + name);
+
             return inst.ReadVersion();
         }
         finally
@@ -126,11 +141,16 @@ public static class PackService
         }
     }
 
-    public static void CopyTreeOverlay(string srcRoot, string dstRoot)
+    /// <summary>
+    /// Copia overlay con overwrite. File già presenti in PreserveExisting (es. ac_config.json) restano.
+    /// Se destinazione locked → scrive .new e restituisce i path relativi pending.
+    /// </summary>
+    public static IReadOnlyList<string> CopyTreeOverlay(string srcRoot, string dstRoot)
     {
         srcRoot = Path.GetFullPath(srcRoot);
         dstRoot = Path.GetFullPath(dstRoot);
         Directory.CreateDirectory(dstRoot);
+        var pending = new List<string>();
         foreach (var file in Directory.EnumerateFiles(srcRoot, "*", SearchOption.AllDirectories))
         {
             var rel = Path.GetRelativePath(srcRoot, file);
@@ -138,9 +158,10 @@ public static class PackService
             var dst = Path.Combine(dstRoot, rel);
             if (PreserveExisting.Contains(name) && File.Exists(dst))
                 continue;
-            Directory.CreateDirectory(Path.GetDirectoryName(dst)!);
-            File.Copy(file, dst, true);
+            if (FileOverlay.CopyOverwriteOrPending(file, dst, out _))
+                pending.Add(rel.Replace('/', '\\'));
         }
+        return pending;
     }
 
     public static UpdateManifest BuildManifest(PackVersion version, string packageUrl, string? sha256 = null)

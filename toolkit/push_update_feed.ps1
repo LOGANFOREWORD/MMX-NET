@@ -24,7 +24,7 @@ if ([string]::IsNullOrWhiteSpace($target)) {
 $target = [System.IO.Path]::GetFullPath($target)
 
 if (-not (Test-Path (Join-Path $target ".git"))) {
-    throw "PublishTarget non e' un clone git: $target`nClona la repo MMX-NET li' oppure imposta PublishTarget."
+    throw "PublishTarget non e' un clone git: $target`nClona MMX-NET-feed li' (toolkit\setup_update_feed_repo.ps1)."
 }
 
 # Copia fresca da dist\update se presente (CARICA puo' aver gia' syncato)
@@ -40,7 +40,13 @@ if (Test-Path $src) {
 
 Push-Location $target
 try {
-    & $git add -A
+    # Solo artefatti feed (mai source prodotto)
+    $feedFiles = @("ac_update_manifest.json", "ac_version.json", "ac-update.zip", "LEGGIMI_FEED.txt", "README.md", ".gitignore")
+    foreach ($name in $feedFiles) {
+        if (Test-Path (Join-Path $target $name)) {
+            & $git add -f -- $name
+        }
+    }
     $status = & $git status --porcelain
     if (-not $status) {
         Write-Host "Nessuna modifica da pushare in $target"
@@ -56,9 +62,9 @@ try {
     }
     & $git commit -m "feed $ver"
     if ($LASTEXITCODE -ne 0) { throw "git commit fallito" }
-    & $git push
-    if ($LASTEXITCODE -ne 0) { throw "git push fallito — controlla auth gh/git" }
-    Write-Host "OK: feed $ver pushato su origin"
+    & $git push -u origin HEAD
+    if ($LASTEXITCODE -ne 0) { throw "git push fallito - controlla auth gh/git" }
+    Write-Host "OK: feed $ver pushato su origin (MMX-NET-feed)"
 }
 finally {
     Pop-Location

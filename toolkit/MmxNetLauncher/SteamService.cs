@@ -81,8 +81,12 @@ public static class SteamService
     {
         if (!IsSteamRunning())
             return FindSteamExe() == null ? "Steam: non installato" : "Steam: non in esecuzione";
-        return "Steam: pronto · overlay richiede avvio da libreria Steam";
+        return "Steam: pronto · HOST/PLAY = Call of Pripyat (41700)";
     }
+
+    public static string BridgeCmdName => "ac_steam_cop_bridge.cmd";
+    public static string LaunchArgsFileName => "ac_steam_launch.args";
+    public static string RedirectOffMarker => "ac_steam_redirect.off";
 
     public static void WriteAppId(string dir, bool enabled)
     {
@@ -117,6 +121,10 @@ public static class SteamService
         }
     }
 
+    /// <summary>
+    /// HOST/PLAY: Steam deve vedere AppID 41700 (non uno shortcut Non-Steam).
+    /// Pattern: Launch Options CoP con %command% → bridge → Anomaly, poi -applaunch 41700.
+    /// </summary>
     public static string LaunchAnomalyAsCallOfPripyat(
         string exePath,
         IReadOnlyList<string> args,
@@ -130,48 +138,131 @@ public static class SteamService
         var steamExe = FindSteamExe()
             ?? throw new InvalidOperationException("steam.exe non trovato.");
 
-        var launchOpts = string.Join(' ', args);
-        try
-        {
-            EnsureCopLaunchOptionsPointToAnomaly(exePath, launchOpts);
-        }
-        catch { /* CoP assente ok */ }
+        var argLine = string.Join(' ', args);
+        File.WriteAllText(Path.Combine(inst.Root, LaunchArgsFileName), argLine, Encoding.ASCII);
 
-        var id = RegisterSteamLibraryShortcut(exePath, startDir, launchOpts, inst);
-        var marker = Path.Combine(inst.Root, "ac_steam_library_ok.txt");
-        if (!File.Exists(marker))
-        {
-            RestartSteamAndWait(steamExe);
-            id = RegisterSteamLibraryShortcut(exePath, startDir, launchOpts, inst);
-            File.WriteAllText(marker, id.ToString());
-        }
+        var bridge = Path.Combine(inst.Root, BridgeCmdName);
+        if (!File.Exists(bridge))
+            throw new FileNotFoundException(
+                "Manca " + BridgeCmdName + " nella root Anomaly Coop (serve per Join Game Steam).",
+                bridge);
 
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = $"steam://rungameid/{id}",
-            UseShellExecute = true,
-        });
+        // Rimuovi marker “solo Non-Steam”: presence deve essere CoP 41700.
+        try { File.Delete(Path.Combine(inst.Root, "ac_steam_library_ok.txt")); } catch { /* ignore */ }
 
-        for (var i = 0; i < 30; i++)
+        var preferDirect = inst.GetConfigBool("preferDirectSteam", false);
+        var hasCop = FindCallOfPripyatManifest() != null;
+        var redirectOff = File.Exists(Path.Combine(inst.Root, RedirectOffMarker));
+
+        if (!preferDirect && hasCop && !redirectOff)
         {
-            Thread.Sleep(500);
-            if (GameLooksRunning(exePath))
+            try
             {
-                OpenFriends();
-                return $"Steam library rungameid/{id} → Anomaly (overlay ON) · AppID {AppId}";
+                EnsureCopRedirectLaunchOptions(bridge, steamExe);
+                if (TryApplLaunchCallOfPripyat(steamExe, exePath))
+                {
+                    OpenFriends();
+                    return $"Steam -applaunch {AppId} → bridge → Anomaly (presence CoP + overlay)";
+                }
+            }
+            catch (Exception ex)
+            {
+                // Continua col fallback diretto; il messaggio resta utile in log.
+                try
+                {
+                    File.WriteAllText(
+                        Path.Combine(inst.Root, "ac_steam_last_error.txt"),
+                        DateTime.Now.ToString("s") + " " + ex.Message);
+                }
+                catch { /* ignore */ }
             }
         }
 
+        // Come MMX / xrMPE: Process.Start diretto con steam_appid + env → SteamAPI = 41700.
+        // Overlay meno affidabile; Join Game sull'amico richiede comunque le Launch Options CoP.
         StartDirectLikeXrMpe(exePath, args, startDir);
         OpenFriends();
-        return "fallback diretto -steam (overlay può mancare: in Steam cerca «Call of Pripyat — MMX-Net» e avvialo da lì)";
+        if (!hasCop)
+            return "avvio diretto -steam (CoP 41700 non in libreria — attiva CoP per Join Game)";
+        if (redirectOff)
+            return "avvio diretto -steam (ac_steam_redirect.off presente — niente redirect CoP)";
+        if (preferDirect)
+            return "avvio diretto -steam (preferDirectSteam=true · AppID 41700 via steam_api)";
+        return "avvio diretto -steam (fallback · AppID 41700 via steam_api; se Join apre vanilla: HOST/PLAY con Steam chiuso una volta per scrivere Launch Options)";
+    }
+
+    public static string BuildCopRedirectLaunchOptions(string bridgePath) =>
+        "cmd /c call \"" + bridgePath + "\" %command%";
+
+    public static bool CopLaunchOptionsLookCorrect(string bridgePath)
+    {
+        var cur = ReadCopLaunchOptions();
+        if (string.IsNullOrWhiteSpace(cur)) return false;
+        var normBridge = bridgePath.Replace('/', '\\');
+        return cur.Contains("%command%", StringComparison.OrdinalIgnoreCase) &&
+               cur.Contains(BridgeCmdName, StringComparison.OrdinalIgnoreCase) &&
+               cur.Contains(normBridge, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static string? ReadCopLaunchOptions()
+    {
+        var steam = FindSteamPath();
+        if (steam == null) return null;
+        var userdata = Path.Combine(steam, "userdata");
+        if (!Directory.Exists(userdata)) return null;
+
+        foreach (var userDir in Directory.GetDirectories(userdata))
+        {
+            var name = Path.GetFileName(userDir);
+            if (name is null || !name.All(char.IsDigit) || name == "0") continue;
+            var local = Path.Combine(userDir, "config", "localconfig.vdf");
+            if (!File.Exists(local)) continue;
+            var opt = ReadLaunchOptionsFromLocalConfig(local, AppId);
+            if (!string.IsNullOrWhiteSpace(opt))
+                return UnescapeVdf(opt);
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Scrive Launch Options CoP con %command% → bridge. Se cambiano, Steam viene
+    /// riavviato (localconfig va scritto a Steam spento altrimenti viene sovrascritto).
+    /// </summary>
+    public static void EnsureCopRedirectLaunchOptions(string bridgePath, string steamExe)
+    {
+        if (FindCallOfPripyatManifest() == null)
+            throw new InvalidOperationException("Call of Pripyat (41700) non trovata in libreria Steam.");
+
+        var desired = BuildCopRedirectLaunchOptions(bridgePath);
+        if (CopLaunchOptionsLookCorrect(bridgePath))
+            return;
+
+        StopSteamFully();
+        EnsureCopLaunchOptions(desired);
+        StartSteamAndWait(steamExe);
+
+        // Marker: redirect applicato almeno una volta su questo PC.
+        try
+        {
+            var root = Path.GetDirectoryName(bridgePath);
+            if (!string.IsNullOrWhiteSpace(root))
+                File.WriteAllText(Path.Combine(root, "ac_steam_cop_redirect_ok.txt"), desired);
+        }
+        catch { /* ignore */ }
     }
 
     public static void EnsureCopLaunchOptionsPointToAnomaly(string anomalyExe, string launchOpts)
     {
-        if (FindCallOfPripyatManifest() == null) return;
-        var opt = $"\"{anomalyExe}\" {launchOpts}";
-        EnsureCopLaunchOptions(opt);
+        // Legacy API: ora il redirect corretto passa dal bridge + %command%.
+        _ = anomalyExe;
+        _ = launchOpts;
+        var root = Path.GetDirectoryName(Path.GetDirectoryName(anomalyExe));
+        if (string.IsNullOrWhiteSpace(root)) return;
+        var bridge = Path.Combine(root, BridgeCmdName);
+        if (!File.Exists(bridge)) return;
+        var steamExe = FindSteamExe();
+        if (steamExe == null) return;
+        EnsureCopRedirectLaunchOptions(bridge, steamExe);
     }
 
     public static void EnsureCopLaunchOptions(string launchOptions)
@@ -203,10 +294,10 @@ public static class SteamService
 
         try { File.Copy(path, path + ".ac_bak", overwrite: true); } catch { /* ignore */ }
 
-        var escaped = launchOptions.Replace("\\", "\\\\");
+        var escaped = EscapeVdf(launchOptions);
 
         var rxOpt = new Regex(
-            $"(\"{appId}\"\\s*\\{{[\\s\\S]*?\"LaunchOptions\"\\s*\")([^\\\"]*)(\")",
+            $"(\"{appId}\"\\s*\\{{[\\s\\S]*?\"LaunchOptions\"\\s*\")((?:\\\\.|[^\"\\\\])*)(\")",
             RegexOptions.IgnoreCase);
         if (rxOpt.IsMatch(text))
         {
@@ -235,6 +326,43 @@ public static class SteamService
             text = rxApps.Replace(text, m => m.Groups[1].Value + block, 1);
             File.WriteAllText(path, text, Encoding.UTF8);
             return true;
+        }
+        return false;
+    }
+
+    public static string? ReadLaunchOptionsFromLocalConfig(string path, string appId)
+    {
+        string text;
+        try { text = File.ReadAllText(path, Encoding.UTF8); }
+        catch { return null; }
+
+        var rxOpt = new Regex(
+            $"\"{appId}\"\\s*\\{{[\\s\\S]*?\"LaunchOptions\"\\s*\"((?:\\\\.|[^\"\\\\])*)\"",
+            RegexOptions.IgnoreCase);
+        var m = rxOpt.Match(text);
+        return m.Success ? m.Groups[1].Value : null;
+    }
+
+    private static string EscapeVdf(string value) =>
+        value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+
+    private static string UnescapeVdf(string value) =>
+        value.Replace("\\\"", "\"").Replace("\\\\", "\\");
+
+    private static bool TryApplLaunchCallOfPripyat(string steamExe, string exePath)
+    {
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = steamExe,
+            Arguments = "-applaunch " + AppId,
+            UseShellExecute = true,
+        });
+
+        for (var i = 0; i < 50; i++)
+        {
+            Thread.Sleep(500);
+            if (GameLooksRunning(exePath))
+                return true;
         }
         return false;
     }
@@ -340,7 +468,7 @@ public static class SteamService
         catch { /* ignore */ }
     }
 
-    private static void RestartSteamAndWait(string steamExe)
+    private static void StopSteamFully()
     {
         try
         {
@@ -349,14 +477,20 @@ public static class SteamService
                 try { p.CloseMainWindow(); } catch { /* ignore */ }
             }
             Thread.Sleep(2500);
-            foreach (var p in Process.GetProcessesByName("steam"))
+            foreach (var name in new[] { "steam", "Steam", "steamwebhelper", "SteamWebHelper" })
             {
-                try { p.Kill(entireProcessTree: true); } catch { /* ignore */ }
+                foreach (var p in Process.GetProcessesByName(name))
+                {
+                    try { p.Kill(entireProcessTree: true); } catch { /* ignore */ }
+                }
             }
-            Thread.Sleep(2500);
+            Thread.Sleep(2000);
         }
         catch { /* ignore */ }
+    }
 
+    private static void StartSteamAndWait(string steamExe)
+    {
         Process.Start(new ProcessStartInfo { FileName = steamExe, UseShellExecute = true });
         for (var i = 0; i < 80; i++)
         {
@@ -367,6 +501,13 @@ public static class SteamService
                 return;
             }
         }
+        throw new InvalidOperationException("Steam non riparte dopo il riavvio per le Launch Options CoP.");
+    }
+
+    private static void RestartSteamAndWait(string steamExe)
+    {
+        StopSteamFully();
+        StartSteamAndWait(steamExe);
     }
 
     private static bool GameLooksRunning(string exePath)

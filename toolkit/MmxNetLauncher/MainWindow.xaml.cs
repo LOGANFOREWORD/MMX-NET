@@ -12,6 +12,8 @@ public partial class MainWindow : Window
     private readonly Install _inst;
     private readonly GameService _game;
     private bool _busy;
+    private bool _updateAvailable;
+    private UpdateManifest? _pendingRemote;
 #if DEVKIT
     private DevPublishConfig _pubCfg = new();
 #endif
@@ -47,9 +49,10 @@ public partial class MainWindow : Window
 #else
         Log("Build utente — solo check/download aggiornamenti + HOST/PLAY.");
 #endif
-        Log("IMPORTANTE: overlay Shift+Tab solo se Steam avvia Anomaly (libreria).");
-        Log("HOST riavvia Steam una volta, poi apre «Call of Pripyat — MMX-Net».");
-        Log("In partita: tip hosting → Shift+Tab → Friends → Invite. Amico: Join Game.");
+        Log("IMPORTANTE: HOST/PLAY avvia Call of Pripyat (41700) via Steam + bridge → Anomaly.");
+        Log("Prima volta: Steam può riavviarsi per scrivere le Launch Options CoP.");
+        Log("In partita: tip hosting → Shift+Tab → Friends → Invite. Amico: Join Game (non Connect IP).");
+        Log("Rischio: Launch Options CoP puntano ad Anomaly — per vanilla crea ac_steam_redirect.off e svuota le opzioni.");
 
         Loaded += async (_, _) =>
         {
@@ -140,9 +143,10 @@ public partial class MainWindow : Window
         var ask = MessageBox.Show(
             "Mancano destinazioni publish.\n\n" +
             "Serve almeno uno tra:\n" +
-            "• FeedBaseUrl — URL feed (es. raw …/MMX-NET/main/)\n" +
-            "• PublishTarget — clone locale del feed (poi push_update_feed.ps1)\n\n" +
-            "Repo privata: amici usano updateFeedToken (PAT read-only) in ac_config.json.\n\n" +
+            "• FeedBaseUrl — URL feed pubblico (raw …/MMX-NET-feed/main/)\n" +
+            "• PublishTarget — clone locale MMX-NET-feed (dopo CARICA: auto-push se c'è .git)\n\n" +
+            "Codice su MMX-NET privata; update zip su MMX-NET-feed pubblica (amici senza PAT).\n" +
+            "Solo owner write su entrambe. Setup: toolkit\\setup_update_feed_repo.ps1\n\n" +
             "Vuoi inserirli ora? (verranno salvati in ac_dev_publish.json)",
             "Devkit — Configura feed",
             MessageBoxButton.YesNo,
@@ -153,14 +157,14 @@ public partial class MainWindow : Window
 
         var feed = PromptSimple(
             "URL feed (updateFeedUrl amici)\n" +
-            "Es. https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/\n" +
-            "Repo privata: amici usano anche updateFeedToken. Lascia vuoto se solo sync locale.",
+            "Es. https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/\n" +
+            "Pubblico: nessun PAT. Lascia vuoto se solo sync locale.",
             DevFeedUrlBox.Text);
         if (feed == null) return false;
 
         var sync = PromptSimple(
             "Clone feed / cartella sync (PublishTarget)\n" +
-            "Es. F:\\Anomaly Coop\\dist\\update-feed — poi toolkit\\push_update_feed.ps1\n" +
+            "Es. F:\\Anomaly Coop\\dist\\update-feed — dopo CARICA parte auto-push\n" +
             "Lascia vuoto se usi solo URL online.",
             DevSyncBox.Text);
         if (sync == null) return false;
@@ -329,18 +333,23 @@ public partial class MainWindow : Window
                 $"SHA-256: {result.Sha256}\n" +
                 $"URL feed amici: {feedUrl}" +
                 (result.SyncTarget != null ? "\nSync: " + result.SyncTarget : "") +
+                (result.PushFeedMessage != null ? "\n" + result.PushFeedMessage : "") +
                 (result.FeedCheckMessage != null ? "\n" + result.FeedCheckMessage : "");
 
             Log($"Publish OK: {result.ZipPath}");
             Log("URL updateFeedUrl amici: " + feedUrl);
+            if (!string.IsNullOrWhiteSpace(result.PushFeedMessage))
+                Log(result.PushFeedMessage);
 
             try { Clipboard.SetText(feedUrl); } catch { /* ignore */ }
 
             MessageBox.Show(
-                $"Pubblicato. Gli amici con updateFeedUrl={feedUrl} vedranno il popup all'avvio.\n\n" +
+                $"Pubblicato. Gli amici con updateFeedUrl={feedUrl}\n" +
+                "(feed pubblico MMX-NET-feed, senza PAT) vedranno il popup all'avvio.\n\n" +
                 $"Versione: {result.Version.Version}\n" +
                 $"Cartella: {result.OutDir}" +
                 (result.SyncTarget != null ? "\nSync: " + result.SyncTarget : "") +
+                (result.PushFeedMessage != null ? "\n\n" + result.PushFeedMessage : "") +
                 (result.FeedCheckMessage != null ? "\n\n" + result.FeedCheckMessage : ""),
                 "Devkit — Carica",
                 MessageBoxButton.OK,
@@ -422,9 +431,16 @@ public partial class MainWindow : Window
         PackInfo.Text = _inst.PackStatus() + "\n" +
                         "Exe: " + Path.GetFileName(_inst.ResolveClientExe()) + "\n" +
                         "Root: " + _inst.Root;
-        StatusLine.Text = _inst.IsValid
-            ? "Pronto — stesso pack su tutti, poi HOST o PLAY."
-            : "Install incompleta — controlla bin\\ e fsgame.ltx";
+        if (_updateAvailable && _pendingRemote != null)
+        {
+            SetUpdateAvailableUi(true, _pendingRemote);
+        }
+        else
+        {
+            StatusLine.Text = _inst.IsValid
+                ? "Pronto — stesso pack su tutti, poi HOST o PLAY."
+                : "Install incompleta — controlla bin\\ e fsgame.ltx";
+        }
     }
 
     private void RunHealthUi()
@@ -452,6 +468,28 @@ public partial class MainWindow : Window
     private async void Update_Click(object sender, RoutedEventArgs e) =>
         await CheckUpdatesAsync(promptIfAvailable: true, silentIfCurrent: false);
 
+    /// <summary>
+    /// Evidenzia AGGIORNA in giallo (stile PLAY) finché c'è un update remoto non applicato.
+    /// </summary>
+    private void SetUpdateAvailableUi(bool available, UpdateManifest? remote = null, string? status = null)
+    {
+        _updateAvailable = available;
+        _pendingRemote = available ? remote : null;
+
+        var accent = (Style)FindResource("OutlineAccentBtn");
+        var outline = (Style)FindResource("OutlineBtn");
+        ApplyUpdateBtn.Style = available ? accent : outline;
+        ApplyUpdateBtn.FontWeight = available ? FontWeights.Bold : FontWeights.Normal;
+        ApplyUpdateBtn.ToolTip = available && remote != null
+            ? $"Update {remote.Version} disponibile — clicca per installare"
+            : "Scarica overlay MMX-Net se c'è una versione nuova";
+
+        if (status != null)
+            StatusLine.Text = status;
+        else if (available && remote != null)
+            StatusLine.Text = $"Update {remote.Version} disponibile — premi AGGIORNA.";
+    }
+
     private async Task CheckUpdatesAsync(bool promptIfAvailable, bool silentIfCurrent)
     {
         if (_busy) return;
@@ -460,23 +498,75 @@ public partial class MainWindow : Window
             _busy = true;
             SetBusyUi(true, "Controllo aggiornamenti…");
             var result = await UpdateService.CheckAsync(_inst).ConfigureAwait(true);
+#if DEVKIT
+            // Test UI senza abbassare ac_version: set MMX_NET_SIMULATE_UPDATE=1
+            if (!result.UpdateAvailable &&
+                string.Equals(Environment.GetEnvironmentVariable("MMX_NET_SIMULATE_UPDATE"), "1",
+                    StringComparison.Ordinal))
+            {
+                var simVer = result.Local.Version;
+                var parts = (simVer ?? "0.0.0").Split('.');
+                if (parts.Length >= 3 && int.TryParse(parts[^1], out var patch))
+                    parts[^1] = (patch + 1).ToString();
+                else
+                    parts = new[] { simVer ?? "0", "0", "1" };
+                var fakeRemote = result.Remote ?? new UpdateManifest
+                {
+                    Name = result.Local.Name,
+                    Channel = result.Local.Channel,
+                    Protocol = result.Local.Protocol,
+                    Engine = result.Local.Engine,
+                    Notes = "SIMULATE (MMX_NET_SIMULATE_UPDATE=1) — non scaricare.",
+                };
+                fakeRemote.Version = string.Join(".", parts);
+                fakeRemote.Notes = string.IsNullOrWhiteSpace(fakeRemote.Notes)
+                    ? "SIMULATE — non applicare."
+                    : fakeRemote.Notes + "\n[SIMULATE]";
+                result = new UpdateService.CheckResult
+                {
+                    Ok = true,
+                    UpdateAvailable = true,
+                    Message = $"SIMULATE update {fakeRemote.Version} (locale {result.Local.Version}).",
+                    Local = result.Local,
+                    Remote = fakeRemote,
+                };
+                Log("MMX_NET_SIMULATE_UPDATE=1 — popup/UI forzati senza bump reale.");
+            }
+#endif
             Log(result.Message);
 
             if (!result.Ok)
             {
-                if (!silentIfCurrent)
-                    MessageBox.Show(result.Message, "Aggiornamenti", MessageBoxButton.OK, MessageBoxImage.Information);
-                StatusLine.Text = result.Message;
+                // silentIfCurrent nasconde solo "sei aggiornato"; errori feed privato
+                // (404 senza PAT) vanno comunque spiegati con passi chiari.
+                var showErr = !silentIfCurrent ||
+                    result.Message.Contains("updateFeedToken", StringComparison.OrdinalIgnoreCase) ||
+                    result.Message.Contains("repo GitHub privata", StringComparison.OrdinalIgnoreCase) ||
+                    result.Message.Contains("FEED_PRIVATO", StringComparison.OrdinalIgnoreCase);
+                if (showErr)
+                {
+                    MessageBox.Show(
+                        result.Message,
+                        "Aggiornamenti",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+                StatusLine.Text = result.Message.Replace("\n", " ").Trim();
+                if (StatusLine.Text.Length > 160)
+                    StatusLine.Text = StatusLine.Text[..157] + "…";
                 return;
             }
 
             if (!result.UpdateAvailable || result.Remote == null)
             {
-                StatusLine.Text = result.Message;
+                SetUpdateAvailableUi(false, status: result.Message);
                 if (!silentIfCurrent)
                     MessageBox.Show(result.Message, "Aggiornamenti", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
+
+            // Evidenzia subito (anche se il popup è disattivato): giallo come PLAY.
+            SetUpdateAvailableUi(true, result.Remote, result.Message);
 
             if (!promptIfAvailable) return;
 
@@ -491,7 +581,24 @@ public partial class MainWindow : Window
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
 
+            // Dopo il popup resta giallo finché non si applica (o un check successivo dice "ok").
+            SetUpdateAvailableUi(true, result.Remote,
+                $"Update {result.Remote.Version} disponibile — premi AGGIORNA.");
+
             if (ask != MessageBoxResult.Yes) return;
+
+#if DEVKIT
+            if ((result.Remote.Notes ?? "").Contains("[SIMULATE]", StringComparison.Ordinal) ||
+                (result.Remote.Notes ?? "").Contains("SIMULATE (MMX_NET_SIMULATE_UPDATE", StringComparison.Ordinal))
+            {
+                MessageBox.Show(
+                    "SIMULATE attivo: nessun download. Togli MMX_NET_SIMULATE_UPDATE per un update reale.",
+                    "Aggiornamenti",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                return;
+            }
+#endif
 
             if (_game.IsOurGameRunning())
             {
@@ -510,13 +617,17 @@ public partial class MainWindow : Window
                 Log(s);
             });
             var applied = await UpdateService.DownloadAndApplyAsync(_inst, result.Remote, progress).ConfigureAwait(true);
+            SetUpdateAvailableUi(false);
             RefreshChrome();
             RunHealthUi();
             Log($"Aggiornamento applicato: {applied.Version}");
             StatusLine.Text = "Aggiornato a " + applied.Version;
 
+            var restartMsg = File.Exists((Environment.ProcessPath ?? "") + MmxNetShared.FileOverlay.PendingSuffix)
+                ? $"Aggiornamento {applied.Version} installato.\n\nIl launcher era in uso: al riavvio verrà sostituito automaticamente.\n\nRiavviare ora?"
+                : $"Aggiornamento {applied.Version} installato.\n\nRiavviare il launcher?";
             var restart = MessageBox.Show(
-                $"Aggiornamento {applied.Version} installato.\n\nRiavviare il launcher?",
+                restartMsg,
                 "MMX-Net",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Information);
@@ -528,11 +639,15 @@ public partial class MainWindow : Window
             Log("ERR update: " + ex.Message);
             MessageBox.Show(ex.Message, "Aggiornamenti", MessageBoxButton.OK, MessageBoxImage.Warning);
             StatusLine.Text = "Aggiornamento fallito.";
+            // Se c'era un update pendente, ripristina evidenziazione.
+            if (_pendingRemote != null)
+                SetUpdateAvailableUi(true, _pendingRemote);
         }
         finally
         {
             _busy = false;
             SetBusyUi(false, null);
+            ApplyUpdateBtn.IsEnabled = true;
         }
     }
 
@@ -541,11 +656,11 @@ public partial class MainWindow : Window
         try
         {
             var exe = Environment.ProcessPath;
-            if (!string.IsNullOrWhiteSpace(exe) && File.Exists(exe))
-            {
-                Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true });
-                Application.Current.Shutdown();
-            }
+            if (string.IsNullOrWhiteSpace(exe) || !File.Exists(exe))
+                return;
+
+            MmxNetShared.FileOverlay.RestartWithPendingReplace(exe, Environment.ProcessId);
+            Application.Current.Shutdown();
         }
         catch (Exception ex)
         {
@@ -581,7 +696,8 @@ public partial class MainWindow : Window
             var args = await Task.Run(() =>
                 _game.PlayClient(steam, stripDebug: true, asHost: hostHint)).ConfigureAwait(true);
             Log($"{label} → {args}");
-            Log("Steam sta aprendo Call of Pripyat (41700); il bridge lancia Anomaly.");
+            Log("Steam: Call of Pripyat (41700) via -applaunch + bridge → Anomaly.");
+            Log("Prima volta: Steam può riavviarsi per scrivere le Launch Options CoP.");
             if (hostHint)
             {
                 Log("HOST: in partita aspetta tip hosting → Shift+Tab → Invite amico.");
@@ -589,7 +705,7 @@ public partial class MainWindow : Window
             }
             else
                 Log("PLAY: Join Game da Friends sull'host (niente menu IP).");
-            StatusLine.Text = "Call of Pripyat via Steam → Anomaly. Invita da Friends.";
+            StatusLine.Text = "In Steam risulti su Call of Pripyat (41700). Invita da Friends.";
             RefreshChrome();
         }
         catch (Exception ex)
@@ -608,6 +724,8 @@ public partial class MainWindow : Window
     private void SetBusyUi(bool busy, string? status)
     {
         UseSteamBox.IsEnabled = !busy;
+        ApplyUpdateBtn.IsEnabled = !busy;
+        UpdateBtn.IsEnabled = !busy;
 #if DEVKIT
         DevPublishBtn.IsEnabled = !busy;
         DevOpenFolderBtn.IsEnabled = !busy;

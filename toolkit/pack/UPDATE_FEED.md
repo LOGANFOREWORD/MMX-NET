@@ -8,27 +8,25 @@ Il launcher legge `updateFeedUrl` da `ac_config.json` e confronta la versione re
 {
   "checkUpdatesOnStart": true,
   "updateChannel": "dev",
-  "updateFeedUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/",
+  "updateFeedUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/",
   "updateFeedToken": ""
 }
 ```
 
 - `updateFeedUrl`: URL del **manifest** (`.json`) **oppure** cartella base che contiene i file sotto.
-- `updateFeedToken`: **PAT GitHub read-only** obbligatorio se il feed è su **repo privata**. Non committare il token. Alternativa: env `MMX_NET_UPDATE_FEED_TOKEN` (legacy: `AC_UPDATE_FEED_TOKEN`).
+- `updateFeedToken`: lasciarlo vuoto con feed pubblico `MMX-NET-feed`. (Opzionale solo se usi ancora un raw privato.)
 - `updateChannel`: `dev` / `release` / `any`.
 - `checkUpdatesOnStart`: popup automatico all’avvio se c’è una versione più nuova.
 
 Template installer: `toolkit/pack/ac_config.user.json`  
 Dopo publish, `FeedBaseUrl` in `ac_dev_publish.json` bake `updateFeedUrl` nel template.
 
-### Repo GitHub privata
+### Repo GitHub (feed)
 
-1. Usa la repo esistente **`MMX-NET`** (prodotto + feed: source overlay, toolkit, manifest + zip).
-2. Logan invita gli amici come **Collaborators** (Read).
-3. Ogni amico crea un PAT fine-grained (Contents: Read) → `updateFeedToken`.
-4. Dopo **CARICA AGGIORNAMENTO**, Logan esegue `toolkit\push_update_feed.ps1`.
-
-Vedi `toolkit/pack/FEED_GITHUB_PRIVATO.md`.
+1. Feed su **`MMX-NET-feed` pubblica** (solo zip/manifest). Codice su **`MMX-NET` privata**.
+2. Solo owner **LOGANFOREWORD** ha write su entrambe. Amici: nessun PAT. Vedi `FEED_PRIVATO_AMICI.md`.
+3. Dopo **CARICA AGGIORNAMENTO**, Logan esegue `toolkit\push_update_feed.ps1` (o auto-push).
+4. Setup: `toolkit\setup_update_feed_repo.ps1`.
 
 ### Test locale
 
@@ -46,7 +44,7 @@ Vedi `toolkit/pack/FEED_GITHUB_PRIVATO.md`.
   "Protocol": "89",
   "Engine": "ST",
   "Notes": "…",
-  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/ac-update.zip",
   "PackageSha256": "",
   "PublishedUtc": "2026-09-08T00:00:00.0000000Z",
   "MinLauncherVersion": "0.1.0"

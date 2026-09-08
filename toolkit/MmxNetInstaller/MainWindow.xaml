@@ -20,7 +20,7 @@
 
         <TextBlock Text="Dove installare" Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,0,0,8"/>
         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource Text}" FontSize="13" Margin="0,0,0,12"
-                   Text="Crea una cartella a parte chiamata «MMX-Net». Non mescolare file con Anomaly vanilla: serve una copia dedicata così fingerprint e pack restano allineati tra amici."/>
+                   Text="Installa nella cartella «Anomaly Coop» (base Anomaly già presente lì). Non mescolare file con Anomaly vanilla: serve una copia dedicata così fingerprint e pack restano allineati tra amici."/>
 
         <TextBlock Text="Percorso installazione" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,0,0,6"/>
         <TextBox x:Name="PathBox" Height="32" Padding="8,6" Background="{StaticResource InputBg}"
@@ -37,7 +37,7 @@
 
         <TextBlock Text="Requisiti" Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,24,0,8"/>
         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource Muted}" FontSize="12" LineHeight="18"
-                   Text="• Anomaly 1.5.3 coop già nella cartella destinazione (o copia dalla sorgente).&#10;• Steam installato; Call of Pripyat (41700) in libreria per overlay/inviti Shift+Tab.&#10;• Questo installer NON redistribuisce db/bin Anomaly interi: applica solo overlay Coop + launcher.&#10;• Dopo l'install: avvia MMX-Net-Launcher.exe dalla cartella MMX-Net."/>
+                   Text="• Anomaly 1.5.3 coop già nella cartella «Anomaly Coop» (o copia dalla sorgente).&#10;• Steam installato; Call of Pripyat (41700) in libreria per overlay/inviti Shift+Tab.&#10;• Questo installer NON redistribuisce db/bin Anomaly interi: applica solo overlay Coop + launcher.&#10;• Dopo l'install: avvia MMX-Net-Launcher.exe dalla cartella Anomaly Coop."/>
 
         <TextBlock x:Name="StatusText" Margin="0,20,0,0" Foreground="{StaticResource Accent}" FontSize="12" TextWrapping="Wrap"/>
       </StackPanel>

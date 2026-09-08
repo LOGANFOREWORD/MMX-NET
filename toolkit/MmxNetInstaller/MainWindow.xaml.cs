@@ -2,26 +2,28 @@ using System.IO;
 using System.IO.Compression;
 using System.Windows;
 using Microsoft.Win32;
+using MmxNetShared;
 
 namespace MmxNetInstaller;
 
 public partial class MainWindow : Window
 {
     private const string OverlayZipName = "ac-overlay.zip";
+    /// <summary>Nome cartella di installazione fisso (coincide con DefaultRoot del launcher).</summary>
+    private const string InstallFolderName = "Anomaly Coop";
 
     public MainWindow()
     {
         InitializeComponent();
-        var drive = Path.GetPathRoot(Environment.SystemDirectory) ?? @"C:\";
-        PathBox.Text = Path.Combine(drive, "Games", "MMX-Net");
-        StatusText.Text = "Pronto. Scegli la cartella «MMX-Net» e installa l'overlay.";
+        PathBox.Text = DefaultInstallPath();
+        StatusText.Text = "Pronto. Installa nella cartella «Anomaly Coop» (base Anomaly già presente lì).";
     }
 
     private void Browse_Click(object sender, RoutedEventArgs e)
     {
         var dlg = new OpenFolderDialog
         {
-            Title = "Scegli (o crea) la cartella MMX-Net",
+            Title = "Scegli la root o la cartella «Anomaly Coop»",
             Multiselect = false,
         };
         try
@@ -34,7 +36,27 @@ public partial class MainWindow : Window
         catch { /* ignore */ }
 
         if (dlg.ShowDialog() == true)
-            PathBox.Text = EnsureMmxNetName(dlg.FolderName);
+        {
+            var chosen = dlg.FolderName;
+            var resolved = EnsureAnomalyCoopFolder(chosen);
+            if (!string.Equals(
+                    Path.GetFileName(chosen.TrimEnd('\\', '/')),
+                    InstallFolderName,
+                    StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(chosen.TrimEnd('\\', '/'), resolved, StringComparison.OrdinalIgnoreCase))
+            {
+                var use = MessageBox.Show(
+                    "La cartella selezionata non si chiama «" + InstallFolderName + "».\n\n" +
+                    "Percorso proposto:\n" + resolved + "\n\n" +
+                    "Usare questa cartella? (No = annulla)",
+                    "MMX-Net",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+                if (use != MessageBoxResult.Yes)
+                    return;
+            }
+            PathBox.Text = resolved;
+        }
     }
 
     private void BrowseSource_Click(object sender, RoutedEventArgs e)
@@ -55,16 +77,17 @@ public partial class MainWindow : Window
             InstallBtn.IsEnabled = false;
             BrowseBtn.IsEnabled = false;
 
-            var dest = EnsureMmxNetName(PathBox.Text.Trim());
+            var dest = EnsureAnomalyCoopFolder(PathBox.Text.Trim());
             PathBox.Text = dest;
 
             if (string.IsNullOrWhiteSpace(dest))
                 throw new InvalidOperationException("Indica un percorso di installazione.");
 
-            if (!dest.EndsWith("MMX-Net", StringComparison.OrdinalIgnoreCase) &&
+            if (!IsAnomalyCoopFolder(dest) &&
                 MessageBox.Show(
-                    "Il percorso non termina con «MMX-Net».\n\n" +
-                    "Consigliato: crea una cartella a parte chiamata MMX-Net.\n\nContinuare comunque?",
+                    "Il percorso non termina con «" + InstallFolderName + "».\n\n" +
+                    "Consigliato: installa in una cartella chiamata «" + InstallFolderName + "»\n" +
+                    "(base Anomaly già presente lì).\n\nContinuare comunque?",
                     "MMX-Net",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question) != MessageBoxResult.Yes)
@@ -95,10 +118,19 @@ public partial class MainWindow : Window
                     "(o in sottocartella pack\\).");
 
             StatusText.Text = "Applicazione overlay MMX-Net…";
-            await Task.Run(() => ApplyZip(zip, dest)).ConfigureAwait(true);
+            var pendingOverlay = await Task.Run(() => ApplyZip(zip, dest)).ConfigureAwait(true);
+
+            StatusText.Text = "Pulizia file legacy AnomalyCoop…";
+            var removed = await Task.Run(() => LegacyCleanup.RemoveFromInstallRoot(dest)).ConfigureAwait(true);
+            foreach (var name in removed)
+                StatusText.Text = "Rimosso legacy: " + name;
+            if (removed.Count > 0)
+                StatusText.Text = $"Rimossi {removed.Count} file legacy AnomalyCoop.";
 
             WriteReadme(dest);
             EnsureConfig(dest);
+            CopyUninstaller(dest);
+            TryCreateUninstallShortcut(dest);
 
             var incomplete = GetIncompleteBaseWarnings(dest);
             if (incomplete.Count > 0)
@@ -108,7 +140,7 @@ public partial class MainWindow : Window
                     "Overlay installato in:\n" + dest +
                     "\n\nATTENZIONE — install incompleta (mancano pezzi della base):\n• " +
                     string.Join("\n• ", incomplete) +
-                    "\n\nServe Anomaly 1.5.3 coop completa nella stessa cartella MMX-Net " +
+                    "\n\nServe Anomaly 1.5.3 coop completa nella stessa cartella «Anomaly Coop» " +
                     "(bin + gamedata + file di release protocollo).\n" +
                     "Rilancia l'Installer con «Copia da install esistente» oppure copia quelle cartelle, " +
                     "poi HEALTH nel launcher non deve avere FATAL.",
@@ -120,11 +152,20 @@ public partial class MainWindow : Window
             StatusText.Text = incomplete.Count > 0
                 ? "Overlay OK — completa la base Anomaly coop prima di giocare."
                 : "Installazione completata.";
+            var legacyNote = removed.Count > 0
+                ? "\n\nPulizia legacy:\n• " + string.Join("\n• ", removed)
+                : "";
+            var pendingNote = pendingOverlay.Count > 0
+                ? "\n\nFile in uso (scritti come .new — chiudi il launcher e riaprilo per applicare):\n• " +
+                  string.Join("\n• ", pendingOverlay)
+                : "";
             var launch = MessageBox.Show(
                 "Overlay MMX-Net installato in:\n" + dest +
                 (incomplete.Count > 0
                     ? "\n\n(Base ancora incompleta — HEALTH segnalerà FATAL finché non copi la base Anomaly coop.)"
                     : "") +
+                legacyNote +
+                pendingNote +
                 "\n\nAprire il launcher ora?",
                 "MMX-Net",
                 MessageBoxButton.YesNo,
@@ -133,7 +174,7 @@ public partial class MainWindow : Window
             if (launch == MessageBoxResult.Yes)
             {
                 var exe = Path.Combine(dest, "MMX-Net-Launcher.exe");
-                if (File.Exists(exe))
+                if (File.Exists(exe) || File.Exists(exe + FileOverlay.PendingSuffix))
                     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe) { UseShellExecute = true });
             }
         }
@@ -149,16 +190,41 @@ public partial class MainWindow : Window
         }
     }
 
-    private static string EnsureMmxNetName(string path)
+    private static string DefaultInstallPath()
+    {
+        var docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        if (!string.IsNullOrWhiteSpace(docs))
+            return Path.Combine(docs, InstallFolderName);
+        var drive = Path.GetPathRoot(Environment.SystemDirectory) ?? @"C:\";
+        return Path.Combine(drive, "Games", InstallFolderName);
+    }
+
+    private static bool IsAnomalyCoopFolder(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return false;
+        return Path.GetFileName(path.TrimEnd('\\', '/'))
+            .Equals(InstallFolderName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Forza il nome cartella «Anomaly Coop»: se manca, usa la sottocartella o rinomina da MMX-Net.
+    /// </summary>
+    private static string EnsureAnomalyCoopFolder(string path)
     {
         if (string.IsNullOrWhiteSpace(path)) return path;
         path = path.TrimEnd('\\', '/');
         var name = Path.GetFileName(path);
-        if (name.Equals("MMX-Net", StringComparison.OrdinalIgnoreCase))
+        if (name.Equals(InstallFolderName, StringComparison.OrdinalIgnoreCase))
             return path;
-        if (!Directory.Exists(path) || !File.Exists(Path.Combine(path, "fsgame.ltx")))
-            return Path.Combine(path, "MMX-Net");
-        return path;
+        // Migrazione path legacy MMX-Net → stessa parent\Anomaly Coop
+        if (name.Equals("MMX-Net", StringComparison.OrdinalIgnoreCase))
+        {
+            var parent = Path.GetDirectoryName(path);
+            return string.IsNullOrEmpty(parent)
+                ? InstallFolderName
+                : Path.Combine(parent, InstallFolderName);
+        }
+        return Path.Combine(path, InstallFolderName);
     }
 
     private static string? FindOverlayZip()
@@ -174,13 +240,13 @@ public partial class MainWindow : Window
         return candidates.FirstOrDefault(File.Exists);
     }
 
-    private static void ApplyZip(string zipPath, string dest)
+    private static List<string> ApplyZip(string zipPath, string dest)
     {
         var tmp = Path.Combine(Path.GetTempPath(), "ac_inst_" + Guid.NewGuid().ToString("N"));
         ZipFile.ExtractToDirectory(zipPath, tmp);
         try
         {
-            CopyTree(tmp, dest, skipNames: null);
+            return CopyTree(tmp, dest, skipNames: null);
         }
         finally
         {
@@ -188,7 +254,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private static void CopyTree(string src, string dst, HashSet<string>? skipNames)
+    private static List<string> CopyTree(string src, string dst, HashSet<string>? skipNames)
     {
         src = Path.GetFullPath(src);
         dst = Path.GetFullPath(dst);
@@ -202,15 +268,18 @@ public partial class MainWindow : Window
             Directory.CreateDirectory(Path.Combine(dst, rel));
         }
 
+        var pending = new List<string>();
         foreach (var file in Directory.EnumerateFiles(src, "*", SearchOption.AllDirectories))
         {
             var rel = Path.GetRelativePath(src, file);
             var top = rel.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)[0];
             if (skipNames != null && skipNames.Contains(top)) continue;
             var target = Path.Combine(dst, rel);
-            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            File.Copy(file, target, true);
+            if (FileOverlay.CopyOverwriteOrPending(file, target, out _))
+                pending.Add(rel.Replace('/', '\\'));
         }
+
+        return pending;
     }
 
     private static void WriteReadme(string dest)
@@ -223,7 +292,7 @@ public partial class MainWindow : Window
 
             Cartella dedicata
             -----------------
-            Usa una cartella a parte chiamata "MMX-Net".
+            Installa nella cartella "Anomaly Coop" (base Anomaly già presente lì).
             Non installare l'overlay sopra Anomaly vanilla che usi in singleplayer:
             fingerprint e pack devono essere uguali tra host e amici.
 
@@ -240,19 +309,90 @@ public partial class MainWindow : Window
 
             Avvio
             -----
-            1. Avvia MMX-Net-Launcher.exe
-            2. HEALTH deve essere senza FATAL
-            3. HOST (chi ospita) o PLAY (chi entra da Join Game)
+            1. Apri Steam (obbligatorio).
+            2. Avvia MMX-Net-Launcher.exe
+            3. HEALTH deve essere senza FATAL
+            4. HOST (chi ospita) o PLAY (chi entra da Join Game)
+               — la prima volta Steam può riavviarsi per scrivere le Launch Options
+                 di Call of Pripyat (bridge → Anomaly). Accetta e riprova HOST/PLAY.
+            5. In Steam devi risultare su «Call of Pripyat», non su uno shortcut Non-Steam.
+            6. Inviti: Shift+Tab → Friends → Invite / Join Game (niente Connect IP).
+
+            Nota Steam / CoP vanilla
+            ------------------------
+            Le Launch Options di Call of Pripyat (41700) vengono impostate sul bridge
+            Anomaly così Join Game non apre stcop vanilla. Se ti serve anche CoP originale:
+            crea il file ac_steam_redirect.off nella cartella Anomaly Coop e svuota le
+            Launch Options di CoP in Steam → Proprietà.
 
             Aggiornamenti
             -------------
             Nel launcher: icona ⬇ o pulsante AGGIORNA.
-            Serve updateFeedUrl in ac_config.json (URL pubblico della cartella
-            dist/update/ di Logan: GitHub raw, itch, server statico).
-            Se il feed e' configurato, all'avvio compare il popup e puoi scaricare.
+            Serve updateFeedUrl in ac_config.json (raw GitHub MMX-NET-feed, pubblico).
+            Nessun PAT: il codice resta su MMX-NET privata; gli update sono sulla repo feed.
+            Vedi FEED_PRIVATO_AMICI.md. All'avvio compare il popup se c'e' una versione nuova.
+
+            Disinstallazione
+            ----------------
+            Esegui MMX-Net-Uninstaller.exe nella cartella Anomaly Coop
+            (o scorciatoia Desktop «MMX-Net Disinstalla»). Rimuove solo i file
+            MMX-Net; non tocca AnomalyLauncher / db / bin vanilla.
 
             """;
         File.WriteAllText(path, text);
+    }
+
+    private static void CopyUninstaller(string dest)
+    {
+        var exeDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
+        var name = "MMX-Net-Uninstaller.exe";
+        var candidates = new[]
+        {
+            Path.Combine(exeDir, name),
+            Path.Combine(AppContext.BaseDirectory, name),
+        };
+        var src = candidates.FirstOrDefault(File.Exists);
+        if (src == null) return;
+        var dst = Path.Combine(dest, name);
+        try
+        {
+            File.Copy(src, dst, true);
+        }
+        catch
+        {
+            FileOverlay.CopyOverwriteOrPending(src, dst, out _);
+        }
+    }
+
+    private static void TryCreateUninstallShortcut(string dest)
+    {
+        try
+        {
+            var uninstaller = Path.Combine(dest, "MMX-Net-Uninstaller.exe");
+            if (!File.Exists(uninstaller)) return;
+            var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+            if (string.IsNullOrWhiteSpace(desktop)) return;
+            var linkPath = Path.Combine(desktop, "MMX-Net Disinstalla.lnk");
+
+            var shellType = Type.GetTypeFromProgID("WScript.Shell");
+            if (shellType == null) return;
+            var shell = Activator.CreateInstance(shellType);
+            if (shell == null) return;
+            var shortcut = shellType.InvokeMember(
+                "CreateShortcut",
+                System.Reflection.BindingFlags.InvokeMethod,
+                null,
+                shell,
+                new object[] { linkPath });
+            if (shortcut == null) return;
+            var st = shortcut.GetType();
+            st.InvokeMember("TargetPath", System.Reflection.BindingFlags.SetProperty, null, shortcut, new object[] { uninstaller });
+            st.InvokeMember("WorkingDirectory", System.Reflection.BindingFlags.SetProperty, null, shortcut, new object[] { dest });
+            st.InvokeMember("Description", System.Reflection.BindingFlags.SetProperty, null, shortcut,
+                new object[] { "Disinstalla overlay MMX-Net (non tocca Anomaly base)" });
+            st.InvokeMember("Save", System.Reflection.BindingFlags.InvokeMethod, null, shortcut, null);
+        }
+        catch { /* scorciatoia opzionale */ }
     }
 
     private static void EnsureConfig(string dest)

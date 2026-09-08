@@ -1,48 +1,40 @@
-﻿# Feed GitHub privato â€” MMX-Net
+# Feed GitHub — MMX-Net
 
-Repo **MMX-NET**: feed aggiornamenti (manifest + zip) + source prodotto (toolkit, overlay). Non include bin/db Anomaly.
+Due repo:
 
-## PerchÃ© un token
+| Repo | Visibilità | Contenuto | Write |
+|------|------------|-----------|-------|
+| `LOGANFOREWORD/MMX-NET` | **privata** | codice / toolkit / overlay | solo owner |
+| `LOGANFOREWORD/MMX-NET-feed` | **pubblica** | solo `ac_version.json`, `ac_update_manifest.json`, `ac-update.zip` | solo owner |
 
-`raw.githubusercontent.com` su repo **privata** risponde **404** senza autenticazione.
-Il launcher supporta `updateFeedToken` (header `Authorization: Bearer â€¦`) su manifest e download zip.
+Gli amici leggono il feed grezzo senza PAT. Non dare Write a nessuno.
 
 ## Una tantum (Logan)
 
-1. Usa la repo privata esistente `MMX-NET` (non crearne unâ€™altra).
-2. Clone locale â†’ `F:\Anomaly Coop\dist\update-feed` (`PublishTarget`).
-3. Imposta `FeedBaseUrl` a:
-   `https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/`
-4. Invita gli amici: **Settings â†’ Collaborators** (Read).
-5. PAT fine-grained (Contents: Read) condiviso in privato, o ogni amico crea il proprio.
+1. `toolkit\setup_update_feed_repo.ps1` → crea/collega `MMX-NET-feed` pubblica + `PublishTarget` = `dist\update-feed`
+2. `FeedBaseUrl` = `https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/`
+3. Non invitare collaboratori Write su nessuna repo
 
-Oppure: `toolkit\setup_update_feed_repo.ps1` (collega la repo esistente).
-
-## Una tantum (amico)
-
-In `ac_config.json` nella root MMX-Net:
+## Amici (`ac_config.json`)
 
 ```json
 {
   "checkUpdatesOnStart": true,
   "updateChannel": "dev",
-  "updateFeedUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/",
-  "updateFeedToken": "github_pat_â€¦"
+  "updateFeedUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/",
+  "updateFeedToken": ""
 }
 ```
-
-Oppure env `MMX_NET_UPDATE_FEED_TOKEN` / `AC_UPDATE_FEED_TOKEN`.
 
 `ac_config.json` **non** viene sovrascritto dagli update overlay.
 
 ## Ogni release (Logan)
 
-1. `MMX-Net-Launcher-dev.exe` â†’ **CARICA AGGIORNAMENTO**
-2. `toolkit\push_update_feed.ps1`
-3. Gli amici vedono il popup se Version remota > locale.
+1. `MMX-Net-Launcher-dev.exe` → **CARICA AGGIORNAMENTO**
+2. `toolkit\push_update_feed.ps1` (o auto-push se `PublishTarget` è il clone)
+3. Amici con `updateFeedUrl` su `MMX-NET-feed` vedono il popup (HTTP 200, no token)
 
 ## Sicurezza
 
-- Mai commitare PAT / `.env` / `updateFeedToken` nella repo del feed.
-- Preferire PAT fine-grained limitato a quella sola repo.
-
+- Mai commitare PAT / source nella repo feed
+- Mai dare Write/Admin agli amici su MMX-NET o MMX-NET-feed

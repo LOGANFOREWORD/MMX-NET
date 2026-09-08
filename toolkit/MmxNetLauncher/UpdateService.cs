@@ -33,7 +33,93 @@ public static class UpdateService
         var env =
             (Environment.GetEnvironmentVariable("MMX_NET_UPDATE_FEED_TOKEN") ?? "").Trim();
         if (!string.IsNullOrWhiteSpace(env)) return env;
-        return (Environment.GetEnvironmentVariable("AC_UPDATE_FEED_TOKEN") ?? "").Trim();
+        var legacy = (Environment.GetEnvironmentVariable("AC_UPDATE_FEED_TOKEN") ?? "").Trim();
+        if (!string.IsNullOrWhiteSpace(legacy)) return legacy;
+#if DEVKIT
+        // Solo DEVKIT/locale: riusa il login `gh` di Logan senza scrivere PAT in ac_config.
+        var gh = TryReadGhAuthToken();
+        if (!string.IsNullOrWhiteSpace(gh)) return gh;
+#endif
+        return "";
+    }
+
+#if DEVKIT
+    /// <summary>Legge il token da `gh auth token` (Keyring). Mai per build utente.</summary>
+    public static string? TryReadGhAuthToken()
+    {
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "gh",
+                Arguments = "auth token",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            };
+            using var p = System.Diagnostics.Process.Start(psi);
+            if (p == null) return null;
+            var stdout = p.StandardOutput.ReadToEnd();
+            p.WaitForExit(8000);
+            if (p.ExitCode != 0) return null;
+            var tok = (stdout ?? "").Trim();
+            return string.IsNullOrWhiteSpace(tok) ? null : tok;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+#endif
+
+    /// <summary>
+    /// Messaggio calmo per amici: repo privata → 404 senza PAT. Evita dump tecnici lunghi.
+    /// </summary>
+    private static string BuildAuthHint(string httpMessage, bool hadToken)
+    {
+        var msg = httpMessage ?? "";
+        var is404 = msg.Contains("404", StringComparison.Ordinal);
+        var isAuth = msg.Contains("401", StringComparison.Ordinal) ||
+                     msg.Contains("403", StringComparison.Ordinal);
+        if (!is404 && !isAuth) return "";
+
+        if (is404 && !hadToken)
+        {
+            return
+                "Feed non raggiungibile (HTTP 404).\n\n" +
+                "Controlla updateFeedUrl: deve puntare a MMX-NET-feed (pubblico), es.\n" +
+                "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/\n\n" +
+                "Se punta ancora a MMX-NET (privata) → 404 senza token.\n" +
+                "Altrimenti Logan non ha ancora pushato il feed, oppure chiedi lo zip.\n\n" +
+                "Guida: FEED_PRIVATO_AMICI.md" +
+#if DEVKIT
+                "\n\nDEVKIT: verifica FeedBaseUrl → MMX-NET-feed e push_update_feed.ps1.";
+#else
+                "";
+#endif
+        }
+
+        if (hadToken && (is404 || isAuth))
+        {
+            return
+                "Token presente ma il feed non è leggibile.\n\n" +
+                "Preferisci il feed pubblico MMX-NET-feed (updateFeedToken vuoto).\n" +
+                "Altrimenti chiedi a Logan lo zip.";
+        }
+
+        return
+            "Feed non leggibile. updateFeedUrl tipico:\n" +
+            "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/\n" +
+            "Vedi FEED_PRIVATO_AMICI.md.";
+    }
+
+    private static bool IsFeedAuthFailure(string httpMessage)
+    {
+        var msg = httpMessage ?? "";
+        return msg.Contains("404", StringComparison.Ordinal) ||
+               msg.Contains("401", StringComparison.Ordinal) ||
+               msg.Contains("403", StringComparison.Ordinal);
     }
 
     public static async Task<CheckResult> CheckAsync(Install inst, string? feedUrl = null, CancellationToken ct = default)
@@ -51,9 +137,9 @@ public static class UpdateService
             };
         }
 
+        var token = ResolveFeedToken(inst);
         try
         {
-            var token = ResolveFeedToken(inst);
             var remote = await FetchManifestAsync(url, token, ct).ConfigureAwait(false);
             var channel = inst.GetConfigString("updateChannel", local.Channel);
             if (!string.IsNullOrWhiteSpace(channel) &&
@@ -85,20 +171,18 @@ public static class UpdateService
         }
         catch (Exception ex)
         {
-            var hint = "";
             var msg = ex.Message ?? "";
-            if (msg.Contains("401", StringComparison.Ordinal) ||
-                msg.Contains("403", StringComparison.Ordinal) ||
-                msg.Contains("404", StringComparison.Ordinal))
-            {
-                hint = " Se il feed è su repo GitHub privata: invita l'amico come collaboratore " +
-                       "e metti un PAT read-only in ac_config.json → updateFeedToken " +
-                       "(oppure env MMX_NET_UPDATE_FEED_TOKEN).";
-            }
+            var hadToken = !string.IsNullOrWhiteSpace(token);
+            var hint = BuildAuthHint(msg, hadToken);
+            // 404/401/403 su privata: messaggio guidato, senza stack tecnico lungo
+            var friendly = IsFeedAuthFailure(msg) && !string.IsNullOrEmpty(hint)
+                ? "Aggiornamenti non disponibili al momento.\n\n" + hint.TrimStart()
+                : "Check aggiornamenti non riuscito." +
+                  (string.IsNullOrEmpty(hint) ? "\n\n" + msg : "\n\n" + hint.TrimStart());
             return new CheckResult
             {
                 Ok = false,
-                Message = "Check aggiornamenti fallito: " + msg + hint,
+                Message = friendly,
                 Local = local,
             };
         }
@@ -354,7 +438,7 @@ public static class UpdateService
         try
         {
             progress?.Report("Applicazione overlay…");
-            return PackService.ApplyUpdate(inst, tmp);
+            return PackService.ApplyUpdate(inst, tmp, s => progress?.Report(s));
         }
         finally
         {
