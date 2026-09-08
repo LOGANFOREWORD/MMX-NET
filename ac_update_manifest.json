@@ -6,7 +6,7 @@
     "Engine":  "ST",
     "Notes":  "Fix bridge Steam CoP: no start orfano, Join Game = Anomaly + overlay",
     "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
-    "PackageSha256":  "51ac9940d291b0b5b42868c9a3705d972f5f0bcbb715089c7c38f966cf32b80f",
-    "PublishedUtc":  "2026-09-08T23:06:48.4315576Z",
+    "PackageSha256":  "3006e9603a42e236bdab74444dd177314c872f7cc0ba8136a9ea165daec1576b",
+    "PublishedUtc":  "2026-09-08T23:11:00.6937257Z",
     "MinLauncherVersion":  "0.1.0"
 }
