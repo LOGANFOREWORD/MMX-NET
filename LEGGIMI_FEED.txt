@@ -1,0 +1,14 @@
+MMX-Net — feed aggiornamenti
+================================
+
+URL da mettere in ac_config.json → updateFeedUrl (amici):
+https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/
+
+Repo GitHub PRIVATA:
+  1) Logan invita l'amico come Collaborator (Read) sulla repo del feed
+  2) L'amico crea un PAT fine-grained (Contents: Read) e lo mette in
+     ac_config.json → "updateFeedToken": "github_pat_…"
+     (oppure variabile d'ambiente AC_UPDATE_FEED_TOKEN — mai nel repo git)
+
+Il launcher utente all'avvio (checkUpdatesOnStart: true) mostra il popup
+se ac_update_manifest.json ha Version maggiore della locale.

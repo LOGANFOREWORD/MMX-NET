@@ -1,12 +1,12 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.1.3",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "MMX-Net rebrand UI/docs; feed LOGANFOREWORD/MMX-NET; protocol 89.",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
-    "PackageSha256":  "d2aa1a84426d218b96dc379526307ec1402afc9453f34face06f3287d2c9f250",
-    "PublishedUtc":  "2026-09-08T12:17:41.0187891Z",
-    "MinLauncherVersion":  "0.1.0"
+{
+  "Name": "MMX-Net",
+  "Version": "0.1.4",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "MMX-Net: Rework",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
+  "PackageSha256": "e9fb44a12c9d2a7920c1f78103bc69aec56af158f427f37c735fdcc4a0af3cf7",
+  "PublishedUtc": "2026-09-08T17:40:43.3520752Z",
+  "MinLauncherVersion": "0.1.0"
 }

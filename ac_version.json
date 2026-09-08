@@ -1,8 +1,8 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.1.3",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "MMX-Net rebrand UI/docs; feed LOGANFOREWORD/MMX-NET; protocol 89."
+{
+  "Name": "MMX-Net",
+  "Version": "0.1.4",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "MMX-Net: Rework"
 }
