@@ -1,8 +1,8 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.1.20",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "Fix bridge Steam CoP: no start orfano, Join Game = Anomaly + overlay"
+{
+  "Name": "MMX-Net",
+  "Version": "0.1.21",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "Fix bridge Steam CoP: no start orfano, Join Game = Anomaly \u002B overlay"
 }
