@@ -1,11 +1,11 @@
-﻿{
+{
     "Name":  "MMX-Net",
     "Version":  "0.1.2",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "MMX-Net branding; launcher MMX-Net-Launcher; HEALTH/feed fix; FeedBaseUrl anomaly-coop-updates.",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/anomaly-coop-updates/main/ac-update.zip",
+    "Notes":  "MMX-Net branding; launcher MMX-Net-Launcher; HEALTH/feed fix; FeedBaseUrl MMX-NET.",
+    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
     "PackageSha256":  "a7cd9bfe14c84bf9808445e4014e7d27c2426a3eff3ccc437286b29947d7a7cf",
     "PublishedUtc":  "2026-09-08T02:18:20.9003057Z",
     "MinLauncherVersion":  "0.1.0"

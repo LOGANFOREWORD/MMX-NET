@@ -9,10 +9,10 @@ Il launcher supporta `updateFeedToken` (header `Authorization: Bearer …`) su m
 
 ## Una tantum (Logan)
 
-1. Usa la repo privata esistente `anomaly-coop-updates` (non crearne un’altra).
+1. Usa la repo privata esistente `MMX-NET` (non crearne un’altra).
 2. Clone locale → `F:\Anomaly Coop\dist\update-feed` (`PublishTarget`).
 3. Imposta `FeedBaseUrl` a:
-   `https://raw.githubusercontent.com/LOGANFOREWORD/anomaly-coop-updates/main/`
+   `https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/`
 4. Invita gli amici: **Settings → Collaborators** (Read).
 5. PAT fine-grained (Contents: Read) condiviso in privato, o ogni amico crea il proprio.
 
@@ -26,7 +26,7 @@ In `ac_config.json` nella root MMX-Net:
 {
   "checkUpdatesOnStart": true,
   "updateChannel": "dev",
-  "updateFeedUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/anomaly-coop-updates/main/",
+  "updateFeedUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/",
   "updateFeedToken": "github_pat_…"
 }
 ```
