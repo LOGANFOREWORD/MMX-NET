@@ -1,8 +1,8 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.1.5",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "Launcher: AGGIORNA giallo post-popup; tip defer client; faction lock retry/poll; pack include peer UI"
+{
+  "Name": "MMX-Net",
+  "Version": "0.1.6",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "Launcher: AGGIORNA giallo post-popup; tip defer client; faction lock retry/poll; pack include peer UI"
 }
