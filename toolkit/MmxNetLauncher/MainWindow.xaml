@@ -1,8 +1,8 @@
-<Window x:Class="MmxNetLauncher.MainWindow"
+﻿<Window x:Class="MmxNetLauncher.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
-        Title="MMX-Net 0.1.0 — xrRazom"
+        Title="MMX-Net 0.1.0"
         Height="700" Width="1020"
         MinHeight="600" MinWidth="900"
         WindowStartupLocation="CenterScreen"
@@ -21,7 +21,7 @@
               MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
         <Grid Margin="12,0,8,0">
           <TextBlock x:Name="TitleLabel" VerticalAlignment="Center" Foreground="#FFE8C84A" FontSize="12" FontWeight="SemiBold"
-                     Text="MMX-Net — xrRazom" IsHitTestVisible="False"/>
+                     Text="MMX-Net" IsHitTestVisible="False"/>
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
             <TextBlock x:Name="SteamBadge" Foreground="{StaticResource Ok}" FontSize="11" Margin="0,0,12,0"
                        VerticalAlignment="Center" IsHitTestVisible="False"/>

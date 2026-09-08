@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Collega PublishTarget + FeedBaseUrl alla repo GitHub PRIVATA esistente anomaly-coop-updates.
+  Collega PublishTarget + FeedBaseUrl alla repo GitHub PRIVATA esistente MMX-NET.
 #>
 $ErrorActionPreference = "Stop"
 $git = "C:\Program Files\Git\cmd\git.exe"
@@ -10,7 +10,7 @@ $env:Path = "C:\Program Files\Git\cmd;C:\Program Files\GitHub CLI;" + $env:Path
 
 $toolkit = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Root = Split-Path -Parent $toolkit
-$repoName = "anomaly-coop-updates"
+$repoName = "MMX-NET"
 $cloneDir = Join-Path $Root "dist\update-feed"
 
 Write-Host "Check gh auth..."
@@ -52,7 +52,7 @@ if (-not (Test-Path (Join-Path $cloneDir ".git"))) {
 
 $readme = Join-Path $cloneDir "README.md"
 @"
-# anomaly-coop-updates
+# MMX-NET
 
 Feed privato **MMX-Net** (``ac_update_manifest.json``, ``ac_version.json``, ``ac-update.zip``).
 

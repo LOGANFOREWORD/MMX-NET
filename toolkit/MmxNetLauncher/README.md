@@ -11,8 +11,8 @@ cd "F:\Anomaly Coop\toolkit"
 .\build_ac_installer.ps1
 ```
 
-Feed: repo privata `LOGANFOREWORD/anomaly-coop-updates`  
-`FeedBaseUrl` = `https://raw.githubusercontent.com/LOGANFOREWORD/anomaly-coop-updates/main/`
+Feed: repo privata `LOGANFOREWORD/MMX-NET`  
+`FeedBaseUrl` = `https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/`
 
 Dopo CARICA: `.\push_update_feed.ps1`
 

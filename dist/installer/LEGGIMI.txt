@@ -1,25 +1,25 @@
-﻿Anomaly Coop - pacchetto installer
+﻿MMX-Net - pacchetto installer
 ==================================
 
-1. Tieni AnomalyCoop-Installer.exe e ac-overlay.zip nella STESSA cartella.
-2. Esegui AnomalyCoop-Installer.exe
-3. Crea / scegli una cartella a parte chiamata Anomaly Coop
+1. Tieni MMX-Net-Installer.exe e ac-overlay.zip nella STESSA cartella.
+2. Esegui MMX-Net-Installer.exe
+3. Crea / scegli una cartella a parte chiamata MMX-Net
    (non usare Anomaly vanilla).
-4. Se la cartella e vuota: spunta Copia da Anomaly+xrRazom esistente
-   oppure copia prima tu bin/db/gamedata/fsgame.ltx + xrRazom-release.txt.
-5. Avvia AnomalyCoop-Launcher.exe dalla cartella Anomaly Coop.
-   Il launcher usa SEMPRE la cartella dell exe (qualsiasi disco), non un path fisso.
+4. Se la cartella e vuota: spunta Copia da install Anomaly coop esistente
+   oppure copia prima tu bin/db/gamedata/fsgame.ltx + file di release protocollo.
+5. Avvia MMX-Net-Launcher.exe dalla cartella MMX-Net.
+   Il launcher usa SEMPRE la cartella dell.exe (qualsiasi disco), non un path fisso.
 
-Requisiti: Anomaly 1.5.3 + xrRazom, Steam, Call of Pripyat (41700) per inviti.
-Se HEALTH ha FATAL su DLL/script xrRazom = install incompleta (solo overlay).
+Requisiti: Anomaly 1.5.3 coop, Steam, Call of Pripyat (41700) per inviti.
+Se HEALTH ha FATAL su DLL/script coop = install incompleta (solo overlay).
 Aggiornamenti: nel launcher icona download / AGGIORNA (serve updateFeedUrl).
 
 URL feed (updateFeedUrl):
-  (dopo publish: URL pubblico di dist/update/ - vedi ac_dev_publish.json FeedBaseUrl)
+  https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/
 
 Logan (dev):
-  1) AnomalyCoop-Launcher-dev.exe -> Prepara/Pubblica (genera dist/update/)
-  2) Carica dist/update/ online (GitHub raw / itch / server)
-  3) Incolla l URL in ac_dev_publish.json -> FeedBaseUrl
+  1) MMX-Net-Launcher-dev.exe -> Prepara/Pubblica (genera dist/update/)
+  2) push_update_feed.ps1 (carica su LOGANFOREWORD/MMX-NET)
+  3) FeedBaseUrl in ac_dev_publish.json gia' settato
   4) Rebuild installer: amici nuovi ricevono updateFeedUrl gia settato
   Vedi toolkit/pack/UPDATE_FEED.md

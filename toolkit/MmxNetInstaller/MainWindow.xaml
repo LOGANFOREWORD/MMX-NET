@@ -27,7 +27,7 @@
                  Foreground="{StaticResource Text}" BorderBrush="{StaticResource Line}" FontSize="13"/>
 
         <CheckBox x:Name="CopyFromBox" Margin="0,16,0,6" Foreground="{StaticResource Text}"
-                  Content="Copia prima da un'install Anomaly+xrRazom esistente (opzionale)"/>
+                  Content="Copia prima da un'install Anomaly coop esistente (opzionale)"/>
         <TextBox x:Name="SourceBox" Height="32" Padding="8,6" Background="{StaticResource InputBg}"
                  Foreground="{StaticResource Text}" BorderBrush="{StaticResource Line}" FontSize="13"
                  IsEnabled="{Binding IsChecked, ElementName=CopyFromBox}"/>
@@ -37,7 +37,7 @@
 
         <TextBlock Text="Requisiti" Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,24,0,8"/>
         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource Muted}" FontSize="12" LineHeight="18"
-                   Text="• Anomaly 1.5.3 + xrRazom già nella cartella destinazione (o copia dalla sorgente).&#10;• Steam installato; Call of Pripyat (41700) in libreria per overlay/inviti Shift+Tab.&#10;• Questo installer NON redistribuisce db/bin Anomaly interi: applica solo overlay Coop + launcher.&#10;• Dopo l'install: avvia MMX-Net-Launcher.exe dalla cartella MMX-Net."/>
+                   Text="• Anomaly 1.5.3 coop già nella cartella destinazione (o copia dalla sorgente).&#10;• Steam installato; Call of Pripyat (41700) in libreria per overlay/inviti Shift+Tab.&#10;• Questo installer NON redistribuisce db/bin Anomaly interi: applica solo overlay Coop + launcher.&#10;• Dopo l'install: avvia MMX-Net-Launcher.exe dalla cartella MMX-Net."/>
 
         <TextBlock x:Name="StatusText" Margin="0,20,0,0" Foreground="{StaticResource Accent}" FontSize="12" TextWrapping="Wrap"/>
       </StackPanel>

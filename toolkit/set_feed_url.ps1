@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 param(
   [Parameter(Mandatory=$true)][string]$GitHubUser,
-  [string]$RepoName = "mmx-net-updates"
+  [string]$RepoName = "MMX-NET"
 )
 $ErrorActionPreference = "Stop"
 $Root = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent

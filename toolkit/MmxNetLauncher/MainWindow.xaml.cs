@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -62,7 +62,7 @@ public partial class MainWindow : Window
     private void InitDevkitUi()
     {
         DevPanel.Visibility = Visibility.Visible;
-        Title = Title.Replace("— xrRazom", "— DEVKIT");
+        Title = Title.Replace("MMX-Net", "MMX-Net DEVKIT");
         _pubCfg = PublishService.Load(_inst);
         var v = _inst.ReadVersion();
         DevVersionBox.Text = v.Version;
@@ -140,7 +140,7 @@ public partial class MainWindow : Window
         var ask = MessageBox.Show(
             "Mancano destinazioni publish.\n\n" +
             "Serve almeno uno tra:\n" +
-            "• FeedBaseUrl — URL feed (es. raw …/anomaly-coop-updates/main/)\n" +
+            "• FeedBaseUrl — URL feed (es. raw …/MMX-NET/main/)\n" +
             "• PublishTarget — clone locale del feed (poi push_update_feed.ps1)\n\n" +
             "Repo privata: amici usano updateFeedToken (PAT read-only) in ac_config.json.\n\n" +
             "Vuoi inserirli ora? (verranno salvati in ac_dev_publish.json)",
@@ -153,7 +153,7 @@ public partial class MainWindow : Window
 
         var feed = PromptSimple(
             "URL feed (updateFeedUrl amici)\n" +
-            "Es. https://raw.githubusercontent.com/LOGANFOREWORD/anomaly-coop-updates/main/\n" +
+            "Es. https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/\n" +
             "Repo privata: amici usano anche updateFeedToken. Lascia vuoto se solo sync locale.",
             DevFeedUrlBox.Text);
         if (feed == null) return false;
@@ -415,7 +415,7 @@ public partial class MainWindow : Window
 #if DEVKIT
         Title = $"MMX-Net {v.Version} — DEVKIT";
 #else
-        Title = $"MMX-Net {v.Version} — xrRazom";
+        Title = $"MMX-Net {v.Version}";
 #endif
         TitleLabel.Text = Title;
         SteamBadge.Text = SteamService.StatusText();

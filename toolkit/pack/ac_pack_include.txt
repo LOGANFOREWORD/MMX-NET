@@ -4,6 +4,9 @@
 # File assenti nella build vengono SKIP (non bloccano il pack).
 
 gamedata/configs/axr_options.ltx
+gamedata/configs/text/eng/ui_xrrazom.xml
+gamedata/configs/text/rus/ui_xrrazom.xml
+gamedata/configs/text/ukr/ui_xrrazom.xml
 
 xrRazom-release.txt
 gamedata/scripts/xrr_core.script

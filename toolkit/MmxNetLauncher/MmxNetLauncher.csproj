@@ -24,7 +24,7 @@
 
   <PropertyGroup Condition="'$(BuildFlavor)' != 'Dev'">
     <AssemblyName>MMX-Net-Launcher</AssemblyName>
-    <Product>MMX-Net — xrRazom</Product>
+    <Product>MMX-Net</Product>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(BuildFlavor)' == 'Dev'">

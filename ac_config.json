@@ -6,5 +6,5 @@
     "checkUpdatesOnStart": true,
     "updateChannel": "dev",
     "updateFeedToken": "",
-    "updateFeedUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/mmx-net-updates/main/"
+    "updateFeedUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/"
 }

@@ -41,7 +41,7 @@ public partial class MainWindow : Window
     {
         var dlg = new OpenFolderDialog
         {
-            Title = "Cartella Anomaly + xrRazom da copiare",
+            Title = "Cartella Anomaly coop da copiare",
             Multiselect = false,
         };
         if (dlg.ShowDialog() == true)
@@ -103,14 +103,14 @@ public partial class MainWindow : Window
             var incomplete = GetIncompleteBaseWarnings(dest);
             if (incomplete.Count > 0)
             {
-                StatusText.Text = "Installazione overlay OK — ATTENZIONE: base Anomaly/xrRazom incompleta.";
+                StatusText.Text = "Installazione overlay OK — ATTENZIONE: base Anomaly coop incompleta.";
                 MessageBox.Show(
                     "Overlay installato in:\n" + dest +
                     "\n\nATTENZIONE — install incompleta (mancano pezzi della base):\n• " +
                     string.Join("\n• ", incomplete) +
-                    "\n\nServe Anomaly 1.5.3 + xrRazom nella stessa cartella MMX-Net " +
-                    "(bin + gamedata + xrRazom-release.txt).\n" +
-                    "Rilancia l'Installer con «Copia da Anomaly+xrRazom» oppure copia quelle cartelle, " +
+                    "\n\nServe Anomaly 1.5.3 coop completa nella stessa cartella MMX-Net " +
+                    "(bin + gamedata + file di release protocollo).\n" +
+                    "Rilancia l'Installer con «Copia da install esistente» oppure copia quelle cartelle, " +
                     "poi HEALTH nel launcher non deve avere FATAL.",
                     "MMX-Net — base mancante",
                     MessageBoxButton.OK,
@@ -118,12 +118,12 @@ public partial class MainWindow : Window
             }
 
             StatusText.Text = incomplete.Count > 0
-                ? "Overlay OK — completa la base Anomaly+xrRazom prima di giocare."
+                ? "Overlay OK — completa la base Anomaly coop prima di giocare."
                 : "Installazione completata.";
             var launch = MessageBox.Show(
                 "Overlay MMX-Net installato in:\n" + dest +
                 (incomplete.Count > 0
-                    ? "\n\n(Base ancora incompleta — HEALTH segnalerà FATAL finché non copi Anomaly+xrRazom.)"
+                    ? "\n\n(Base ancora incompleta — HEALTH segnalerà FATAL finché non copi la base Anomaly coop.)"
                     : "") +
                 "\n\nAprire il launcher ora?",
                 "MMX-Net",
@@ -229,14 +229,14 @@ public partial class MainWindow : Window
 
             Requisiti
             ---------
-            - Anomaly 1.5.3 + xrRazom nella stessa cartella (bin, db, gamedata, fsgame.ltx, xrRazom-release.txt)
+            - Anomaly 1.5.3 coop nella stessa cartella (bin, db, gamedata, fsgame.ltx, file di release protocollo)
             - Steam + Call of Pripyat (App ID 41700) per Shift+Tab / inviti
             - Stessa versione pack (ac_version.json) su tutti i PC
             - Il launcher usa la cartella dell'exe (qualsiasi disco), non un path fisso
 
-            Se HEALTH segnala FATAL su steam_api64 / GameNetworkingSockets / script xrr_* /
-            xrRazom-release.txt: l'install e' incompleta (solo overlay). Usa
-            «Copia da Anomaly+xrRazom» nell'Installer oppure copia quelle cartelle.
+            Se HEALTH segnala FATAL su steam_api64 / GameNetworkingSockets / script coop /
+            file di release protocollo: l'install e' incompleta (solo overlay). Usa
+            «Copia da install esistente» nell'Installer oppure copia quelle cartelle.
 
             Avvio
             -----

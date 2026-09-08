@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text.RegularExpressions;
 
 namespace MmxNetLauncher;
@@ -20,7 +20,7 @@ public sealed class HealthReport
 
 public static class HealthCheckService
 {
-    private static readonly string[] RazomScripts =
+    private static readonly string[] CoopScripts =
     {
         @"scripts\xrr_core.script",
         @"scripts\xrr_net_client.script",
@@ -35,14 +35,14 @@ public static class HealthCheckService
     };
 
     public const string IncompleteBaseHint =
-        "Serve base Anomaly 1.5.3 + xrRazom nella stessa cartella MMX-Net " +
-        "(bin + gamedata + xrRazom-release.txt). Usa Installer con Copia da Anomaly+xrRazom " +
+        "Serve base Anomaly 1.5.3 coop completa nella stessa cartella MMX-Net " +
+        "(bin + gamedata + file di release protocollo). Usa Installer con «Copia da install esistente» " +
         "oppure copia quelle cartelle. L'overlay da solo non basta.";
 
     // MMX-Net: messaggio chiaro su fingerprint desync (join rifiutato)
     public const string FingerprintHint =
         "Fingerprint config/spawn diverso tra PC = join rifiutato. Tutti devono avere " +
-        "stesso pack MMX-Net (stessa versione overlay) e stessa base Anomaly+xrRazom.";
+        "stesso pack MMX-Net (stessa versione overlay) e stessa base Anomaly coop.";
 
     public static HealthReport Run(Install inst)
     {
@@ -72,37 +72,37 @@ public static class HealthCheckService
                 ? "steam_appid anche in root (cwd)"
                 : "steam_appid root assente — lo scrive il PLAY");
 
-        var missingNetOrRazom = false;
+        var missingNetOrCoop = false;
         foreach (var dll in NetStack)
         {
             var p = Path.Combine(inst.Bin, dll);
             var ok = File.Exists(p);
-            if (!ok) missingNetOrRazom = true;
+            if (!ok) missingNetOrCoop = true;
             Add(CheckSev.Fatal, ok,
-                ok ? "bin\\" + dll : "bin\\" + dll + " MANCANTE — base Anomaly/xrRazom incompleta");
+                ok ? "bin\\" + dll : "bin\\" + dll + " MANCANTE — base Anomaly coop incompleta");
         }
 
-        foreach (var rel in RazomScripts)
+        foreach (var rel in CoopScripts)
         {
             var p = Path.Combine(inst.Gamedata, rel);
             var ok = File.Exists(p);
-            if (!ok) missingNetOrRazom = true;
+            if (!ok) missingNetOrCoop = true;
             Add(CheckSev.Fatal, ok,
-                ok ? "xrRazom: " + rel : "xrRazom MANCANTE: " + rel);
+                ok ? "coop: " + rel : "coop MANCANTE: " + rel);
         }
 
         var protoOk = false;
-        var protoMsg = "xrRazom-release.txt assente";
+        var protoMsg = "file di release protocollo assente";
         if (File.Exists(inst.RazomRelease))
         {
             var txt = File.ReadAllText(inst.RazomRelease);
             protoOk = Regex.IsMatch(txt, @"protocol\s+89", RegexOptions.IgnoreCase);
-            protoMsg = protoOk ? "protocol 89 (xrRazom 1.3)" : "protocol NON 89 — amici sullo stesso bundle";
+            protoMsg = protoOk ? "protocol 89 (MMX-Net)" : "protocol NON 89 — amici sullo stesso bundle";
         }
-        else missingNetOrRazom = true;
+        else missingNetOrCoop = true;
         Add(CheckSev.Fatal, File.Exists(inst.RazomRelease) && protoOk, protoMsg);
 
-        if (missingNetOrRazom)
+        if (missingNetOrCoop)
             Add(CheckSev.Fatal, false, "Install incompleta: " + IncompleteBaseHint);
 
         var ver = inst.ReadVersion();

@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="windows-1251" ?>
+﻿<?xml version="1.0" encoding="windows-1251" ?>
 
 <!--
-	xrRazom: currency-unit overrides for string ids owned by third-party mods.
+	MMX-Net: currency-unit overrides for string ids owned by third-party mods.
 
 	Keep the text in sync with st_xrr_currency (ui_xrrazom.xml) - a string table
 	cannot reference another entry, so the unit is spelled out again here.

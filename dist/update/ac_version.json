@@ -1,8 +1,8 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.1.2",
+    "Version":  "0.1.3",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "MMX-Net branding; launcher MMX-Net-Launcher; HEALTH/feed fix; FeedBaseUrl anomaly-coop-updates."
+    "Notes":  "MMX-Net rebrand UI/docs; feed LOGANFOREWORD/MMX-NET; protocol 89."
 }

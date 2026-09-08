@@ -1,5 +1,5 @@
-<w>
-	<!-- xrRazom co-op chat: input line only. History/overlay is drawn by C++
+﻿<w>
+	<!-- MMX-Net co-op chat: input line only. History/overlay is drawn by C++
 	     (xrr_render_chat) on the left; this edit box sits just below that block.
 	     y must track the C++ `bottom` anchor (0.60 * height): 0.60 * 768 ~= 461. -->
 	<input x="15" y="462" width="520" height="24" max_symb_count="200">

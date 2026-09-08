@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 
 namespace MmxNetLauncher;
@@ -223,7 +223,7 @@ public sealed class Install
     {
         var v = ReadVersion();
         var xrr = File.Exists(Path.Combine(Gamedata, "scripts", "xrr_core.script"));
-        return $"{v.Name} {v.Version} · xrRazom {(xrr ? "OK" : "MANCANTE")} · {v.Channel}";
+        return $"{v.Name} {v.Version} · coop {(xrr ? "OK" : "MANCANTE")} · {v.Channel}";
     }
 }
 
@@ -234,6 +234,6 @@ public sealed class PackVersion
     public string Channel { get; set; } = "dev";
     public string Protocol { get; set; } = "89";
     public string Engine { get; set; } = "ST";
-    public string Notes { get; set; } = "Anomaly 1.5.3 + xrRazom 1.3 Steam P2P (MMX-Net).";
+    public string Notes { get; set; } = "Anomaly 1.5.3 Steam P2P (MMX-Net).";
     public static PackVersion Default => new();
 }

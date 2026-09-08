@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -26,7 +26,7 @@ public sealed class GameService
         if (stripDebug)
             ApplyFriendsProfile();
         ApplyCoopSafeOptions();
-        ApplyXrRazomNetMode(steam, asHost);
+        ApplyMmxNetMode(steam, asHost);
 
         if (!steam)
             throw new InvalidOperationException(
@@ -36,7 +36,7 @@ public sealed class GameService
         return SteamService.LaunchAnomalyAsCallOfPripyat(exe, argList, _inst.Root, _inst);
     }
 
-    public void ApplyXrRazomNetMode(bool steam, bool asHost)
+    public void ApplyMmxNetMode(bool steam, bool asHost)
     {
         var path = Path.Combine(_inst.AppData, "user.ltx");
         if (!File.Exists(path)) return;

@@ -8,7 +8,7 @@ Il launcher legge `updateFeedUrl` da `ac_config.json` e confronta la versione re
 {
   "checkUpdatesOnStart": true,
   "updateChannel": "dev",
-  "updateFeedUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/anomaly-coop-updates/main/",
+  "updateFeedUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/",
   "updateFeedToken": ""
 }
 ```
@@ -23,7 +23,7 @@ Dopo publish, `FeedBaseUrl` in `ac_dev_publish.json` bake `updateFeedUrl` nel te
 
 ### Repo GitHub privata
 
-1. Usa la repo esistente **`anomaly-coop-updates`** (solo feed: manifest + zip).
+1. Usa la repo esistente **`MMX-NET`** (prodotto + feed: source overlay, toolkit, manifest + zip).
 2. Logan invita gli amici come **Collaborators** (Read).
 3. Ogni amico crea un PAT fine-grained (Contents: Read) → `updateFeedToken`.
 4. Dopo **CARICA AGGIORNAMENTO**, Logan esegue `toolkit\push_update_feed.ps1`.
@@ -46,7 +46,7 @@ Vedi `toolkit/pack/FEED_GITHUB_PRIVATO.md`.
   "Protocol": "89",
   "Engine": "ST",
   "Notes": "…",
-  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/anomaly-coop-updates/main/ac-update.zip",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
   "PackageSha256": "",
   "PublishedUtc": "2026-09-08T00:00:00.0000000Z",
   "MinLauncherVersion": "0.1.0"

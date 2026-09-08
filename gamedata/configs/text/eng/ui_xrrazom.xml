@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="windows-1251"?>
+﻿<?xml version="1.0" encoding="windows-1251"?>
 <string_table>
 	<string id="ui_xrr_connect">
 		<text>Connect to Session</text>
@@ -19,13 +19,13 @@
 		<text>Your mods don't match the host's. Check the log (appdata\logs) for the list of differing files. Both players must run the same modpack.</text>
 	</string>
 	<string id="ui_xrr_version_mismatch">
-		<text>Your xrRazom version doesn't match the host's. Both players must run the same version.</text>
+		<text>Your MMX-Net version doesn't match the host's. Both players must run the same version.</text>
 	</string>
 	<string id="ui_xrr_world_mismatch">
 		<text>Your game world doesn't match the host's. The two installs were built from different spawn data, so the same object would have different IDs on each machine. Both players must run the same game build.</text>
 	</string>
 	<string id="ui_xrr_duplicate_identity">
-		<text>Your install has the same network identity as the host's. This happens when one install was copied from the other. Delete appdata\xrrazom_lan_id.bin in your game folder and restart — a new identity is generated automatically.</text>
+		<text>Your install has the same network identity as the host's. This happens when one install was copied from the other. Delete the LAN identity file in appdata (name ends with _lan_id.bin) in your game folder and restart — a new identity is generated automatically.</text>
 	</string>
 	<string id="ui_xrr_connection_lost">
 		<text>Connection to host was lost</text>
@@ -114,7 +114,7 @@
 
 	<!-- Keybinding (Controls options screen) -->
 	<string id="kb_grp_xrrazom">
-		<text>xrRazom Co-op</text>
+		<text>MMX-Net Co-op</text>
 	</string>
 	<string id="kb_xrr_tag">
 		<text>Place / remove ping tag</text>
@@ -125,15 +125,15 @@
 
 	<!-- Peer faction screen -->
 	<string id="ui_xrr_name_options_hint">
-		<text>Change in Options -> xrRazom</text>
+		<text>Change in Options -> MMX-Net</text>
 	</string>
 	<string id="ui_xrr_coop_options">
 		<text>Co-op Options</text>
 	</string>
 
-	<!-- Options -> xrRazom. Caption id is ui_mm_xrrazom_<page>_<option>, hover text the same + _desc. -->
+	<!-- Options -> MMX-Net. Caption ids remain ui_mm_xrrazom_* (engine). -->
 	<string id="ui_mm_menu_xrrazom">
-		<text>xrRazom Co-op</text>
+		<text>MMX-Net Co-op</text>
 	</string>
 	<string id="ui_mm_menu_xrr_player">
 		<text>Player</text>
@@ -183,13 +183,13 @@
 		<text>Ping tag lifetime (s)</text>
 	</string>
 	<string id="ui_mm_xrrazom_xrr_player_tag_duration_desc">
-		<text>How long your ping tag stays visible to everyone. Bind the ping key in Options -> Controls (xrRazom Co-op).</text>
+		<text>How long your ping tag stays visible to everyone. Bind the ping key in Options -> Controls (MMX-Net Co-op).</text>
 	</string>
 	<string id="ui_mm_xrrazom_xrr_player_chat_enable">
 		<text>Text chat</text>
 	</string>
 	<string id="ui_mm_xrrazom_xrr_player_chat_enable_desc">
-		<text>Enable the in-game co-op text chat. Bind the chat key in Options -> Controls (xrRazom Co-op); press it to open the input box. Messages appear bottom-left for everyone in the session.</text>
+		<text>Enable the in-game co-op text chat. Bind the chat key in Options -> Controls (MMX-Net Co-op); press it to open the input box. Messages appear bottom-left for everyone in the session.</text>
 	</string>
 	<string id="ui_mm_xrrazom_xrr_player_chat_sound">
 		<text>Chat sound</text>
