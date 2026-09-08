@@ -1,10 +1,10 @@
 {
-    "useSteam":  true,
-    "friendsProfile":  true,
-    "autoUpdateGame":  false,
-    "preferDirectSteam":  false,
-    "checkUpdatesOnStart":  true,
-    "updateChannel":  "dev",
-    "updateFeedToken":  "",
-    "updateFeedUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/anomaly-coop-updates/main/"
+  "useSteam": true,
+  "friendsProfile": true,
+  "autoUpdateGame": false,
+  "preferDirectSteam": false,
+  "checkUpdatesOnStart": true,
+  "updateChannel": "dev",
+  "updateFeedToken": "",
+  "updateFeedUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/mmx-net-updates/main/"
 }
