@@ -1,12 +1,12 @@
-{
-  "Name": "MMX-Net",
-  "Version": "0.1.21",
-  "Channel": "dev",
-  "Protocol": "89",
-  "Engine": "ST",
-  "Notes": "Fix bridge Steam CoP: no start orfano, Join Game = Anomaly \u002B overlay",
-  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
-  "PackageSha256": "c715a1756c34b96c5fe94511e2c62918ade1b891b8dfb4286becda3685dfab81",
-  "PublishedUtc": "2026-09-08T23:28:07.0090001Z",
-  "MinLauncherVersion": "0.1.0"
+﻿{
+    "Name":  "MMX-Net",
+    "Version":  "0.1.21",
+    "Channel":  "dev",
+    "Protocol":  "89",
+    "Engine":  "ST",
+    "Notes":  "Fix bridge Steam CoP: no start orfano, Join Game = Anomaly + overlay",
+    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
+    "PackageSha256":  "9651cc6127d060f982a5e787d25c4f9275ecfdc92e4942f65345b7a6dd9b05d1",
+    "PublishedUtc":  "2026-09-08T23:47:19.0877424Z",
+    "MinLauncherVersion":  "0.1.0"
 }
