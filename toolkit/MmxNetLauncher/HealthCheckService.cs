@@ -36,7 +36,7 @@ public static class HealthCheckService
 
     public const string IncompleteBaseHint =
         "Serve base Anomaly 1.5.3 + xrRazom nella stessa cartella MMX-Net " +
-        "(bin + gamedata + xrRazom-release.txt). Usa Installer con "Copia da Anomaly+xrRazom" +
+        "(bin + gamedata + xrRazom-release.txt). Usa Installer con Copia da Anomaly+xrRazom " +
         "oppure copia quelle cartelle. L'overlay da solo non basta.";
 
     // MMX-Net: messaggio chiaro su fingerprint desync (join rifiutato)
