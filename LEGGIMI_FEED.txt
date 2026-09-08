@@ -1,20 +1,19 @@
-MMX-Net - feed aggiornamenti (PUBBLICO)
+MMX-Net — feed aggiornamenti
+================================
 
-Repo: https://github.com/LOGANFOREWORD/MMX-NET
-(pubblica per raw update; write solo owner LOGANFOREWORD)
-
-L amico NON deve clonare la repo: usa installer/zip oppure popup AGGIORNA.
-Dopo l install, gli aggiornamenti partono dal launcher senza PAT.
-
-updateFeedUrl (ac_config.json):
+URL da mettere in ac_config.json → updateFeedUrl (amici):
 https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/
 
-updateFeedToken: lasciare vuoto
-Token forever / PAT nello zip: NON serve.
+Repo PUBBLICA MMX-NET: nessun PAT.
+  Un token «che non scade mai» NON serve e NON va messo nello zip.
+  Write solo owner LOGANFOREWORD.
+  Dopo CARICA: push automatico se PublishTarget e' il clone feed,
+  oppure toolkit\push_update_feed.ps1
 
-Install vecchi su MMX-NET: il launcher migra a MMX-NET all avvio.
+Launcher: se updateFeedUrl punta ancora a MMX-NET-feed,
+all'avvio migra a MMX-NET e salva ac_config.
 
-File feed in root repo:
-- ac_version.json
-- ac_update_manifest.json
-- ac-update.zip
+Solo LOGANFOREWORD puo' pushare. Vedi FEED_PRIVATO_AMICI.md
+
+Il launcher utente all'avvio (checkUpdatesOnStart: true) mostra il popup
+se ac_update_manifest.json ha Version maggiore della locale.
