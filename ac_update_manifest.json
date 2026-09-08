@@ -1,12 +1,12 @@
-{
-  "Name": "MMX-Net",
-  "Version": "0.1.6",
-  "Channel": "dev",
-  "Protocol": "89",
-  "Engine": "ST",
-  "Notes": "Launcher: AGGIORNA giallo post-popup; tip defer client; faction lock retry/poll; pack include peer UI",
-  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
-  "PackageSha256": "ab6f1d01efc0a09615bf6032b2afd1039151c9e8ae784fc430a184138ff0ad39",
-  "PublishedUtc": "2026-09-08T18:40:00.5395144Z",
-  "MinLauncherVersion": "0.1.0"
+﻿{
+    "Name":  "MMX-Net",
+    "Version":  "0.1.7",
+    "Channel":  "dev",
+    "Protocol":  "89",
+    "Engine":  "ST",
+    "Notes":  "Cleanup legacy AnomalyCoop-* dopo Apply Update e a fine Installer",
+    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
+    "PackageSha256":  "2194a5cd14c6474fb355ceab0fd7b96487abd01f4676bf8507526c88879b73ee",
+    "PublishedUtc":  "2026-09-08T18:47:56.9618203Z",
+    "MinLauncherVersion":  "0.1.0"
 }
