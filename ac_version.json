@@ -1,0 +1,8 @@
+{
+    "Name":  "MMX-Net",
+    "Version":  "0.1.13",
+    "Channel":  "dev",
+    "Protocol":  "89",
+    "Engine":  "ST",
+    "Notes":  "Feed pubblico MMX-NET; update senza PAT; write solo owner"
+}
