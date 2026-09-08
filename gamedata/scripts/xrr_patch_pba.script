@@ -1,0 +1,102 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+  Разом нас багато. (Together we are many.)
+
+  Perk-Based Artefacts (GAMMA Artefacts Reinvention) opt-outs from
+  xrr_patch_common's before-hit identity swap. Two player-personal surfaces:
+
+  1. npc_/monster_on_before_hit — process_artefacts iterates the LOCAL player's
+     equipped perks and passes the draftsman in as `actor`, so a peer's hit would
+     proc host perks and mutate the AVATAR's mirrored items.
+  2. af_moh invisibility — a peer's hit would break the HOST's invisibility. That
+     closure is minted inside the perk activator, out of reach of the registry,
+     so both activators are rebuilt here with one added early return.
+     ⚠ A rebuild is a copy of mod code: a PBA change to the perk's duration,
+     per-tick effect or teardown will NOT be picked up. Re-check when GAMMA moves.
+]]
+
+local function is_peer_hit(shit)
+    local drafts = shit and shit.draftsman
+    return drafts ~= nil and XrrPlayers():IsPlayerDummy(drafts:id())
+end
+
+-- One af_moh invisibility perk, rebuilt guarded. `effect` is its per-tick body,
+-- the sole difference between the krovosos and psysucker entries upstream.
+local function moh_invisibility(effect)
+    return function(self, actor)
+        local pba = perk_based_artefacts
+
+        local function ignore_enemy(obj, enemy, flags)
+            if enemy:id() == AC_ID then
+                flags.override = true
+                flags.result = false
+            end
+        end
+
+        local function enable_enemy()
+            UnregisterScriptCallback("on_enemy_eval", ignore_enemy)
+            pba.remove_status_effect("af_moh_invisibility")
+        end
+
+        local function enable_enemy_on_hit(obj, s_hit)
+            if is_peer_hit(s_hit) then return end
+            if s_hit.draftsman:id() == AC_ID then
+                enable_enemy()
+            end
+        end
+
+        self:register("on_enemy_eval", ignore_enemy)
+        RegisterScriptCallback("actor_on_weapon_fired", enable_enemy)
+        RegisterScriptCallback("monster_on_before_hit", enable_enemy_on_hit)
+        RegisterScriptCallback("npc_on_before_hit", enable_enemy_on_hit)
+        pba.add_status_effect(60, nil, "af_moh_invisibility")
+
+        self:add_effect(function()
+            effect(actor)
+        end, function()
+            UnregisterScriptCallback("actor_on_weapon_fired", enable_enemy)
+            UnregisterScriptCallback("monster_on_before_hit", enable_enemy_on_hit)
+            UnregisterScriptCallback("npc_on_before_hit", enable_enemy_on_hit)
+            pba.remove_status_effect("af_moh_invisibility")
+        end)
+    end
+end
+
+local function decline_peer_hits(name)
+    local orig = perk_based_artefacts[name]
+    if type(orig) ~= "function" then
+        log("[xrRazom][pba] perk_based_artefacts." .. name .. " missing — not opted out")
+        return
+    end
+    local function wrapped(victim, s_hit, bone_id, flags)
+        if is_peer_hit(s_hit) then return end
+        return orig(victim, s_hit, bone_id, flags)
+    end
+    -- The registry keys on the function VALUE; the module-field write is inert.
+    perk_based_artefacts[name] = wrapped
+    UnregisterScriptCallback(name, orig)
+    RegisterScriptCallback(name, wrapped)
+end
+
+local function guard_moh_invisibility()
+    local props = perk_based_artefacts.artefact_props
+    props = props and props.af_moh
+    if not (props and props.mutant_part_krovosos_meat and props.mutant_part_psysucker_meat) then
+        log("[xrRazom][pba] af_moh invisibility perks missing — not opted out")
+        return
+    end
+    props.mutant_part_krovosos_meat = moh_invisibility(function(actor)
+        actor.bleeding = 0.003
+    end)
+    props.mutant_part_psysucker_meat = moh_invisibility(function()
+        perk_based_artefacts.change_psy_health(0.005)
+    end)
+end
+
+function on_game_start()
+    if not perk_based_artefacts then return end
+    decline_peer_hits("npc_on_before_hit")
+    decline_peer_hits("monster_on_before_hit")
+    guard_moh_invisibility()
+    log("[xrRazom][pba] perk procs: peer hits declined")
+end

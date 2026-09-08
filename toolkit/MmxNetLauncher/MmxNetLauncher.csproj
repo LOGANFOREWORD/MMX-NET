@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>MmxNetLauncher</RootNamespace>
+    <Company>MMX-Net</Company>
+    <Authors>MMX-Net</Authors>
+    <Version>0.1.0</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
+    <!-- User (default) | Dev -->
+    <BuildFlavor Condition="'$(BuildFlavor)' == ''">User</BuildFlavor>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(BuildFlavor)' != 'Dev'">
+    <AssemblyName>MMX-Net-Launcher</AssemblyName>
+    <Product>MMX-Net — xrRazom</Product>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(BuildFlavor)' == 'Dev'">
+    <AssemblyName>MMX-Net-Launcher-dev</AssemblyName>
+    <Product>MMX-Net Devkit</Product>
+    <DefineConstants>$(DefineConstants);DEVKIT</DefineConstants>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,12 @@
+﻿{
+    "Name":  "Anomaly Coop",
+    "Version":  "0.1.1",
+    "Channel":  "dev",
+    "Protocol":  "89",
+    "Engine":  "ST",
+    "Notes":  "Path auto da cartella exe; HEALTH chiaro se manca base Anomaly+xrRazom; pack ripara script/DLL minimi; feed update.",
+    "PackageUrl":  "ac-update.zip",
+    "PackageSha256":  "37249faaaef16acd81c519899a1f11b4dfa8d575228ede2190686d72defda4ba",
+    "PublishedUtc":  "2026-09-07T21:17:52.1348886Z",
+    "MinLauncherVersion":  "0.1.0"
+}

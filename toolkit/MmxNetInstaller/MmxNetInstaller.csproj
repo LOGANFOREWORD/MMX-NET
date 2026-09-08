@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>MMX-Net-Installer</AssemblyName>
+    <RootNamespace>MmxNetInstaller</RootNamespace>
+    <Product>MMX-Net Installer</Product>
+    <Company>MMX-Net</Company>
+    <Authors>MMX-Net</Authors>
+    <Version>0.1.0</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,25 @@
+﻿Anomaly Coop - pacchetto installer
+==================================
+
+1. Tieni AnomalyCoop-Installer.exe e ac-overlay.zip nella STESSA cartella.
+2. Esegui AnomalyCoop-Installer.exe
+3. Crea / scegli una cartella a parte chiamata Anomaly Coop
+   (non usare Anomaly vanilla).
+4. Se la cartella e vuota: spunta Copia da Anomaly+xrRazom esistente
+   oppure copia prima tu bin/db/gamedata/fsgame.ltx + xrRazom-release.txt.
+5. Avvia AnomalyCoop-Launcher.exe dalla cartella Anomaly Coop.
+   Il launcher usa SEMPRE la cartella dell exe (qualsiasi disco), non un path fisso.
+
+Requisiti: Anomaly 1.5.3 + xrRazom, Steam, Call of Pripyat (41700) per inviti.
+Se HEALTH ha FATAL su DLL/script xrRazom = install incompleta (solo overlay).
+Aggiornamenti: nel launcher icona download / AGGIORNA (serve updateFeedUrl).
+
+URL feed (updateFeedUrl):
+  (dopo publish: URL pubblico di dist/update/ - vedi ac_dev_publish.json FeedBaseUrl)
+
+Logan (dev):
+  1) AnomalyCoop-Launcher-dev.exe -> Prepara/Pubblica (genera dist/update/)
+  2) Carica dist/update/ online (GitHub raw / itch / server)
+  3) Incolla l URL in ac_dev_publish.json -> FeedBaseUrl
+  4) Rebuild installer: amici nuovi ricevono updateFeedUrl gia settato
+  Vedi toolkit/pack/UPDATE_FEED.md

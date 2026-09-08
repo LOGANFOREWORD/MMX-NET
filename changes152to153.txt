@@ -1,0 +1,139 @@
+
+*******************************************************************
+S.T.A.L.K.E.R. Anomaly changes in version 1.5.3 since version 1.5.2
+*******************************************************************
+
+====
+GAME
+====
+
+Changes
+-------
+
+- Added button to main menu to open the GSC website page for the original games in the web browser
+- Added disclaimer message to the main menu
+- Added MOTY 2022 logo to the main menu
+- Moved and repackaged UI textures in their own .db0 file
+
+Fixes
+-----
+
+- Fixed anisotropic filtering option not applying when setting the slider to the lowest value
+- Fixed weapon stuck in idle animation when attaching a grenade launcher to a Scar
+- Disabled the RPM animation fix for a few weapons that have bad shot animations
+- Set max FOV to 140 in Graphics options, 180 causes render issues
+- Fixed loot chances for higher ranked stalkers
+- Fixed an issue with handling the ESC key in the pause menu
+- Fixed nil reference issue in sim_squad_scripted:get_script_target()
+- Reduced damage from fire anomalies
+- Reduced weight of the PFM-1 mine
+- Blacklisted some stashes that are broken or can't be reached
+- Fixed weapon position for G3SG1, SR25, and TRG42
+- Fixed psy damage when in cover during an emission
+- Fixed potential issue in the move function for weapons
+- Fixed quest "Scanning Field"
+- Fixed quest "Unquenchable Flame"
+- Fixed issue with emissions when failing the "Barrier Defense" task
+- Fixed potential crash when moving items in the inventory
+- Fixed some widescreen related issues with rotated icons
+
+Modders
+-------
+
+- Added new callbacks: actor_on_before_throwable_select; on_before_key_release; on_before_key_hold; bullet_on_hit
+- Added a new callback to adjust npc shot dispersion "npc_shot_dispersion"
+
+======
+ENGINE
+======
+
+Changes
+-------
+
+- Added lua function to open the link to the GSC website (page for original games) in the web browser
+- Increased chance of bullet ricochet
+
+Fixes
+-----
+
+- Fixed floating shells in shotgun reload animations
+- Fixed invisible player hands after switching to third person and back
+- Fixed jittery weapon in npc hands / third person
+- Old OGF Motion Refs now support wildcard omf loading (Blender exported OGFs)
+- Weapon shot animation length no longer depends on weapon RPM
+- Fixed RPG7 and RG6 reload animation blending
+- Updated Monolith Engine version and fixed a potential crash issue related to certain obstacles (doors)
+- Weapon RPM animation fix no longer slows down shotgun firing
+- Fixed some visual glitches for particles
+
+Modders
+-------
+
+- Added script callback to modify which item the player switches to after throwing a bolt or grenade
+- Added a callback for bullet hits (on objects and level geometry)
+- Added before key hold and release callbacks, before key press callback now blocks scripted key inputs
+- Added level.add_bullet() function to spawn shots
+- Improved force_set_position function and added force_set_rotation
+- It's now possible to play script particle effects in hud mode :play(true) :play_at_pos(pos, true)
+- Added a new config bool "rpm_anim_fix" which can be set to false to restore old shot animation behavior for certain weapons, if the value doesn't exist it will default to true
+- Added a new callback to adjust npc fire dispersion
+
+=====
+FILES
+=====
+
+Any addon that includes any of the following files will not
+work with version 1.5.3 of Anomaly and needs to be updated!
+-----------------------------------------------------------
+
+bin\AnomalyDX10.exe
+bin\AnomalyDX10AVX.exe
+bin\AnomalyDX11.exe
+bin\AnomalyDX11AVX.exe
+bin\AnomalyDX8.exe
+bin\AnomalyDX8AVX.exe
+bin\AnomalyDX9.exe
+bin\AnomalyDX9AVX.exe
+bin\VerifiedDX11.exe
+db\configs\configs.db0
+db\configs\scripts.db0
+db\meshes\meshes_weapons.db0
+db\textures\textures.db0
+db\textures\textures.db3
+db\textures\textures.db4
+gamedata\configs\creatures\actor.ltx
+gamedata\configs\items\items\items_explosives_new_mines.ltx
+gamedata\configs\items\settings\treasure_manager.ltx
+gamedata\configs\items\weapons\w_ak101.ltx
+gamedata\configs\items\weapons\w_ak74.ltx
+gamedata\configs\items\weapons\w_ash12.ltx
+gamedata\configs\items\weapons\w_fn2000.ltx
+gamedata\configs\items\weapons\w_fnc.ltx
+gamedata\configs\items\weapons\w_g3sg1.ltx
+gamedata\configs\items\weapons\w_sr25.ltx
+gamedata\configs\items\weapons\w_trg.ltx
+gamedata\configs\items\weapons\w_vityaz.ltx
+gamedata\configs\text\eng\_game_version.xml
+gamedata\configs\text\eng\ui_st_loadscreen.xml
+gamedata\configs\text\eng\ui_st_options.xml
+gamedata\configs\text\rus\_game_version.xml
+gamedata\configs\text\rus\ui_st_loadscreen.xml
+gamedata\configs\text\rus\ui_st_options.xml
+gamedata\configs\ui\ui_mm_main_16.xml
+gamedata\meshes\anomaly_weapons\hud_hands_animation\wpn_hand_val_hud_animation.omf
+gamedata\scripts\arszi_psy.script
+gamedata\scripts\_g.script
+gamedata\scripts\axr_main.script
+gamedata\scripts\item_weapon.script
+gamedata\scripts\level_input.script
+gamedata\scripts\sim_squad_scripted.script
+gamedata\scripts\task_functor.script
+gamedata\scripts\task_status_functor.script
+gamedata\scripts\tasks_anomaly_scanner.script
+gamedata\scripts\tasks_defense.script
+gamedata\scripts\ui_inventory.script
+gamedata\scripts\ui_main_menu.script
+gamedata\scripts\ui_options.script
+gamedata\scripts\utils_stpk.script
+gamedata\scripts\utils_ui.script
+gamedata\scripts\xr_motivator.script

@@ -1,0 +1,64 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+  Разом нас багато. (Together we are many.)
+
+  Module: Workshop / Cooking / Repair — peer-side gate lifting for
+  UIWorkshopCraft:Craft, UIWorkshopRepair:Repair and UICook:OnCook.
+
+  Both machines run the same chain; the peer only needs the client-create and
+  release-ownership gates opened around it.
+]]
+
+-- Bound in on_game_start(), never at file scope: only by then has axr_main loaded
+-- every script, so these capture the last link of a mod's monkey-patch chain (the
+-- convention installs from `zz*`, after `xrr_*`).
+local _orig_workshop_craft, _orig_workshop_repair, _orig_cook
+local _applied
+
+-- Run the chain on the peer with both gates open, so its alife_create_item and
+-- alife_release mean there what they mean on the host.
+local function run_peer_chain(fn, self)
+    XrrNet():SetClientCreateBypass(true)
+    xrr_set_release_forwarding(true)
+    local ok, err = pcall(fn, self)
+    xrr_set_release_forwarding(false)
+    XrrNet():SetClientCreateBypass(false)
+    if not ok then printe("[xrr_patch_workshop] peer chain failed: %s", tostring(err)) end
+end
+
+-- No Lua caller: the engine calls this when the host serves a peer's LOOK into a
+-- container or trader. The id must be a live inventory item — evaluate_parts
+-- reads obj:condition() unguarded.
+function xrr_evaluate_parts_for_capture(id)
+    local obj = level.object_by_id(id)
+    if obj then item_parts.evaluate_parts(obj) end
+end
+_G.xrr_evaluate_parts_for_capture = xrr_evaluate_parts_for_capture
+
+function on_game_start()
+    -- Re-entry would rebind the originals to our own overrides, a link per load.
+    if _applied then return end
+    _applied = true
+
+    _orig_workshop_craft  = ui_workshop.UIWorkshopCraft.Craft
+    _orig_workshop_repair = ui_workshop.UIWorkshopRepair.Repair
+    _orig_cook            = item_cooking.UICook.OnCook
+
+    function ui_workshop.UIWorkshopCraft:Craft()
+        if XrrIsHost() then return _orig_workshop_craft(self) end
+        run_peer_chain(_orig_workshop_craft, self)
+    end
+
+    function ui_workshop.UIWorkshopRepair:Repair()
+        if XrrIsHost() then return _orig_workshop_repair(self) end
+        run_peer_chain(_orig_workshop_repair, self)
+    end
+
+    function item_cooking.UICook:OnCook()
+        if XrrIsHost() then return _orig_cook(self) end
+        run_peer_chain(_orig_cook, self)
+    end
+
+    -- item_repair.UIRepair:OnRepair is deliberately not overridden: neither
+    -- vanilla nor any chain link reaches alife, so the peer needs no gate open.
+end

@@ -1,0 +1,2045 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+  Разом нас багато. (Together we are many.)
+
+  Quest synchronisation — shared journal, any player's actions count,
+  both players receive rewards. Covers give_task / check_task broadcast,
+  quest list / accept / skip / reward sync and story-quest delegation.
+
+  Sibling files:
+    xrr_patch_task_guards.script         — task-functor peer guards (runs first)
+    xrr_quest_serialize.script           — pstor / quest-var wire format
+    xrr_quest_reward.script              — reward INI parser + broadcast
+    xrr_patch_quest_spawns.script        — xr_effects.spawn_* + mlr_utils.spawn_item
+    xrr_patch_quest_story_dialogs.script — Yantar/MLR story dialogs + target functor
+    xrr_patch_quest_drx.script           — DRX Questlines (pstor, dialogs, side effects)
+]]
+
+local _installed
+
+-- ═══════════════════════════════════════════════════════════════
+-- SHARED STATE
+-- ═══════════════════════════════════════════════════════════════
+
+-- Peer-side authoritative target overrides set by OnJoinTask / OnPlayerTask.
+_G.xrr_synced_task_targets = _G.xrr_synced_task_targets or {}
+
+-- Peer-side: host-rendered iconed task-offer previews keyed by task_id
+-- (caption/text/icon/templ); set by OnQuestListResponse, replayed in peer_task_text.
+_G.xrr_task_offer_msgs = _G.xrr_task_offer_msgs or {}
+
+-- Peer-side: pristine full available-task list per LOCAL npc id, as last sent by
+-- the host; generate_available_tasks rebuilds the drained working copy from it.
+_G.xrr_quest_avail_full = _G.xrr_quest_avail_full or {}
+
+-- HOST-side per-task quest-item schema, built by rebuild_watch_sets():
+--   task_watch[task_id] = { watch = {[sec]=true}, pass = {[sec]=need} or nil }
+-- `pass` sections belong to a presence status functor.
+local task_watch = {}
+
+local temp_npc_entry = nil
+
+-- HOST: the "servicing a peer's dialog" window — drives BOTH the GetTalkingNpc
+-- shim below AND the engine-side db.actor:is_talking() override, and the vanilla
+-- generators need both. Never set one without the other.
+local function set_peer_dialog_npc(entry)
+    temp_npc_entry = entry
+    XrrAlife():SetPeerDialogActive(entry ~= nil)
+end
+
+-- The same window makes db.actor:is_talking() true, and the news helpers then post
+-- an iconed message into a talk menu the host doesn't have — silently dropped.
+-- Close the window for the call so they take their give_game_news branch.
+local function without_dialog_sham(fn, ...)
+    if not temp_npc_entry then return fn(...) end
+    local saved = temp_npc_entry
+    set_peer_dialog_npc(nil)
+    local ok, r = pcall(fn, ...)
+    set_peer_dialog_npc(saved)
+    if not ok then
+        printf("![xrRazom][quest] news helper error: %s", tostring(r))
+        return nil
+    end
+    return r
+end
+
+-- Story-quest pseudo-id dispatch table: modules register peer→host delegation
+-- handlers (e.g. __drx_sl); consumed by OnQuestAccept. Lazy so apply order doesn't matter.
+_G.xrr_story_quest_handlers = _G.xrr_story_quest_handlers or {}
+
+-- Personal tasks: [task_id] = true means the task never crosses the wire. Read
+-- engine-side by xrr_task_is_local at every task sender, so one entry suppresses
+-- every egress at once. Populated by per-mod xrr_patch_*.script.
+_G.xrr_local_tasks = _G.xrr_local_tasks or {}
+
+-- HOST-side is_sim corrections for OnQuestListRequest, keyed by NPC section:
+-- [section] = true forces sim task generation for an NPC whose section name does
+-- not follow the sim_ convention. Populated by per-mod xrr_patch_*.script.
+_G.xrr_task_sim_overrides = _G.xrr_task_sim_overrides or {}
+
+-- ═══════════════════════════════════════════════════════════════
+-- HELPERS
+-- ═══════════════════════════════════════════════════════════════
+
+-- Target position at last broadcast, per task — feeds the check_task drift re-broadcast.
+local _target_pos_sent = {}
+
+local function broadcast_task(task_id)
+    local tm  = task_manager.get_task_manager()
+    local tma = tm and tm.task_info[task_id]
+    if not tma then return end
+    printf("[xrRazom][quest] broadcast_task id=%s giver=%s stage=%s target=%s",
+        task_id, tostring(tma.task_giver_id),
+        tostring(tma.stage), tostring(tma.current_target))
+    -- Title/descr ride along: the peer can't re-run the functors against state it
+    -- doesn't have.
+    XrrAlife():SendGetTask(task_id, tma.task_giver_id or 65535, tma.stage or 0,
+                          tma.current_target or 0, tma.current_title, tma.current_descr)
+    local se = tma.current_target and alife_object(tma.current_target)
+    if se then
+        _target_pos_sent[task_id] = { pos = vector():set(se.position), t = time_global() }
+    else
+        _target_pos_sent[task_id] = nil
+    end
+end
+
+function get_personal_item_count(section)
+    if not section then return 0 end
+    local count = 0
+    db.actor:iterate_inventory(function(_, item)
+        if item:section() == section then
+            local multiuse = IsItem("multiuse", section)
+            count = count + (multiuse and item:get_remaining_uses() or 1)
+        end
+    end)
+    return count
+end
+
+-- HOST: sum of all connected peers' holdings of `sec`, from the mirrored peer
+-- inventories.
+local function party_item_count(sec)
+    if not sec then return 0 end
+    return XrrAlife():PartyItemCount(sec)
+end
+
+-- Compat shims: both read the party histogram by section, so task_id is ignored.
+local function peer_task_section_count(_task_id, sec) return party_item_count(sec) end
+local function xrr_peer_item_count(sec)               return party_item_count(sec) end
+
+
+-- ── fate_task ("Lost Signal") team helpers ──────────────────────
+-- search_dist in tasks_fate.script: both the corpse-discovery radius and the
+-- range written into the RF target.
+local FATE_SEARCH_DIST = 200
+
+local function fate_peer_near(pos)
+    local players = XrrPlayers()
+    if not players then return false end
+    for i = 1, players:GetPeerCount() do
+        local cid = players:GetPeerLocalIdAt(i)
+        if cid and cid > 0 and cid ~= 65535 then
+            local obj = level.object_by_id(cid)
+            if obj and obj:alive()
+               and pos:distance_to(obj:position()) <= FATE_SEARCH_DIST then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- Vanilla's RF registration, measured from the peer avatars instead of the host.
+-- Stage 2 itself stays host-position-bound, so this covers a shared level, not a
+-- split party.
+local function fate_register_for_peer(tsk, task_id, var)
+    if tsk.stage ~= 2 or not var.target_id then return end
+    if not has_alife_info(task_id .. "_dead_spawned") then return end
+    if has_alife_info(task_id .. "_item_spawned") then return end
+
+    local se_target = alife_object(var.target_id)
+    if not se_target then return end
+    if se_target.position:distance_to(db.actor:position()) <= FATE_SEARCH_DIST then return end
+    if not fate_peer_near(se_target.position) then return end
+
+    local obj_target = db.storage[var.target_id] and db.storage[var.target_id].object
+                       or level.object_by_id(var.target_id)
+    if not obj_target then return end
+    obj_target:iterate_inventory(function(_, item)
+        if item:section() == var.item_2_sec then var.item_2_id = item:id() end
+    end, obj_target)
+    if not var.item_2_id then return end
+
+    save_var(db.actor, task_id, var)
+    item_radio.add_target(var.item_2_id, var.freq, FATE_SEARCH_DIST)
+    db.actor:give_info_portion(task_id .. "_item_spawned")
+    printf("[xrRazom][quest] fate PEER-NEAR id=%s -> %s[%s] armed at %s MHz",
+        tostring(task_id), tostring(var.item_2_sec), tostring(var.item_2_id),
+        tostring(var.freq))
+end
+
+-- "A peer is carrying the quest pda" — by id, not by section: broken_pda is common
+-- junk loot, and a section match would complete the search off an unrelated pickup.
+local function fate_peer_holds(var)
+    if not var.item_2_id then return false end
+    local se = alife_object(var.item_2_id)
+    if not se or se.parent_id == 65535 then return false end
+    local players = XrrPlayers()
+    if not players then return false end
+    for i = 1, players:GetPeerCount() do
+        local cid = players:GetPeerLocalIdAt(i)
+        if cid and cid > 0 and cid ~= 65535 and se.parent_id == cid then return true end
+    end
+    return false
+end
+
+-- Mirrors vanilla's unpin of the dead squad on pda recovery, for the peer path.
+local function fate_unpin_dead(var)
+    if not var.dead_npcs then return end
+    for i = 1, #var.dead_npcs do
+        if se_load_var(var.dead_npcs[i], "", "dont_release") then
+            se_save_var(var.dead_npcs[i], "", "dont_release", nil)
+        end
+    end
+end
+
+
+-- ── measure_task ("Anomalous Study") team helpers ───────────────
+-- anomaly_measure_dist in tasks_measure: the radius the measurement arms in.
+local MEASURE_DIST = 10
+
+local function measure_peer_near(pos)
+    local players = XrrPlayers()
+    if not players then return false end
+    for i = 1, players:GetPeerCount() do
+        local cid = players:GetPeerLocalIdAt(i)
+        if cid and cid > 0 and cid ~= 65535 then
+            local obj = level.object_by_id(cid)
+            if obj and obj:alive()
+               and pos:distance_to(obj:position()) <= MEASURE_DIST then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- Arms vanilla's stage-2 ambush off a peer's proximity instead of the host's.
+-- The spawn stays host-relative: spawn_squad_dynamic only accepts already-online
+-- smarts, so it quietly declines when the players are apart.
+local function measure_arm_peer_ambush(task_id, var)
+    if not (var.monster and var.target_id) then return end
+    if has_alife_info(task_id .. "_measurment_enemy") then return end
+
+    local se_target = alife_object(var.target_id)
+    if not se_target then return end
+    if se_target.position:distance_to(db.actor:position()) <= MEASURE_DIST then return end
+    if not measure_peer_near(se_target.position) then return end
+
+    local mutants = parse_list(task_manager.task_ini, task_id, "task_measure_mutants")
+    if #mutants > 0 then
+        tasks_measure.spawn_squad_dynamic(mutants[math.random(#mutants)], 50, 200)
+    end
+    db.actor:give_info_portion(task_id .. "_measurment_enemy")
+    printf("[xrRazom][quest] measure PEER-NEAR id=%s -> ambush armed", tostring(task_id))
+end
+
+
+-- DRX stash tasks declare their quest-item type via on_job_descr, e.g.
+--   on_job_descr = %=drx_sl_create_quest_stash(<task_id>:3)%
+local function drx_stash_section_for(task_id)
+    if not (task_manager.task_ini and task_manager.task_ini:section_exist(task_id)) then return nil end
+    if task_manager.task_ini:r_string_ex(task_id, "target_functor") ~= "drx_sl_quest_item_task_target" then
+        return nil
+    end
+    local on_jd = task_manager.task_ini:r_string_ex(task_id, "on_job_descr") or ""
+    local typ = on_jd:match("drx_sl_create_quest_stash%([^:]+:(%d+)%)")
+    if not typ then return nil end
+    return "drx_sl_quest_item_" .. typ
+end
+
+-- recover_mutant_data tracks its device by alife id, not a `<tid>_fetch` var, so
+-- the section has to be routed into peer-holdings reporting by hand.
+local function recover_section_for(task_id)
+    if not (task_manager.task_ini and task_manager.task_ini:section_exist(task_id)) then return nil end
+    if task_manager.task_ini:r_string_ex(task_id, "target_functor") ~= "recover_mutant_data_target" then
+        return nil
+    end
+    return "recover_mutant_data_device"
+end
+
+-- recover_item_on_corpse (RIOC): `item_section` is a comma list of candidates,
+-- only one of which is actually spawned.
+local function rioc_sections_for(task_id)
+    local ini = task_manager.task_ini
+    if not (ini and ini:section_exist(task_id)) then return nil end
+    if ini:r_string_ex(task_id, "status_functor") ~= "recover_item_on_corpse_status_functor" then
+        return nil
+    end
+    local raw = ini:r_string_ex(task_id, "item_section")
+    if not raw then return nil end
+    local secs = {}
+    for sec in raw:gmatch("[^,%s]+") do
+        if ini_sys:section_exist(sec) then secs[#secs + 1] = sec end
+    end
+    return #secs > 0 and secs or nil
+end
+
+-- Extract `fname(a:b:c)` args from a raw ini line (on_job_descr effect strings,
+-- precondition condlists). Returns an array of the colon-separated args or nil.
+local function parse_effect_args(str, fname)
+    if not str then return nil end
+    local args = str:match(fname .. "%(([^%)]*)%)")
+    if not args then return nil end
+    local out = {}
+    for a in args:gmatch("[^:%s]+") do out[#out + 1] = a end
+    return out
+end
+
+-- Item sections for the delivery / measure / fate / chimera-scan sim-task
+-- families, derived from the ini schema (works on peers too).
+local function delivery_sections_for(task_id)
+    local ini = task_manager.task_ini
+    if not (ini and ini:section_exist(task_id)) then return nil end
+    if ini:r_string_ex(task_id, "status_functor") ~= "delivery_task" then return nil end
+    local a = parse_effect_args(ini:r_string_ex(task_id, "on_job_descr"), "on_init_delivery_task")
+    if not a then return nil end
+    local secs = {}
+    for i = 4, #a do  -- params 4+: the candidate package sections
+        if ini_sys:section_exist(a[i]) then secs[#secs + 1] = a[i] end
+    end
+    return #secs > 0 and secs or nil
+end
+
+local function measure_section_for(task_id)
+    local ini = task_manager.task_ini
+    if not (ini and ini:section_exist(task_id)) then return nil end
+    if ini:r_string_ex(task_id, "status_functor") ~= "measure_task" then return nil end
+    local a = parse_effect_args(ini:r_string_ex(task_id, "precondition"), "validate_measure_task")
+    local sec = a and a[4]  -- param 4: the measuring-device section
+    return (sec and ini_sys:section_exist(sec)) and sec or nil
+end
+
+local function fate_sections_for(task_id)
+    local ini = task_manager.task_ini
+    if not (ini and ini:section_exist(task_id)) then return nil end
+    if ini:r_string_ex(task_id, "status_functor") ~= "fate_task" then return nil end
+    local a = parse_effect_args(ini:r_string_ex(task_id, "on_job_descr"), "on_init_fate_task")
+    if not a then return nil end
+    local secs = {}
+    for i = 2, 3 do  -- param 2: tool (detector_radio), param 3: find (broken_pda)
+        if a[i] and ini_sys:section_exist(a[i]) then secs[#secs + 1] = a[i] end
+    end
+    return #secs > 0 and secs or nil
+end
+
+local function chimera_section_for(task_id)
+    local ini = task_manager.task_ini
+    if not (ini and ini:section_exist(task_id)) then return nil end
+    if ini:r_string_ex(task_id, "status_functor") ~= "chimera_scan_status" then return nil end
+    return "chimera_scan_device"
+end
+
+-- HOST: the quest-item sections of the families that remove BY ALIFE ID. Those
+-- removals reach an avatar-held entity by themselves until the id goes stale (a
+-- peer rejoin re-mints its inventory, and nothing re-anchors those ids), so the
+-- sections join the party consume as an id-independent backstop.
+local function quest_schema_sections(task_id)
+    local out
+    local function add(sec)
+        if sec and ini_sys:section_exist(sec) then
+            out = out or {}
+            out[sec] = 1
+        end
+    end
+    add(recover_section_for(task_id))
+    local rioc = rioc_sections_for(task_id)
+    if rioc then for i = 1, #rioc do add(rioc[i]) end end
+    add(measure_section_for(task_id))
+    local fate = fate_sections_for(task_id)
+    if fate then for i = 1, #fate do add(fate[i]) end end
+    add(chimera_section_for(task_id))
+    -- Delivery is deliberately absent: its schema lists CANDIDATE sections, so
+    -- adding them would ask the party for packages the task never used.
+    return out
+end
+
+-- HOST: the sections a task's on_complete removes with `remove_item(sec:amt)`,
+-- as { [sec] = amt }. xr_effects.remove_item walks db.actor's inventory by
+-- section, so a copy parked in a peer's avatar is invisible to it and has to be
+-- consumed from the party instead.
+local function on_complete_remove_sections(task_id)
+    local ini = task_manager.task_ini
+    if not (ini and ini:section_exist(task_id)) then return nil end
+    local oc = ini:r_string_ex(task_id, "on_complete")
+    if not oc then return nil end
+    local out
+    for args in oc:gmatch("remove_item%(([^%)]*)%)") do
+        local sec, amt = args:match("^([^:]+):?(%d*)")
+        if sec and ini_sys:section_exist(sec) then
+            out = out or {}
+            out[sec] = (out[sec] or 0) + (tonumber(amt) or 1)
+        end
+    end
+    return out
+end
+
+-- Presence status functors ("actor holds the watched item(s) -> stage 1") get a
+-- `pass` watch; anything not listed keeps vanilla host-only stage semantics.
+local PASS_FUNCTORS = {
+    actor_has_fetch_item             = true,  -- `<tid>_fetch` collect/supply family
+    drx_sl_retrieve_item_task_status = true,  -- status_functor_params item list
+    drx_sl_quest_item_task_status    = true,  -- DRX stash (also team-aware via actor_has_item wrap)
+}
+
+-- Derive the watched item sections for one task from its ini schema (fetch var,
+-- status_functor_params, target_functor DRX/recover rules, actor_has_item* condlists).
+local function task_watch_entry(tid)
+    local ini = task_manager.task_ini
+    if not (ini and ini:section_exist(tid) and db.actor) then return nil end
+    local watch, pass = {}, nil
+    local functor = ini:r_string_ex(tid, "status_functor")
+    local function add(sec, need)
+        watch[sec] = true
+        if need then
+            pass = pass or {}
+            pass[sec] = need
+        end
+    end
+
+    local fsec = utils_data.load_var(db.actor, tid .. "_fetch")
+    if fsec and type(fsec) == "string" and ini_sys:section_exist(fsec) then
+        local need = utils_data.load_var(db.actor, tid .. "_fetch_count") or 1
+        add(fsec, functor == "actor_has_fetch_item" and need or nil)
+    end
+
+    if functor and PASS_FUNCTORS[functor] then
+        local params = ini:r_string_ex(tid, "status_functor_params")
+        if params then
+            for sec in params:gmatch("[^,%s]+") do
+                if ini_sys:section_exist(sec) then add(sec, 1) end
+            end
+        end
+    end
+
+    local qsec = drx_stash_section_for(tid)
+    if qsec then add(qsec, 1) end
+    local rsec = recover_section_for(tid)
+    if rsec then add(rsec, nil) end
+
+    local function scan_condlist(str)
+        if not str then return end
+        for args in str:gmatch("actor_has_item[%w_]*%(([^%)]*)%)") do
+            local sec = args:match("^([^:,%s]+)")
+            if sec and ini_sys:section_exist(sec) then add(sec, nil) end
+        end
+    end
+    scan_condlist(ini:r_string_ex(tid, "target"))
+    local i = 0
+    while ini:line_exist(tid, "condlist_" .. i) do
+        scan_condlist(ini:r_string_ex(tid, "condlist_" .. i))
+        i = i + 1
+    end
+
+    if not next(watch) then return nil end
+    return { watch = watch, pass = pass }
+end
+
+local function rebuild_watch_sets()
+    task_watch = {}
+    local tm = task_manager.get_task_manager()
+    if not (tm and db.actor) then return end
+    for tid, _ in pairs(tm.task_info) do
+        local e = task_watch_entry(tid)
+        if e then
+            task_watch[tid] = e
+        end
+    end
+end
+
+-- HOST: render a task's iconed offer preview and capture its strings for the peer.
+-- Vanilla defers give_talk_message2 through CreateTimeEvent and only draws it while
+-- a local TalkMenu is up, so on_job_descr runs with CreateTimeEvent forced
+-- synchronous and db.actor swapped for a proxy that intercepts the call.
+local function capture_offer_message(task_id)
+    if not task_id then return nil end
+    local on_jd     = task_manager.task_ini:r_string_ex(task_id, "on_job_descr")
+    local has_fetch = task_manager.task_ini:r_string_ex(task_id, "fetch_descr") ~= nil
+    if not (on_jd or has_fetch) then return nil end
+
+    local real_actor = db.actor
+    if not real_actor then return nil end
+
+    local captured = nil
+    local capturing = true
+    -- Stands in for db.actor while the deferred message renders: forwards every
+    -- member but give_talk_message2 to the real actor, writes included — patching
+    -- db.actor is a live idiom in this mod set, and a raw write would land on this
+    -- throwaway table and shadow the interceptor for the rest of the capture.
+    local proxy = setmetatable({}, {
+        __newindex = function(_, k, v) real_actor[k] = v end,
+        __index = function(_, k)
+            if k == "give_talk_message2" then
+                return function(_, caption, text, icon, templ)
+                    captured = {
+                        caption = caption or "",
+                        text    = text or "",
+                        icon    = icon or "",
+                        templ   = templ or "iconed_answer_item",
+                    }
+                end
+            end
+            local v = real_actor[k]
+            if type(v) == "function" then
+                return function(_, ...) return v(real_actor, ...) end
+            end
+            return v
+        end,
+    })
+
+    -- Via _G: the task modules resolve the bare global name, so a local would
+    -- only shadow it in this module's env.
+    local in_sync = false
+    local _orig_cte = _G.CreateTimeEvent
+    _G.CreateTimeEvent = function(ev_id, act_id, timer, f, ...)
+        if in_sync or not capturing or type(f) ~= "function" then return end
+        in_sync = true
+        db.actor = proxy
+        pcall(f, ...)
+        db.actor = real_actor
+        in_sync = false
+    end
+
+    local ok, err = pcall(function()
+        if on_jd then
+            local cond = xr_logic.parse_condlist(real_actor, "task_manager", "on_job_descr", on_jd)
+            if cond then xr_logic.pick_section_from_condlist(real_actor, real_actor, cond) end
+        end
+        -- The peer renders fetch offers itself, against its own holdings; the call
+        -- stays only for the host-side fetch setup, which runs before the render defers.
+        capturing = false
+        if has_fetch and axr_task_manager.trigger_fetch_func then
+            axr_task_manager.trigger_fetch_func(task_id)
+        end
+    end)
+
+    _G.CreateTimeEvent = _orig_cte
+    db.actor = real_actor
+    if not ok then
+        printf("[xrRazom][quest] capture_offer_message ERROR task=%s: %s", task_id, tostring(err))
+    end
+
+    -- Locale-portable blobs: the peer unpacks at replay and renders in its own locale.
+    if captured then
+        local mgr = XrrNet and XrrNet()
+        if mgr and mgr.PackI18nText then
+            captured.caption = mgr:PackI18nText(captured.caption)
+            captured.text    = mgr:PackI18nText(captured.text)
+        end
+    end
+    return captured
+end
+
+-- ═══════════════════════════════════════════════════════════════
+-- PEER-SIDE OFF-DIALOG HELPERS (exported)
+-- ═══════════════════════════════════════════════════════════════
+
+-- Generous on purpose: the deadline only bites when a reply is never coming (the
+-- host answers nothing for an id it cannot resolve), and a cold ~20-NPC scan
+-- costs the host over a second of task generation.
+local AVAIL_REQ_TIMEOUT = 5  -- seconds
+
+-- { pending = {[npc_id] = true}, left = n, answered = n, on_complete = fn } or nil.
+-- Non-nil means a batch is in flight; a second request is dropped rather than stacked.
+local _avail_req = nil
+
+local function avail_req_finish(timed_out)
+    local req = _avail_req
+    if not req then return end
+    _avail_req = nil
+    printf("[xrRazom][quest] avail_req done answered=%s timeout=%s",
+        tostring(req.answered), timed_out and "1" or "0")
+    if req.on_complete then
+        local ok, err = pcall(req.on_complete)
+        if not ok then
+            printf("![xrRazom][quest] avail_req on_complete error: %s", tostring(err))
+        end
+    end
+end
+
+local function avail_req_note_answer(npc_id)
+    local req = _avail_req
+    if not (req and req.pending[npc_id]) then return end
+    req.pending[npc_id] = nil
+    req.answered = req.answered + 1
+    req.left     = req.left - 1
+    if req.left <= 0 then
+        RemoveTimeEvent("xrr_avail_req", "timeout")
+        avail_req_finish(false)
+    end
+end
+
+-- PEER: ask the host for the available-task list of every id in `ids`, then call
+-- on_complete() once every id has answered or the deadline passes. The answers
+-- land in xrr_quest_avail_full (OnQuestListResponse).
+function xrr_request_task_availability(ids, on_complete)
+    if XrrIsHost() then return false end
+    if _avail_req then
+        printf("[xrRazom][quest] avail_req SKIP — batch already in flight")
+        return false
+    end
+
+    local pending, n = {}, 0
+    for _, id in ipairs(ids or {}) do
+        if id and not pending[id] then
+            pending[id] = true
+            n = n + 1
+        end
+    end
+    printf("[xrRazom][quest] avail_req start n=%s", tostring(n))
+
+    if n == 0 then
+        _avail_req = { pending = pending, left = 0, answered = 0, on_complete = on_complete }
+        avail_req_finish(false)
+        return true
+    end
+
+    _avail_req = { pending = pending, left = n, answered = 0, on_complete = on_complete }
+    for id in pairs(pending) do
+        XrrAlife():SendQuestListRequest(id)
+    end
+    CreateTimeEvent("xrr_avail_req", "timeout", AVAIL_REQ_TIMEOUT, function()
+        avail_req_finish(true)
+        return true
+    end)
+    return true
+end
+
+-- PEER: the host-rendered iconed offer preview for a task, rebuilt in this
+-- machine's locale. Nil when the host captured none for it.
+function xrr_peer_task_offer_preview(task_id)
+    local m = task_id and _G.xrr_task_offer_msgs and _G.xrr_task_offer_msgs[task_id]
+    if not m then return nil end
+    local cap, txt = m.caption, m.text
+    local mgr = XrrNet and XrrNet()
+    if mgr and mgr.UnpackI18nText then
+        cap = mgr:UnpackI18nText(cap)
+        txt = mgr:UnpackI18nText(txt)
+    end
+    return { caption = cap, text = txt, icon = m.icon, templ = m.templ }
+end
+
+-- PEER: the long job description for a task the peer cannot generate locally.
+-- Fetch tasks name their item from the host-synced <tid>_fetch var; the rest fall
+-- back to job_descr.
+function xrr_peer_task_long_description(task_id)
+    if not task_id then return game.translate_string("st_no_available_task") end
+    local fetch = task_manager.task_ini:r_string_ex(task_id, "fetch_descr")
+    if fetch then
+        local fetch_sec = db.actor and utils_data.load_var(db.actor, task_id .. "_fetch")
+        return strformat(game.translate_string(fetch),
+            fetch_sec and ui_item.get_sec_name(fetch_sec) or "")
+    end
+    local job_descr = task_manager.task_ini:r_string_ex(task_id, "job_descr")
+    return game.translate_string(job_descr or "st_no_available_task")
+end
+
+-- Raised by the setup_fetch_task ADOPT branch when it actually schedules the offer
+-- render — "trigger_fetch_func did not throw" is the weaker claim.
+local fetch_render_fired = false
+
+-- PEER: render the fetch offer locally — the "needs: <item>" message reads the
+-- actor that renders it. Needs the host-chosen <tid>_fetch var: without it the
+-- original rolls an item of its own. Returns whether a message is on its way.
+function xrr_peer_render_fetch_preview(task_id)
+    if not (task_id and db.actor and task_manager.task_ini) then return false end
+    if not task_manager.task_ini:r_string_ex(task_id, "fetch_descr") then return false end
+
+    local sec = utils_data.load_var(db.actor, task_id .. "_fetch")
+    if not (sec and type(sec) == "string" and ini_sys:section_exist(sec)) then
+        printf("[xrRazom][quest] fetch preview SKIP task=%s — no synced fetch var",
+            tostring(task_id))
+        return false
+    end
+    if not axr_task_manager.trigger_fetch_func then return false end
+
+    -- trigger_fetch_func indexes CFG_CACHE[task_id] unguarded.
+    fetch_render_fired = false
+    local ok, err = pcall(axr_task_manager.trigger_fetch_func, task_id)
+    if not ok then
+        printf("![xrRazom][quest] fetch preview task=%s: %s", tostring(task_id), tostring(err))
+        return false
+    end
+    return fetch_render_fired
+end
+
+-- ═══════════════════════════════════════════════════════════════
+-- MAIN PATCH — apply()
+-- ═══════════════════════════════════════════════════════════════
+
+function apply()
+    log("[xrRazom] Patching quest scripts and task sync (full quest patch)")
+
+    -- Peer rebuilds the task-ini cache on every load; the installs below do not.
+    if not XrrIsHost() and axr_task_manager.generate_cache then
+        axr_task_manager.generate_cache()
+    end
+
+    if _installed then return end
+    _installed = true
+
+    -- Captured here, not at file scope: apply() runs after axr_main has force-loaded
+    -- every script, so these are the last link of a mod's patch chain.
+    local _orig_give_task    = task_manager.CRandomTask.give_task
+    local _orig_check_task   = task_objects.CGeneralTask.check_task
+    local _orig_gen_tasks    = axr_task_manager.generate_available_tasks
+    local _orig_npc_has_task = dialogs.text_npc_has_task
+    local _orig_npc_skip     = dialogs.npc_skip_task
+    local _orig_talking_npc  = mob_trade.GetTalkingNpc
+    local _orig_actor_has_finished     = dialogs.actor_has_finished_ordered_task
+    local _orig_actor_sim_has_finished = dialogs.actor_sim_has_finished_ordered_task
+    local _orig_text_task_finish       = dialogs.text_task_finish
+    local _orig_text_sim_task_finish   = dialogs.text_sim_task_finish
+    local _orig_npc_set_finished       = dialogs.npc_set_finished_task_complete
+    local _orig_npc_sim_set_finished   = dialogs.npc_sim_set_finished_task_complete
+    local _orig_task_callback          = task_manager.task_callback
+    local _orig_give_reward            = task_objects.CGeneralTask.give_reward
+
+    -- (1) generate_available_tasks — the peer filters the host's cached snapshot,
+    --     which is refreshed from the wire only on dialog (re)open.
+    axr_task_manager.generate_available_tasks = function(npc, is_sim)
+        if XrrIsHost() then return _orig_gen_tasks(npc, is_sim) end
+        if not npc then return end
+        local id   = npc:id()
+        local full = _G.xrr_quest_avail_full and _G.xrr_quest_avail_full[id]
+        local tm_  = task_manager.get_task_manager()
+        local ti   = tm_ and tm_.task_info or {}
+        local rebuilt = {}
+        if full then
+            for _, tid in ipairs(full) do
+                if ti[tid] == nil then
+                    rebuilt[#rebuilt + 1] = tid
+                end
+            end
+        end
+        axr_task_manager.available_tasks = axr_task_manager.available_tasks or {}
+        axr_task_manager.available_tasks[id] = rebuilt
+        printf("[xrRazom][quest] generate_available_tasks PEER npc=%s full=%s rebuilt=%s",
+            tostring(id), tostring(full and #full or 0), tostring(#rebuilt))
+    end
+
+    -- (2) mob_trade.GetTalkingNpc — resolve to the NPC the host is servicing a
+    --     peer's dialog for, so the vanilla generators see a speaker.
+    mob_trade.GetTalkingNpc = function(netid)
+        if temp_npc_entry and temp_npc_entry.busy then
+            if type(netid) ~= "number" or netid == temp_npc_entry.netid then
+                return level.object_by_id(temp_npc_entry.id)
+            end
+        end
+        if type(netid) == "number" then return nil end
+        return _orig_talking_npc()
+    end
+    _G.get_speaker = mob_trade.GetTalkingNpc
+
+    -- (3) give_task — host/peer fork with broadcast.
+    function task_manager.CRandomTask:give_task(task_id, task_giver_id)
+        if self.task_info[task_id] then
+            printf("[xrRazom][quest] give_task SKIP duplicate id=%s", task_id)
+            return
+        end
+        _orig_give_task(self, task_id, task_giver_id)
+        if XrrIsHosted() then
+            printf("[xrRazom][quest] give_task HOST id=%s giver=%s -> broadcast",
+                task_id, tostring(task_giver_id))
+            broadcast_task(task_id)
+        elseif XrrIsClient() then
+            -- Broadcast handlers set _G.xrr_applying_remote_task: the host already
+            -- has the task, and an echoed accept could re-give it and duplicate
+            -- on_fail effects.
+            if _G.xrr_applying_remote_task then
+                printf("[xrRazom][quest] give_task PEER id=%s SKIP echo (applying remote broadcast)",
+                    task_id)
+            else
+                -- Dialog lock first: on that path task_giver_id is usually a squad
+                -- group_id, not an object id. Off-dialog callers (the PDA taskboard)
+                -- hold no lock and pass a real npc id, hence the resolve check.
+                local host_id = xrr_pending_npc_lock_host_id()
+                if not (host_id and host_id > 0) then
+                    host_id = (type(task_giver_id) == "number"
+                               and task_giver_id > 0 and task_giver_id < 65535
+                               and level.object_by_id(task_giver_id) ~= nil)
+                              and task_giver_id or nil
+                end
+                if host_id and host_id > 0 then
+                    -- Carry the locally-picked fetch item so the host adopts it
+                    -- instead of re-rolling its own.
+                    local fsec = utils_data.load_var(db.actor, task_id .. "_fetch")
+                    if fsec and ini_sys:section_exist(fsec) then
+                        local fcnt = utils_data.load_var(db.actor, task_id .. "_fetch_count") or 1
+                        printf("[xrRazom][quest] give_task PEER id=%s -> SendQuestAcceptFetch npc=%s fetch=%s x%s",
+                            task_id, tostring(host_id), fsec, tostring(fcnt))
+                        XrrAlife():SendQuestAcceptFetch(task_id, host_id, fsec, fcnt)
+                    else
+                        printf("[xrRazom][quest] give_task PEER id=%s -> SendQuestAccept npc=%s",
+                            task_id, tostring(host_id))
+                        XrrAlife():SendQuestAccept(task_id, host_id)
+                    end
+                else
+                    printf("[xrRazom][quest] give_task PEER id=%s no lock host_id, not sent",
+                        task_id)
+                end
+            end
+        else
+            printf("[xrRazom][quest] give_task SOLO id=%s giver=%s",
+                task_id, tostring(task_giver_id))
+        end
+        rebuild_watch_sets()
+    end
+
+    -- (3b) setup_fetch_task family — the peer picks the fetch item and the host
+    --      pre-seeds <tid>_fetch (OnQuestAccept), so this wrap adopts it instead of
+    --      re-rolling. The deferred "needs: <item>" render must stay: it is the sole
+    --      source of the offer message, hooked through tasks_fetch's CreateTimeEvent.
+    local function wrap_fetch_setup(fname)
+        local orig = xr_effects[fname]
+        if not orig then return end
+        xr_effects[fname] = function(actor, npc, p)
+            if (XrrIsConnected() or XrrIsHosted()) and p and p[1] and db.actor then
+                local sec = utils_data.load_var(db.actor, p[1])
+                if sec and type(sec) == "string" and ini_sys:section_exist(sec) then
+                    local cnt = utils_data.load_var(db.actor, p[1] .. "_count") or 1
+                    dialogs._FETCH_TEXT = ui_item.get_sec_name(sec)
+                    printf("[xrRazom][quest] %s ADOPT var=%s sec=%s x%s serving_peer=%s",
+                        fname, tostring(p[1]), sec, tostring(cnt),
+                        temp_npc_entry and "1" or "0")
+                    if not temp_npc_entry then
+                        local cte = tasks_fetch.CreateTimeEvent or CreateTimeEvent
+                        cte(0, "setup_fetch_task", 0,
+                            tasks_fetch.postpone_fetch_for_next_frame, p[1], sec, cnt)
+                        fetch_render_fired = true
+                    end
+                    return
+                end
+            end
+            return orig(actor, npc, p)
+        end
+    end
+    wrap_fetch_setup("setup_fetch_task")
+    wrap_fetch_setup("setup_supplies_fetch_task_lostzone_patch")
+    wrap_fetch_setup("setup_generic_fetch_task")
+
+    -- (4) check_task — detect stage/target changes for broadcast.
+    function task_objects.CGeneralTask:check_task(tm)
+        if not db.actor then return end
+        local prev_stage  = self.stage
+        local prev_target = self.current_target
+
+        -- PEER: completion/failure is host-authoritative. The vanilla status functor
+        -- resolves task_giver_id as a raw HOST alife id and locally fails the task
+        -- when it can't; suppress it so only title/descr/target/map refresh here.
+        if XrrIsClient() then
+            local saved_sf = self.status_functor
+            self.status_functor = nil
+            _orig_check_task(self, tm)
+            self.status_functor = saved_sf
+            return
+        end
+
+        _orig_check_task(self, tm)
+        if not XrrIsHosted() then return end
+
+        -- Team stage pass: presence status functors see only the host's own
+        -- inventory. Raised after the orig call, which resets stage to 0 each tick
+        -- while the host lacks the items, and gated on a peer actually contributing.
+        local w = task_watch[self.id]
+        if w and w.pass and self.stage == 0 then
+            local peer_contrib = false
+            local satisfied = true
+            for sec, need in pairs(w.pass) do
+                local pc = peer_task_section_count(self.id, sec)
+                if pc > 0 then peer_contrib = true end
+                if get_personal_item_count(sec) + pc < need then
+                    satisfied = false
+                    break
+                end
+            end
+            if peer_contrib and satisfied then
+                if prev_stage ~= 1 then  -- steady-state re-raises happen every tick; log the transition only
+                    printf("[xrRazom][quest] check_task TEAM PASS id=%s -> stage=1", self.id)
+                end
+                self.stage = 1
+            end
+        end
+
+        if self.stage ~= prev_stage or self.current_target ~= prev_target then
+            printf("[xrRazom][quest] check_task CHANGED id=%s stage %s->%s target %s->%s",
+                self.id, tostring(prev_stage), tostring(self.stage),
+                tostring(prev_target), tostring(self.current_target))
+            broadcast_task(self.id)
+        elseif self.current_target then
+            -- Drift re-broadcast: stage and target id don't change for pure
+            -- movement, so a moving offline target would pin peer markers at a
+            -- stale point. Re-send past 50 m, at most every 5 s.
+            local sent = _target_pos_sent[self.id]
+            local se = alife_object(self.current_target)
+            if se then
+                if not sent then
+                    -- No baseline (join bulk bypasses broadcast_task): seed it.
+                    _target_pos_sent[self.id] = { pos = vector():set(se.position), t = time_global() }
+                elseif time_global() - sent.t > 5000
+                       and se.position:distance_to_sqr(sent.pos) > 2500 then
+                    if XrrAlife():HostIdIsSquad(self.current_target) then
+                        -- Squad target: peers track it via the squad registry.
+                        sent.pos = vector():set(se.position)
+                        sent.t = time_global()
+                    else
+                        printf("[xrRazom][quest] check_task target DRIFT id=%s -> rebroadcast", self.id)
+                        broadcast_task(self.id)
+                    end
+                end
+            end
+        end
+    end
+
+    -- (4b) task_callback — broadcast rewards + forced state to peers when engine completes/fails a task.
+    task_manager.task_callback = function(tsk, state)
+        -- Broadcast is deferred past the replay below: the wrapped xr_effects
+        -- accumulate into xrr_quest_reward while on_complete/on_fail replay.
+        local reward_task, reward_fetch, penalty_task
+        if XrrIsHosted() then
+            local tm_ = task_manager.get_task_manager()
+            local id  = tsk:get_id()
+            if state == task.completed then
+                local rtask = tm_ and tm_.task_info[id]
+                if rtask then
+                    printf("[xrRazom][quest] task_callback COMPLETE id=%s -> broadcasting reward + state", id)
+                    reward_task = rtask
+                    -- Rolled pre-replay: on_complete often pstor_resets the fetch var.
+                    reward_fetch = xrr_quest_reward.calc_fetch_money(id)
+                    if not rtask.forced_status then
+                        XrrAlife():SendForcedTaskState(id, 2)
+                    end
+                    local fetch_money = xrr_quest_reward.calc_fetch_money(id)
+                    if fetch_money > 0 then
+                        printf("[xrRazom][quest] giving host fetch_money=%s", tostring(fetch_money))
+                        dialogs.relocate_money(db.actor, fetch_money, "in")
+                    end
+                end
+            elseif state == task.fail then
+                local rtask = tm_ and tm_.task_info[id]
+                if rtask then
+                    -- Penalties accumulate during the on_fail replay, broadcast below.
+                    penalty_task = rtask
+                    if not rtask.forced_status then
+                        printf("[xrRazom][quest] task_callback FAIL id=%s cancelled=%s -> broadcasting state",
+                            id, tostring(rtask.cancelled_by_actor or false))
+                        XrrAlife():SendForcedTaskState(id, rtask.cancelled_by_actor and 3 or 1)
+                    end
+                end
+            end
+        end
+        -- PEER: the replay runs on_complete/on_fail, whose DRX side effects the host
+        -- is authoritative for; the flag makes the peer-side DRX overrides no-op for
+        -- the window. pcall so it can't leak true on error.
+        if XrrIsClient() then
+            local id_ = tsk:get_id()
+            printf("[xrRazom][quest] task_callback PEER id=%s state=%s known=%s",
+                tostring(id_), tostring(state),
+                tostring(task_manager.get_task_manager().task_info[id_] ~= nil))
+            _G.xrr_host_driven_task_effect = true
+            local ok, err = pcall(_orig_task_callback, tsk, state)
+            _G.xrr_host_driven_task_effect = false
+            if not ok then
+                printf("[xrRazom][quest] task_callback PEER _orig error: %s", tostring(err))
+            end
+        else
+            -- Read by the DRX cf-task redirect in xrr_patch_quest_drx.
+            local id = tsk:get_id()
+            _G.xrr_completing_task_id = id
+            if reward_task or penalty_task then xrr_quest_reward.accum_reset() end
+
+            -- Party fetch consume: on_complete strips only the HOST's share of each
+            -- watched section. Snapshot holdings BEFORE the replay — host share =
+            -- min(before, need) — because fetch_reward_and_remove defers its removal
+            -- a frame, so a diff taken after would read the wrong count.
+            local completing = (state == task.completed) and XrrIsHosted()
+            local watch = completing and task_watch[id]
+            local need_by_sec
+            if watch and watch.pass then
+                need_by_sec = {}
+                for sec, n in pairs(watch.pass) do need_by_sec[sec] = n end
+            end
+            if completing then
+                local rm = on_complete_remove_sections(id)
+                local schema = quest_schema_sections(id)
+                if schema then
+                    rm = rm or {}
+                    for sec, n in pairs(schema) do
+                        if (rm[sec] or 0) < n then rm[sec] = n end
+                    end
+                end
+                if rm then
+                    need_by_sec = need_by_sec or {}
+                    for sec, n in pairs(rm) do
+                        -- MAX, not sum: the two sources describe the SAME removal
+                        -- from opposite ends (`status_functor_params` names the
+                        -- item, `on_complete` removes it), and summing would eat a
+                        -- peer's legitimately-owned second copy.
+                        local prev = need_by_sec[sec] or 0
+                        need_by_sec[sec] = (n > prev) and n or prev
+                    end
+                end
+            end
+            local before
+            if need_by_sec then
+                before = {}
+                for sec in pairs(need_by_sec) do before[sec] = get_personal_item_count(sec) end
+            end
+            -- The by-id removal families reach an item parked in a peer's avatar on
+            -- their own, but the owner refuses a plain DESTROY for something in its
+            -- own hands; this window restates those removals as ITEM_REMOVE(CONSUME).
+            -- It self-closes, so a throw below cannot latch it open.
+            if completing then XrrAlife():ArmQuestConsume() end
+            if reward_task or penalty_task then
+                -- Hosted: a throw inside an on_complete effect must not cost the
+                -- peers their QUEST_REWARD. Solo keeps vanilla throw semantics
+                -- through the raw call below.
+                local ok, err = pcall(_orig_task_callback, tsk, state)
+                if not ok then
+                    printf("![xrRazom][quest] task_callback HOST _orig error: %s", tostring(err))
+                end
+            else
+                _orig_task_callback(tsk, state)
+            end
+            if before then
+                for sec, need in pairs(need_by_sec) do
+                    local host_share = math.min(before[sec], need)
+                    local remainder  = need - host_share
+                    if remainder > 0 then
+                        printf("[xrRazom][quest] party consume id=%s sec=%s need=%s host_share=%s peers_remove=%s",
+                            id, sec, tostring(need), tostring(host_share), tostring(remainder))
+                        XrrAlife():ConsumePartyItems(sec, remainder)
+                    end
+                end
+            end
+            _G.xrr_completing_task_id = nil
+            if reward_task then
+                xrr_quest_reward.broadcast(reward_task, reward_fetch)
+            elseif penalty_task then
+                xrr_quest_reward.broadcast_fail(id)
+            end
+        end
+    end
+
+    -- (4c) give_reward — suppress on peer (rewards come via OnQuestReward broadcast).
+    function task_objects.CGeneralTask:give_reward()
+        if XrrIsClient() then return end
+        _orig_give_reward(self)
+    end
+
+    -- (5) set_task_completed / set_task_failed — broadcast forced state.
+    function task_manager.CRandomTask:set_task_completed(task_id)
+        if not self.task_info[task_id] then return end
+        self.task_info[task_id].forced_status = "complete"
+        printf("[xrRazom][quest] set_task_completed id=%s connected=%s host=%s",
+            task_id, tostring(XrrIsConnected()), tostring(XrrIsHost()))
+        if XrrIsConnected() then
+            XrrAlife():SendForcedTaskState(task_id, 2)
+            if not XrrIsHost() then
+                -- No local strip: the HOST destroys the turn-in items wherever they
+                -- are and states each removal as ITEM_REMOVE(CONSUME). A local strip
+                -- races that and, being section-keyed, could eat a different copy.
+                self.task_info[task_id].on_complete = nil
+            end
+        end
+    end
+
+    function task_manager.CRandomTask:set_task_failed(task_id)
+        if not self.task_info[task_id] then return end
+        self.task_info[task_id].forced_status = "fail"
+        printf("[xrRazom][quest] set_task_failed id=%s connected=%s host=%s",
+            task_id, tostring(XrrIsConnected()), tostring(XrrIsHost()))
+        if XrrIsConnected() then
+            XrrAlife():SendForcedTaskState(task_id, 1)
+        end
+    end
+
+    -- (5b) set_task_cancelled — vanilla sets forced_status directly, so the
+    -- set_task_failed wrap above never sees it. State 3 carries the
+    -- cancelled_by_actor semantics (on_cancel condlist, tasks_cancelled stat).
+    function task_manager.CRandomTask:set_task_cancelled(task_id)
+        if not self.task_info[task_id] then return end
+        self.task_info[task_id].forced_status = "fail"
+        self.task_info[task_id].cancelled_by_actor = true
+        printf("[xrRazom][quest] set_task_cancelled id=%s connected=%s host=%s",
+            task_id, tostring(XrrIsConnected()), tostring(XrrIsHost()))
+        if XrrIsConnected() then
+            XrrAlife():SendForcedTaskState(task_id, 3)
+        end
+    end
+
+    -- (6) Dialog rendering of a peer's task offer — both halves are the exported
+    --     off-dialog helpers; only the talk-menu replay is dialog-specific.
+    local function peer_task_text(npc_id, task_id)
+        if not task_id then return game.translate_string("st_no_available_task") end
+
+        -- Fetch offers render locally so the counts are this actor's; the rest the
+        -- peer can't re-derive and comes from the host's capture. Not either/or —
+        -- vanilla posts both messages for a task with fetch_descr and on_job_descr.
+        xrr_peer_render_fetch_preview(task_id)
+
+        local m = xrr_peer_task_offer_preview(task_id)
+        if m then
+            -- Deferred a frame: the TalkMenu must be settled for _AddIconedTalkMessage.
+            CreateTimeEvent(0, "xrr_task_offer_msg", 0, function()
+                if db.actor then
+                    db.actor:give_talk_message2(m.caption, m.text, m.icon, m.templ)
+                end
+                return true
+            end)
+        end
+
+        return xrr_peer_task_long_description(task_id)
+    end
+
+    -- Peer-side get_first_finished_task: checks task_info directly (no CFG_CACHE).
+    local function peer_get_first_finished_task(npc, is_sim)
+        local tm_ = task_manager.get_task_manager()
+        if not tm_ then return nil end
+        local task_info = tm_.task_info
+        local npc_id = npc:id()
+
+        local sec
+        local st = db.storage[npc_id]
+        if st and st.ini and st.section_logic then
+            sec = st.ini:r_string_ex(st.section_logic, "task_section")
+            if sec then sec = sec .. "_task_" end
+        end
+        if not sec then
+            sec = is_sim and "simulation_task_"
+                  or npc:section() ~= "m_trader" and (npc:section() .. "_task_")
+                  or (npc:name() .. "_task_")
+        end
+
+        for task_id, tsk in pairs(task_info) do
+            if string.find(task_id, sec, 1, true) == 1 then
+                local stage_complete = task_manager.task_ini:r_float_ex(task_id, "stage_complete") or 254
+                if db.actor:get_task(task_id, true) ~= nil
+                   and tsk.stage ~= nil
+                   and tsk.stage == stage_complete
+                   and tsk.status ~= "fail"
+                   and tsk.status ~= "completed" then
+                    if is_sim and tsk.task_giver_id then
+                        if npc_id == tsk.task_giver_id then
+                            return task_id
+                        end
+                        local se_obj = alife():object(npc_id)
+                        if se_obj and se_obj.group_id ~= 65535
+                           and se_obj.group_id == tsk.task_giver_id then
+                            return task_id
+                        end
+                    else
+                        return task_id
+                    end
+                end
+            end
+        end
+        return nil
+    end
+
+    -- text_npc_has_task — peer reads from synced available_tasks.
+    dialogs.text_npc_has_task = function(a, b)
+        if XrrIsHost() then return _orig_npc_has_task(a, b) end
+        local npc = dialogs.who_is_npc(a, b)
+        if not npc then return game.translate_string("st_no_available_task") end
+        local npc_id = npc:id()
+        local task_id = axr_task_manager.available_tasks[npc_id]
+                        and axr_task_manager.available_tasks[npc_id][1]
+        printf("[xrRazom][quest] text_npc_has_task PEER npc=%s task=%s",
+            tostring(npc_id), tostring(task_id))
+        return peer_task_text(npc_id, task_id)
+    end
+
+    -- (6b) npc_has_task — peer checks synced available_tasks.
+    local _orig_npc_has_task_bool = dialogs.npc_has_task
+    dialogs.npc_has_task = function(a, b)
+        if XrrIsHost() then return _orig_npc_has_task_bool(a, b) end
+        local npc = dialogs.who_is_npc(a, b)
+        if not npc then return false end
+        local npc_id = npc:id()
+        local has = axr_task_manager.available_tasks[npc_id]
+                    and axr_task_manager.available_tasks[npc_id][1] ~= nil
+        printf("[xrRazom][quest] npc_has_task PEER npc=%s result=%s",
+            tostring(npc_id), tostring(has))
+        return has
+    end
+
+    -- (6d) npc_has_ordered_task_to_give — peer checks synced available_tasks
+    --      OR dialogs.last_task_id (set by DRX text functions that generate locally).
+    local _orig_npc_has_ordered = dialogs.npc_has_ordered_task_to_give
+    dialogs.npc_has_ordered_task_to_give = function(a, b)
+        if XrrIsHost() then return _orig_npc_has_ordered(a, b) end
+        if dialogs.last_task_id then return true end
+        local npc = dialogs.who_is_npc(a, b)
+        if not npc then return false end
+        local npc_id = npc:id()
+        local has = axr_task_manager.available_tasks[npc_id]
+                    and axr_task_manager.available_tasks[npc_id][1] ~= nil
+        printf("[xrRazom][quest] npc_has_ordered_task PEER npc=%s result=%s last_task=%s",
+            tostring(npc_id), tostring(has), tostring(dialogs.last_task_id))
+        return has
+    end
+
+    -- (6e) Turn-in dialog patches — peer uses peer_get_first_finished_task
+    --      instead of axr_task_manager.get_first_finished_task (which needs CFG_CACHE).
+    dialogs.actor_has_finished_ordered_task = function(a, b)
+        if XrrIsHost() then return _orig_actor_has_finished(a, b) end
+        local npc = dialogs.who_is_npc(a, b)
+        if not npc then return false end
+        local tid = peer_get_first_finished_task(npc, false)
+        printf("[xrRazom][quest] actor_has_finished_ordered_task PEER npc=%s result=%s",
+            tostring(npc:id()), tostring(tid))
+        return tid ~= nil
+    end
+
+    dialogs.actor_has_not_finished_ordered_task = function(a, b)
+        return not dialogs.actor_has_finished_ordered_task(a, b)
+    end
+
+    dialogs.actor_sim_has_finished_ordered_task = function(a, b)
+        if XrrIsHost() then return _orig_actor_sim_has_finished(a, b) end
+        local npc = dialogs.who_is_npc(a, b)
+        if not npc then return false end
+        local tid = peer_get_first_finished_task(npc, true)
+        printf("[xrRazom][quest] actor_sim_has_finished PEER npc=%s result=%s",
+            tostring(npc:id()), tostring(tid))
+        return tid ~= nil
+    end
+
+    dialogs.actor_sim_has_not_finished_ordered_task = function(a, b)
+        return not dialogs.actor_sim_has_finished_ordered_task(a, b)
+    end
+
+    dialogs.text_task_finish = function(a, b)
+        if XrrIsHost() then return _orig_text_task_finish(a, b) end
+        local npc = dialogs.who_is_npc(a, b)
+        if not npc then
+            return game.translate_string("st_default_task_finished_" .. math.random(1, 3))
+        end
+        local tid = peer_get_first_finished_task(npc, false)
+        printf("[xrRazom][quest] text_task_finish PEER npc=%s tid=%s",
+            tostring(npc:id()), tostring(tid))
+        if tid then
+            local descr = task_manager.task_ini:r_string_ex(tid, "task_complete_descr")
+            if descr then return game.translate_string(descr) end
+        end
+        return game.translate_string("st_default_task_finished_" .. math.random(1, 3))
+    end
+
+    dialogs.text_sim_task_finish = function(a, b)
+        if XrrIsHost() then return _orig_text_sim_task_finish(a, b) end
+        local npc = dialogs.who_is_npc(a, b)
+        if not npc then
+            return game.translate_string("st_default_task_finished_" .. math.random(1, 3))
+        end
+        local tid = peer_get_first_finished_task(npc, true)
+        printf("[xrRazom][quest] text_sim_task_finish PEER npc=%s tid=%s",
+            tostring(npc:id()), tostring(tid))
+        if tid then
+            local descr = task_manager.task_ini:r_string_ex(tid, "task_complete_descr")
+            if descr then return game.translate_string(descr) end
+        end
+        return game.translate_string("st_default_task_finished_" .. math.random(1, 3))
+    end
+
+    dialogs.npc_set_finished_task_complete = function(a, b)
+        if XrrIsHost() then return _orig_npc_set_finished(a, b) end
+        local npc = dialogs.who_is_npc(a, b)
+        if not npc then return end
+        local tid = peer_get_first_finished_task(npc, false)
+        printf("[xrRazom][quest] npc_set_finished_task_complete PEER npc=%s tid=%s",
+            tostring(npc:id()), tostring(tid))
+        if tid then
+            task_manager.get_task_manager():set_task_completed(tid)
+        end
+    end
+
+    dialogs.npc_sim_set_finished_task_complete = function(a, b)
+        if XrrIsHost() then return _orig_npc_sim_set_finished(a, b) end
+        local npc = dialogs.who_is_npc(a, b)
+        if not npc then return end
+        local tid = peer_get_first_finished_task(npc, true)
+        printf("[xrRazom][quest] npc_sim_set_finished_task_complete PEER npc=%s tid=%s",
+            tostring(npc:id()), tostring(tid))
+        if tid then
+            task_manager.get_task_manager():set_task_completed(tid)
+        end
+    end
+
+    -- (7) npc_skip_task — peer sends QUEST_SKIP to host.
+    dialogs.npc_skip_task = function(a, b)
+        local result = _orig_npc_skip(a, b)
+        if not XrrIsHost() then
+            local host_id = xrr_pending_npc_lock_host_id()
+            if host_id and host_id > 0 then
+                printf("[xrRazom][quest] npc_skip_task PEER -> SendQuestSkip npc=%s", tostring(host_id))
+                XrrAlife():SendQuestSkip(host_id)
+            end
+        end
+        return result
+    end
+
+    -- (8) xr_conditions.task_giver_alive — use alife_object (works on both sides).
+    xr_conditions.task_giver_alive = function(actor, npc, p)
+        if not p[1] then return false end
+        local tm_  = task_manager.get_task_manager()
+        local tsk = tm_ and tm_.task_info[p[1]]
+        if not tsk then return true end
+        local se_obj = tsk.task_giver_id and alife_object(tsk.task_giver_id)
+        if not se_obj then return false end
+        local cls = se_obj:clsid()
+        if IsSquad(nil, cls) then return true end
+        return (IsMonster(nil, cls) or IsStalker(nil, cls)) and se_obj:alive()
+    end
+
+    -- (9a) actor_has_item — team view: vanilla checks db.actor only.
+    xr_conditions.actor_has_item = function(actor, npc, p)
+        if not (p and p[1]) then return false end
+        if actor and actor:object(p[1]) then return true end
+        if XrrIsHosted() and xrr_peer_item_count(p[1]) > 0 then return true end
+        return false
+    end
+
+    -- (9a') actor_has_item_amount / actor_has_item_count — the counting variants.
+    xr_conditions.actor_has_item_amount = function(actor, npc, p)
+        local cnt = p[1] and utils_item.get_amount(db.actor, p[1]) or 0
+        if XrrIsHosted() and p[1] then cnt = cnt + xrr_peer_item_count(p[1]) end
+        local amt = p[2] and tonumber(p[2])
+        return amt and (cnt >= amt)
+    end
+    xr_conditions.actor_has_item_count = function(actor, npc, p)
+        local item_section = p and p[1]
+        local need_count   = p and tonumber(p[2])
+        if not (item_section and need_count) then return false end
+        local has_count = 0
+        db.actor:iterate_inventory(function(_, item)
+            if item:section() == item_section then has_count = has_count + 1 end
+        end, db.actor)
+        if XrrIsHosted() then has_count = has_count + xrr_peer_item_count(item_section) end
+        return has_count >= need_count
+    end
+
+    -- (9b) recover_mutant_data — the device is tracked BY ALIFE ID and the functor
+    --      fails on item-gone, which is what a peer's pickup looks like. Complete
+    --      on a peer holding it, and hold that fail while peers are connected
+    --      (holdings can update a tick after the pickup).
+    if task_status_functor and task_status_functor.recover_mutant_data_status then
+        local _orig_rmd = task_status_functor.recover_mutant_data_status
+        task_status_functor.recover_mutant_data_status = function(tsk, task_id)
+            if XrrIsClient() or not XrrIsHosted() then return _orig_rmd(tsk, task_id) end
+            if tsk and tsk.stage and tsk.stage > 0 then
+                if peer_task_section_count(task_id, "recover_mutant_data_device") > 0 then
+                    printf("[xrRazom][quest] recover_mutant_data COMBINED id=%s -> peer holds device, complete",
+                        tostring(task_id))
+                    tsk.stage = 2  -- stage_complete → fires on_complete
+                    return
+                end
+                local ret = _orig_rmd(tsk, task_id)
+                if ret == "fail" then
+                    printf("[xrRazom][quest] recover_mutant_data HOLD id=%s -> item gone, awaiting peer holdings",
+                        tostring(task_id))
+                    return
+                end
+                return ret
+            end
+            return _orig_rmd(tsk, task_id)
+        end
+    end
+
+    -- (9c) recover_item_on_corpse (RIOC) — same by-alife-id shape as (9b): a peer
+    --      looting the corpse destroys the host-side copy. Keep stage 1 (the normal
+    --      turn-in path) while a peer holds one of the sections, and hold the fail.
+    if task_status_functor and task_status_functor.recover_item_on_corpse_status_functor then
+        local _orig_rioc = task_status_functor.recover_item_on_corpse_status_functor
+        task_status_functor.recover_item_on_corpse_status_functor = function(tsk, task_id)
+            if XrrIsClient() or not XrrIsHosted() then return _orig_rioc(tsk, task_id) end
+            local secs = tsk and rioc_sections_for(task_id)
+            if secs then
+                for i = 1, #secs do
+                    if party_item_count(secs[i]) > 0 then
+                        if tsk.stage ~= 1 then
+                            printf("[xrRazom][quest] rioc TEAM id=%s -> peer holds %s, stage=1",
+                                tostring(task_id), secs[i])
+                            tsk.stage = 1
+                        end
+                        return
+                    end
+                end
+            end
+            local ret = _orig_rioc(tsk, task_id)
+            if ret == "fail" then
+                printf("[xrRazom][quest] rioc HOLD id=%s -> item gone, awaiting peer holdings",
+                    tostring(task_id))
+                return
+            end
+            return ret
+        end
+    end
+
+    -- (9c'') xr_effects.remove_delivery_item — vanilla removes the package BY
+    --      SECTION out of db.actor, so one a peer carries survives the turn-in
+    --      silently. Route that case through the party consume; a delivery package
+    --      is unique per task, so section-keyed is safe here.
+    if xr_effects and xr_effects.remove_delivery_item then
+        local _orig_rdi = xr_effects.remove_delivery_item
+        xr_effects.remove_delivery_item = function(actor, npc, p)
+            if XrrIsClient() or not XrrIsHosted() then return _orig_rdi(actor, npc, p) end
+            local task_id = p and p[1]
+            local var = task_id and db.actor and load_var(db.actor, task_id)
+            local sec = var and var.item_1_sec
+            -- Host holds it: vanilla also does the hand-to-NPC relocate for a trader.
+            if not sec or (db.actor and db.actor:object(sec)) then
+                return _orig_rdi(actor, npc, p)
+            end
+            printf("[xrRazom][quest] remove_delivery_item task=%s sec=%s -> party consume",
+                tostring(task_id), sec)
+            XrrAlife():ConsumePartyItems(sec, 1)
+        end
+    end
+
+    -- (9d) delivery_task — the package is tracked by alife id, so a peer carrying
+    --      it reads as gone. Hold that fail, keep the legitimate target-died one,
+    --      and count a peer's copy for the stage 0->1 advance. Turn-in stays with
+    --      the host at the target NPC; a peer can't run that line (known gap).
+    if task_status_functor and task_status_functor.delivery_task then
+        local _orig_delivery = task_status_functor.delivery_task
+        task_status_functor.delivery_task = function(tsk, task_id)
+            if XrrIsClient() or not XrrIsHosted() then return _orig_delivery(tsk, task_id) end
+            local var = db.actor and load_var(db.actor, task_id)
+            if not (var and tsk) then return _orig_delivery(tsk, task_id) end
+            -- No id repair here (nor in the measure / fate wraps below): under
+            -- shared ids a host→peer transfer is only a re-parent, and re-anchoring
+            -- a stale id would pick a different instance of the section. The
+            -- section-keyed team pass below covers the stale case.
+            local prev_stage = tsk.stage
+            local ret = _orig_delivery(tsk, task_id)
+            if ret == "fail" then
+                -- Target vanished/dead is a legitimate fail — recompute and pass on.
+                local se_target = var.target_id and alife_object(var.target_id)
+                local target = se_target and db.storage[var.target_id] and db.storage[var.target_id].object
+                if (not se_target) or (target and not target:alive()) then return "fail" end
+                printf("[xrRazom][quest] delivery HOLD id=%s -> package gone, awaiting peer holdings",
+                    tostring(task_id))
+                ret = nil
+            end
+            if tsk.stage == 0 and var.item_1_sec and party_item_count(var.item_1_sec) > 0 then
+                if prev_stage ~= 1 then  -- orig re-bounces 1->0 every tick while a peer carries; log transitions only
+                    printf("[xrRazom][quest] delivery TEAM id=%s -> peer holds %s, stage=1",
+                        tostring(task_id), var.item_1_sec)
+                end
+                tsk.stage = 1
+            end
+            return ret
+        end
+    end
+
+    -- (9d') dialogs.actor_has_package — the turn-in precondition checks the package
+    --      by alife id in the HOST inventory; accept a peer-held one for the task
+    --      whose target is the talking NPC.
+    if dialogs and dialogs.actor_has_package then
+        local _orig_ahp = dialogs.actor_has_package
+        dialogs.actor_has_package = function(actor, npc, p)
+            if _orig_ahp(actor, npc, p) then return true end
+            if XrrIsClient() or not XrrIsHosted() then return false end
+            local tm_ = task_manager.get_task_manager()
+            if not (tm_ and npc) then return false end
+            for tid in pairs(tm_.task_info) do
+                if delivery_sections_for(tid) then
+                    local var = load_var(db.actor, tid)
+                    if var and var.target_id == npc:id() and var.item_1_sec
+                       and party_item_count(var.item_1_sec) > 0 then
+                        return true
+                    end
+                end
+            end
+            return false
+        end
+    end
+
+    -- (9e) measure_task — same track-by-id scheme as delivery. The peer runs the
+    --      measurement itself (peer_measure_update below) and the host sees only
+    --      the <tid>_measurment_finished info; this wrap keeps the device reachable
+    --      while a peer holds it and arms the ambush the host can no longer see.
+    if task_status_functor and task_status_functor.measure_task then
+        local _orig_measure = task_status_functor.measure_task
+        task_status_functor.measure_task = function(tsk, task_id)
+            if XrrIsClient() or not XrrIsHosted() then return _orig_measure(tsk, task_id) end
+            local var = db.actor and load_var(db.actor, task_id)
+            if not (var and tsk) then return _orig_measure(tsk, task_id) end
+            -- Before the original: vanilla's spawn block fires on any tick that
+            -- reaches stage 2, so the flag must be latched first or both arms spawn.
+            measure_arm_peer_ambush(task_id, var)
+            local prev_stage = tsk.stage
+            local ret = _orig_measure(tsk, task_id)
+            if ret == "fail" then
+                printf("[xrRazom][quest] measure HOLD id=%s -> device gone, awaiting peer holdings",
+                    tostring(task_id))
+                ret = nil
+            end
+            if tsk.stage == 0 and var.item_1_sec and party_item_count(var.item_1_sec) > 0 then
+                tsk.stage = has_alife_info(task_id .. "_measurment_finished") and 3 or 1
+                if prev_stage ~= tsk.stage then  -- orig re-bounces to 0 every tick while a peer carries; log transitions only
+                    printf("[xrRazom][quest] measure TEAM id=%s -> peer holds %s, stage=%s",
+                        tostring(task_id), var.item_1_sec, tostring(tsk.stage))
+                end
+            end
+            return ret
+        end
+    end
+
+    -- (9f) fate_task — every gate in the vanilla functor measures the HOST actor.
+    --      Team semantics go AROUND the original, never in front of it: granting
+    --      `<tid>_target_found` up front satisfies the `not flag_2` guard on
+    --      vanilla's own stage-2 → 4 branch and strands the task at stage 2.
+    if task_status_functor and task_status_functor.fate_task then
+        local _orig_fate = task_status_functor.fate_task
+        task_status_functor.fate_task = function(tsk, task_id)
+            if XrrIsClient() or not XrrIsHosted() then return _orig_fate(tsk, task_id) end
+            local var = db.actor and load_var(db.actor, task_id)
+            if not (var and tsk) then return _orig_fate(tsk, task_id) end
+            -- Detector is fungible — any peer's RF receiver counts; the pda is not.
+            local peer1 = var.item_1_sec and party_item_count(var.item_1_sec) > 0
+
+            -- Before peer2: arming is what resolves var.item_2_id in the first place.
+            fate_register_for_peer(tsk, task_id, var)
+            local peer2 = fate_peer_holds(var)
+
+            local ret = _orig_fate(tsk, task_id)
+            if ret == "fail" then
+                printf("[xrRazom][quest] fate HOLD id=%s -> item gone, awaiting peer holdings",
+                    tostring(task_id))
+                ret = nil
+            end
+            -- Re-read: the original grants it when the host is the one holding.
+            local flag_2 = has_alife_info(task_id .. "_target_found")
+
+            -- Peer looted the pda — same three effects as the vanilla branch.
+            if tsk.stage == 2 and peer2 and (not flag_2)
+               and has_alife_info(task_id .. "_dead_spawned") then
+                printf("[xrRazom][quest] fate TEAM id=%s -> %s recovered by peer, target found",
+                    tostring(task_id), tostring(var.item_2_sec))
+                db.actor:give_info_portion(task_id .. "_target_found")
+                fate_unpin_dead(var)
+                flag_2 = true
+                tsk.stage = 4
+            end
+            -- pda with a peer is not "lost": retrieve (3) → return to giver (4)
+            if tsk.stage == 3 and peer2
+               and not (var.item_2_id and utils_item.has_item_by_id(nil, var.item_2_id, var.item_2_sec)) then
+                tsk.stage = 4
+            end
+            -- detector with a peer counts for the stage-0 advance
+            if tsk.stage == 0 and peer1
+               and not (var.item_1_sec and db.actor:object(var.item_1_sec)) then
+                if flag_2 then
+                    tsk.stage = (peer2 or (var.item_2_id
+                        and utils_item.has_item_by_id(nil, var.item_2_id, var.item_2_sec))) and 4 or 3
+                else
+                    tsk.stage = (var.map == level.name()) and 2 or 1
+                end
+            end
+            return ret
+        end
+    end
+
+    -- (9g) anomaly_scanner_task_status — every transition keys on the HOST alone.
+    --      Post-correct with team semantics; the anomaly position is captured from
+    --      the stage-1 target because the functor stops exposing it at stage 2.
+    if task_status_functor and task_status_functor.anomaly_scanner_task_status then
+        local _orig_scan = task_status_functor.anomaly_scanner_task_status
+        local _scan_anom_pos = {}  -- task_id → last known anomaly position
+        task_status_functor.anomaly_scanner_task_status = function(tsk, task_id)
+            if XrrIsClient() or not XrrIsHosted() then return _orig_scan(tsk, task_id) end
+            if not (tsk and db.actor) then return _orig_scan(tsk, task_id) end
+            local prev_stage = tsk.stage
+            local ret = _orig_scan(tsk, task_id)
+            local scanner = "jup_b32_scanner_device"
+            local host_holds = db.actor:object(scanner) ~= nil
+            local peer_holds = party_item_count(scanner) > 0
+            -- Vanilla reads "near + not in host inventory" as placed — wrong while
+            -- a peer still carries it.
+            if prev_stage == 2 and tsk.stage == 3 and (host_holds or peer_holds) then
+                tsk.stage = 2
+            end
+            if tsk.stage == 1 then
+                local se_t = tsk.current_target and alife_object(tsk.current_target)
+                if se_t then _scan_anom_pos[task_id] = vector():set(se_t.position) end
+            end
+            local pos = _scan_anom_pos[task_id]
+            local near_any = pos
+                and xrr_patch_common.nearest_player_dist_sqr(pos) <= 25 or false
+            if tsk.stage == 0 and peer_holds then
+                printf("[xrRazom][quest] scanner TEAM id=%s -> peer holds scanner, stage=1",
+                    tostring(task_id))
+                tsk.stage = 1
+            end
+            if tsk.stage == 1 and near_any then
+                tsk.stage = 2
+            end
+            if tsk.stage == 2 and near_any and not (host_holds or peer_holds) then
+                printf("[xrRazom][quest] scanner TEAM id=%s -> scanner placed, stage=3",
+                    tostring(task_id))
+                disable_info("jup_b32_scanner_can_place")
+                tsk.stage = 3
+            end
+            return ret
+        end
+    end
+
+    -- (9h) chimera_scan — the scan accumulates only while the scanner is in the
+    --      HOST's inventory and the HOST is within 20 m. Wrap the module's has_id /
+    --      in_range seams so a party-held scanner and any player's range count.
+    if tasks_chimera_scan and tasks_chimera_scan.has_id then
+        local _orig_chim_hasid = tasks_chimera_scan.has_id
+        tasks_chimera_scan.has_id = function(id)
+            if _orig_chim_hasid(id) then return true end
+            if XrrIsClient() or not XrrIsHosted() then return false end
+            return party_item_count("chimera_scan_device") > 0
+        end
+    end
+    if tasks_chimera_scan and tasks_chimera_scan.in_range then
+        local _orig_chim_inrange = tasks_chimera_scan.in_range
+        tasks_chimera_scan.in_range = function(chid)
+            if _orig_chim_inrange(chid) then return true end
+            if XrrIsClient() or not XrrIsHosted() then return false end
+            local o = chid and level.object_by_id(chid)
+            return (o and xrr_patch_common.nearest_player_dist_sqr(o:position()) < 400)
+                and true or false
+        end
+    end
+
+    -- (9i) agr_u bandit boss docs — main_story_1_quest_case is checked by section
+    --      in the HOST inventory only; team-aware holdings, and the hand-over
+    --      consumes a peer's copy when the host holds none.
+    if dialogs_agr_u and dialogs_agr_u.actor_has_agr_u_docs then
+        local _orig_agr_docs = dialogs_agr_u.actor_has_agr_u_docs
+        dialogs_agr_u.actor_has_agr_u_docs = function(a, b)
+            if _orig_agr_docs(a, b) then return true end
+            if XrrIsClient() or not XrrIsHosted() then return false end
+            return party_item_count("main_story_1_quest_case") > 0
+        end
+    end
+    if dialogs_agr_u and dialogs_agr_u.take_agr_u_docs then
+        local _orig_agr_take = dialogs_agr_u.take_agr_u_docs
+        dialogs_agr_u.take_agr_u_docs = function(a, b)
+            if XrrIsHosted() and db.actor
+               and not db.actor:object("main_story_1_quest_case")
+               and party_item_count("main_story_1_quest_case") > 0 then
+                printf("[xrRazom][quest] agr_u docs handed over from a peer's inventory")
+                XrrAlife():ConsumePartyItems("main_story_1_quest_case", 1)
+                -- vanilla relocate puts the case in the boss's inventory — keep parity
+                local npc = dialogs.who_is_npc(a, b)
+                if npc then alife_create_item("main_story_1_quest_case", npc) end
+                return
+            end
+            return _orig_agr_take(a, b)
+        end
+    end
+
+    -- Silent task restore: join/transition re-materialises the host's tasks via
+    -- give_task, so two notices are muted on different timelines — "New mission" by
+    -- _G.xrr_restoring_tasks, and the later check_task "Mission updated" by
+    -- _G.xrr_silent_restore_tasks (task_id -> mute deadline, seeded in xrr_net_client).
+    local _orig_nm_send_task = news_manager.send_task
+    news_manager.send_task = function(actor, type, tsk)
+        if _G.xrr_restoring_tasks then return end
+        if type == "updated" and tsk and _G.xrr_silent_restore_tasks then
+            local id = tsk.get_id and tsk:get_id()
+            local deadline = id and _G.xrr_silent_restore_tasks[id]
+            if deadline then
+                if time_global() < deadline then
+                    return
+                end
+                _G.xrr_silent_restore_tasks[id] = nil
+            end
+        end
+        -- News pops are generated locally on every process from synced task state,
+        -- so broadcasting them as GAME_NEWS too would double-notify the peer.
+        local mgr = XrrNet()
+        if mgr then mgr:SetNewsBroadcast(false) end
+        without_dialog_sham(_orig_nm_send_task, actor, type, tsk)
+        if mgr then mgr:SetNewsBroadcast(true) end
+    end
+
+    -- The other three is_talking()-branching news helpers reachable from a task's
+    -- on_init / reward while the host services a peer's dialog (stash coords, fetch
+    -- item hand-over, on-accept payout).
+    for _, name in ipairs({ "send_treasure", "relocate_item", "relocate_money" }) do
+        local orig = news_manager[name]
+        if type(orig) == "function" then
+            news_manager[name] = function(...) return without_dialog_sham(orig, ...) end
+        else
+            log("[xrRazom][quest] INSTALL WARNING: news_manager." .. name .. " missing")
+        end
+    end
+
+    local _orig_set_fade_msg = actor_menu.set_fade_msg
+    actor_menu.set_fade_msg = function(...)
+        if _G.xrr_restoring_tasks then return end
+        return _orig_set_fade_msg(...)
+    end
+end
+
+-- ═══════════════════════════════════════════════════════════════
+-- PEER — measure_task measurement driver
+-- ═══════════════════════════════════════════════════════════════
+-- Only task_status_functor.measure_task calls start_measurement_hud, and check_task
+-- nulls the status functor on clients, so the peer recomputes the arming locally.
+-- Known gap: the PDA text tracks the host's stage until the finish info lands.
+
+local _measure_armed = nil
+local _measure_tg    = 0
+
+-- The anomaly, as a server object this peer can measure a distance to. The synced
+-- target is the maintained path but is built for dynamic entities; the anomaly is
+-- a static all.spawn object, so the host's pstor var resolves directly — both
+-- worlds spawn statics from the same file at the same ids.
+local function measure_target_se(tid)
+    local id = xrr_net_client and xrr_net_client.xrr_resolve_synced_target
+               and xrr_net_client.xrr_resolve_synced_target(tid)
+    local se = id and id > 0 and alife_object(id)
+    if se then return se end
+    local var = load_var(db.actor, tid)
+    return var and var.target_id and alife_object(var.target_id) or nil
+end
+
+local function peer_measure_update()
+    if not (XrrIsClient() and db.actor) then return end
+    local tg = time_global()
+    if tg < _measure_tg then return end
+    _measure_tg = tg + 500
+
+    -- No detector drawn: nothing to arm, and the task sweep stays off the common path.
+    local det = db.actor:active_detector()
+    local sec = det and det:section()
+    local armed = nil
+
+    if sec then
+        local tm = task_manager.get_task_manager()
+        for tid in pairs(tm and tm.task_info or {}) do
+            if measure_section_for(tid) == sec
+               and not has_alife_info(tid .. "_measurment_finished") then
+                local se = measure_target_se(tid)
+                -- The target is the anomaly only from stage 1 on; at stage 0 it is
+                -- the device in this peer's own pack. Parentless = a world object.
+                if se and se.parent_id == 65535
+                   and se.position:distance_to(db.actor:position()) <= MEASURE_DIST then
+                    armed = tid
+                    break
+                end
+            end
+        end
+    end
+
+    if armed then
+        tasks_measure.start_measurement_hud(armed)
+    else
+        tasks_measure.close_measurement_hud()
+    end
+
+    if armed ~= _measure_armed then
+        printf("[xrRazom][quest] measure PEER %s id=%s",
+            armed and "ARM" or "DISARM", tostring(armed or _measure_armed))
+        _measure_armed = armed
+    end
+end
+
+-- ═══════════════════════════════════════════════════════════════
+-- CALLBACKS — on_game_start()
+-- ═══════════════════════════════════════════════════════════════
+
+function on_game_start()
+    -- (A) Peer requests quest list when dialog opens.
+    RegisterScriptCallback("GUI_on_show", function(name)
+        if name ~= "Dialog" or XrrIsHost() then return end
+        local host_id = xrr_pending_npc_lock_host_id()
+        if host_id and host_id > 0 then
+            printf("[xrRazom][quest] GUI_on_show Dialog -> SendQuestListRequest npc=%s", tostring(host_id))
+            XrrAlife():SendQuestListRequest(host_id)
+        else
+            printf("[xrRazom][quest] GUI_on_show Dialog but no lock host_id=%s", tostring(host_id))
+        end
+    end)
+
+    -- Join / level load: the give_task and QUEST_LIST_RESPONSE rebuilds cover only
+    -- newly given tasks; tasks already active at load time need their sets here.
+    RegisterScriptCallback("actor_on_first_update", function()
+        rebuild_watch_sets()
+    end)
+
+    -- (B) PEER: drive the anomaly-measurement minigame locally.
+    RegisterScriptCallback("actor_on_update", peer_measure_update)
+
+    -- (C) Cleanup on session end.
+    xrr_register_cleanup(function()
+        _G.xrr_task_offer_msgs = {}
+        _G.xrr_quest_avail_full = {}
+        _G.xrr_silent_restore_tasks = {}
+        task_watch = {}
+        _avail_req = nil
+        set_peer_dialog_npc(nil)
+        _target_pos_sent = {}
+        tasks_measure.close_measurement_hud()
+        _measure_armed = nil
+    end)
+end
+
+-- ═══════════════════════════════════════════════════════════════
+-- DLL → LUA CALLBACKS (registered in _G)
+-- ═══════════════════════════════════════════════════════════════
+
+-- HOST: peer requests available tasks for a locked NPC.
+function OnQuestListRequest(sender_conn, npc_host_id)
+    if not XrrIsHost() then return end
+    printf("[xrRazom][quest] OnQuestListRequest conn=%s npc=%s",
+        tostring(sender_conn), tostring(npc_host_id))
+    local npc = level.object_by_id(npc_host_id)
+    if not npc then
+        printf("[xrRazom][quest] OnQuestListRequest FAIL npc not found id=%s", tostring(npc_host_id))
+        return
+    end
+
+    set_peer_dialog_npc({ id = npc_host_id, busy = true, netid = sender_conn })
+
+    -- pcall-guarded: generation runs arbitrary vanilla condlists, and a throw must
+    -- not leak the dialog window — the host's actor would report is_talking() true
+    -- indefinitely.
+    local ok, err = pcall(function()
+        axr_task_manager.available_tasks[npc_host_id] = nil
+        axr_task_manager.clear_skipped_tasks()
+        local section = npc:section()
+        local is_sim  = (_G.xrr_task_sim_overrides and _G.xrr_task_sim_overrides[section])
+                        or string.find(section, "sim_") or string.find(section, "simulation_")
+        printf("[xrRazom][quest] OnQuestListRequest generating npc=%s sec=%s is_sim=%s",
+            npc:name(), section, tostring(is_sim))
+        axr_task_manager.generate_available_tasks(npc, is_sim)
+        if axr_task_manager.generate_ongoing_tasks then
+            axr_task_manager.generate_ongoing_tasks(npc, is_sim)
+        end
+
+        local avail = axr_task_manager.available_tasks[npc_host_id] or {}
+        local ong   = axr_task_manager.ongoing_tasks
+                      and axr_task_manager.ongoing_tasks[npc_host_id] or {}
+        printf("[xrRazom][quest] OnQuestListRequest result: available=%s ongoing=%s",
+            tostring(#avail), tostring(#ong))
+
+        local vars = {}
+        local msgs = {}
+        local msg_n = 0
+        for _, tid in ipairs(avail) do
+            -- Also drives the host-side fetch setup, so it isn't called separately.
+            local m = capture_offer_message(tid)
+            if m then msgs[tid] = m; msg_n = msg_n + 1 end
+            xrr_quest_serialize.collect_task_variables(tid, vars)
+        end
+
+        local blob = xrr_quest_serialize.serialize_quest_data(avail, ong, vars, msgs)
+        printf("[xrRazom][quest] OnQuestListRequest -> SendResponse blob=%s tasks=[%s] msgs=%s",
+            tostring(#blob), table.concat(avail, ","), tostring(msg_n))
+
+        XrrAlife():SendQuestListResponse(sender_conn, npc_host_id, blob)
+    end)
+    set_peer_dialog_npc(nil)
+    if not ok then
+        printf("[xrRazom][quest] OnQuestListRequest ERROR npc=%s: %s",
+            tostring(npc_host_id), tostring(err))
+    end
+end
+
+-- PEER: host sends back the available + ongoing task list + pstor vars.
+function OnQuestListResponse(npc_host_id, blob)
+    if XrrIsHost() then return end
+    printf("[xrRazom][quest] OnQuestListResponse npc_host=%s blob_len=%s",
+        tostring(npc_host_id), tostring(blob and #blob or 0))
+
+    -- The NPC's mirror wears the host's id, so no translation is left.
+    local local_npc_id = npc_host_id
+
+    local available_tbl, ongoing_tbl, var_blob, msg_tbl = xrr_quest_serialize.deserialize_quest_data(blob)
+    printf("[xrRazom][quest] OnQuestListResponse local_npc=%s avail=%s ong=%s vars=%s tasks=[%s]",
+        tostring(local_npc_id), tostring(#available_tbl), tostring(#ongoing_tbl),
+        tostring(#var_blob), table.concat(available_tbl, ","))
+
+    axr_task_manager.available_tasks = axr_task_manager.available_tasks or {}
+    axr_task_manager.available_tasks[local_npc_id] = available_tbl
+    if axr_task_manager.ongoing_tasks then
+        axr_task_manager.ongoing_tasks[local_npc_id] = ongoing_tbl
+    end
+
+    -- Pristine copy of the host's full list, separate from the working copy above
+    -- that "Have anything else?" drains; generate_available_tasks rebuilds from it.
+    _G.xrr_quest_avail_full = _G.xrr_quest_avail_full or {}
+    local full_copy = {}
+    for i = 1, #available_tbl do full_copy[i] = available_tbl[i] end
+    _G.xrr_quest_avail_full[local_npc_id] = full_copy
+
+    -- Host-rendered iconed offer previews, keyed by task_id — identical on both
+    -- sides, since task ids are config section names, not entity ids.
+    _G.xrr_task_offer_msgs = _G.xrr_task_offer_msgs or {}
+    for tid, m in pairs(msg_tbl or {}) do
+        _G.xrr_task_offer_msgs[tid] = m
+    end
+
+    xrr_quest_serialize.deserialize_quest_vars(var_blob)
+    rebuild_watch_sets()
+end
+
+-- Wait-clock for a peer-accepted timed task (`check_if_enough_time_passed`): the
+-- dialog effect's save_ctime ran on the accepting peer only, and a missing host
+-- stamp reads as "the wait is over" on the next check_task.
+local function stamp_timed_task_start(task_id)
+    local ini = task_manager.task_ini
+    if not (ini and ini:section_exist(task_id) and db.actor) then return end
+    if ini:r_string_ex(task_id, "status_functor") ~= "check_if_enough_time_passed" then return end
+    if load_ctime(db.actor, task_id) then return end
+    save_ctime(db.actor, task_id, game.get_game_time())
+    printf("[xrRazom][quest] wait-clock stamped for peer-accepted task=%s", task_id)
+end
+
+-- HOST: peer accepts a task. fetch_sec/fetch_count carry the peer's chosen fetch
+-- item, "" / 0 for non-fetch tasks and pseudo-id story handlers.
+function OnQuestAccept(sender_conn, task_id, npc_host_id, fetch_sec, fetch_count)
+    if not XrrIsHost() then return end
+    printf("[xrRazom][quest] OnQuestAccept conn=%s task=%s npc=%s fetch=%s x%s",
+        tostring(sender_conn), task_id, tostring(npc_host_id),
+        tostring(fetch_sec), tostring(fetch_count))
+
+    local handler = _G.xrr_story_quest_handlers and _G.xrr_story_quest_handlers[task_id]
+    if handler then
+        printf("[xrRazom][quest] OnQuestAccept -> story handler for %s", task_id)
+        -- Lets a handler attribute the task it generates to the acting peer.
+        _G.xrr_quest_accept_conn = sender_conn
+        -- Same window the give path below needs: the handlers run generators that
+        -- bail when the host's actor isn't talking. pcall-guarded so a throw can't
+        -- leak the window or the conn.
+        set_peer_dialog_npc({ id = npc_host_id, busy = true, netid = sender_conn })
+        local ok, err = pcall(handler, npc_host_id)
+        set_peer_dialog_npc(nil)
+        _G.xrr_quest_accept_conn = nil
+        if not ok then
+            printf("![xrRazom][quest] OnQuestAccept story handler %s: %s", task_id, tostring(err))
+        end
+        return
+    end
+
+    local tm_ = task_manager.get_task_manager()
+    if not tm_ then return end
+    if tm_.task_info[task_id] then
+        printf("[xrRazom][quest] OnQuestAccept SKIP already active task=%s", task_id)
+        return
+    end
+
+    -- Pre-seed <tid>_fetch so the setup_fetch_task wrap adopts the peer's pick
+    -- instead of re-rolling.
+    if fetch_sec and fetch_sec ~= "" and ini_sys:section_exist(fetch_sec) then
+        save_var(db.actor, task_id .. "_fetch", fetch_sec)
+        save_var(db.actor, task_id .. "_fetch_count",
+            (fetch_count and fetch_count > 0) and fetch_count or 1)
+    end
+
+    -- Speaker window for the give: on_init effects that query the talking NPC would
+    -- otherwise abort before give_task. pcall so a throw can't leak the entry.
+    printf("[xrRazom][quest] OnQuestAccept -> give_task(%s, %s)",
+        task_id, tostring(npc_host_id < 65535 and npc_host_id or nil))
+    stamp_timed_task_start(task_id)
+    set_peer_dialog_npc({ id = npc_host_id, busy = true, netid = sender_conn })
+    local ok, err = pcall(function()
+        tm_:give_task(task_id, npc_host_id < 65535 and npc_host_id or nil)
+    end)
+    set_peer_dialog_npc(nil)
+    if not ok then
+        printf("[xrRazom][quest] OnQuestAccept give_task ERROR task=%s: %s", task_id, tostring(err))
+    end
+end
+
+-- HOST: peer declines current task offer (skip to next).
+function OnQuestSkip(sender_conn, npc_host_id)
+    if not XrrIsHost() then return end
+    local npc = level.object_by_id(npc_host_id)
+    if not npc then
+        printf("[xrRazom][quest] OnQuestSkip FAIL npc not found id=%s", tostring(npc_host_id))
+        return
+    end
+    local tasks = axr_task_manager.available_tasks
+        and axr_task_manager.available_tasks[npc_host_id]
+    if tasks and #tasks > 0 then
+        printf("[xrRazom][quest] OnQuestSkip npc=%s removed=%s remaining=%s",
+            tostring(npc_host_id), tostring(tasks[1]), tostring(#tasks - 1))
+        table.remove(tasks, 1)
+    else
+        printf("[xrRazom][quest] OnQuestSkip npc=%s no tasks to skip", tostring(npc_host_id))
+    end
+end
+
+-- PEER: host broadcasts reward on quest completion.
+-- items_str: "section1,section2,..."; an "@effect:arg1:arg2" entry is a relayed
+--            xr_effects call to run locally.
+-- gw_str:    "community1:delta1,community2:delta2,..."
+function OnQuestReward(task_id, money, items_str, gw_str)
+    if XrrIsHost() then return end
+    printf("[xrRazom][quest] OnQuestReward task=%s money=%s items=[%s] gw=[%s]",
+        task_id, tostring(money), tostring(items_str), tostring(gw_str))
+    if money and money > 0 then
+        db.actor:give_money(money)
+        news_manager.relocate_money(db.actor, "in", money)
+    end
+    if items_str and items_str ~= "" then
+        for section in items_str:gmatch("[^,]+") do
+            local eff = section:match("^@([%w_]+)")
+            if eff then
+                local fn = xr_effects[eff]
+                if fn then
+                    local args = {}
+                    for a in section:gmatch(":([^:]+)") do args[#args + 1] = a end
+                    local ok, err = pcall(fn, db.actor, nil, args)
+                    if not ok then
+                        printf("![xrRazom][quest] OnQuestReward @%s error: %s", eff, tostring(err))
+                    end
+                end
+            elseif section ~= "" then
+                alife_create_item(section, db.actor)
+                news_manager.relocate_item(db.actor, "in", section)
+            end
+        end
+    end
+    if gw_str and gw_str ~= "" then
+        for entry in gw_str:gmatch("[^,]+") do
+            local comm, delta = entry:match("^(.+):([%-]?%d+)$")
+            if comm and delta then
+                relation_registry.change_community_goodwill(comm, 0, tonumber(delta))
+            end
+        end
+    end
+end
+
+-- ═══════════════════════════════════════════════════════════════
+-- EXPORTS
+-- ═══════════════════════════════════════════════════════════════
+
+_G.OnQuestListRequest    = OnQuestListRequest
+_G.OnQuestListResponse   = OnQuestListResponse
+_G.OnQuestAccept         = OnQuestAccept
+_G.OnQuestSkip           = OnQuestSkip
+_G.OnQuestReward         = OnQuestReward
+
+_G.xrr_request_task_availability  = xrr_request_task_availability
+_G.xrr_peer_task_offer_preview    = xrr_peer_task_offer_preview
+_G.xrr_peer_task_long_description = xrr_peer_task_long_description
+_G.xrr_peer_render_fetch_preview  = xrr_peer_render_fetch_preview
+
+-- Batch tracker for xrr_request_task_availability: the engine resolves the handler
+-- by name on every dispatch, so wrapping the _G binding catches every reply.
+local _dispatch_quest_list_response = _G.OnQuestListResponse
+_G.OnQuestListResponse = function(npc_host_id, blob)
+    _dispatch_quest_list_response(npc_host_id, blob)
+    avail_req_note_answer(npc_host_id)
+end

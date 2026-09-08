@@ -1,0 +1,83 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+  Разом нас багато. (Together we are many.)
+
+  Peer-side MCM overlay: while a session is live, reads of host-authored MCM
+  keys answer with the host's values and writes to them are dropped. The
+  authored set arrives over MCM_AUTHORITY and lives engine-side in XrrMcmSync.
+
+  The file name is load-bearing — dxml_core globs modxml_*.script at the
+  $game_scripts$ root and indexing _G[name] there is what loads this module, the
+  earliest a script can run — so nothing here may reference ui_mcm, xrr_core or
+  any _G xrRazom global; only axr_main and XrrNet exist at that moment.
+]]
+
+-- The net accessor when this key is host-authored right now, else nil. The
+-- IsConnected test is load-bearing: the same map holds the HOST's own authored
+-- values, so without it a host would read its settings back through the overlay.
+local function authored(k)
+    if not (k and XrrNet) then return nil end
+    local net = XrrNet()
+    if not (net and net:IsConnected()) then return nil end
+    if net:McmOverlayTag(k) < 0 then return nil end
+    return net
+end
+
+local announced = {}
+
+-- The seam is axr_main.config, the single ini_file_ex every MCM consumer ends at
+-- — and above its per-instance read cache, so a host value never enters the
+-- cache or the ltx. Wrapped on the INSTANCE: the class backs every ini in the game.
+local function install()
+    if not XrrNet then return end                    -- vanilla exe: no overlay to consult
+    local cfg = axr_main and axr_main.config
+    if not (cfg and cfg.r_value and cfg.w_value) then return end
+
+    local orig_r = cfg.r_value
+    local orig_w = cfg.w_value
+
+    -- MCM keys sit in the map bare; ui_options keys under an "options/" prefix.
+    -- The options branch tests the session before building its key: it is on the
+    -- path of every axr_option read in the game.
+    local function overlay_key(s, k)
+        if s == "mcm" then return k end
+        if s == "options" and XrrNet and XrrNet():IsConnected() then
+            return "options/" .. k
+        end
+        return nil
+    end
+
+    cfg.r_value = function(self, s, k, typ, def)
+        local ok = overlay_key(s, k)
+        if ok then
+            local net = authored(ok)
+            if net then
+                if not announced[ok] then
+                    announced[ok] = true
+                    log("[xrRazom] mcm overlay: " .. ok .. " → host")
+                end
+                -- typ codes are ini_file_ex's own: 1 boolean, 2 number,
+                -- anything else the raw string.
+                if typ == 1 then return net:McmOverlayBool(ok) end
+                if typ == 2 then return net:McmOverlayNumber(ok) end
+                return net:McmOverlayString(ok)
+            end
+        end
+        return orig_r(self, s, k, typ, def)
+    end
+
+    cfg.w_value = function(self, s, k, val, comment)
+        local ok = overlay_key(s, k)
+        if ok and authored(ok) then
+            log("[xrRazom] mcm overlay: write to host-owned " .. ok .. " dropped")
+            return
+        end
+        return orig_w(self, s, k, val, comment)
+    end
+end
+
+install()
+
+-- dxml_core calls this on every gathered file; the wrap is already installed.
+function on_xml_read()
+end

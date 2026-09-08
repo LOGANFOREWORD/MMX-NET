@@ -1,0 +1,555 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+
+  Module: Hideout Furniture (Aoldri) — use-intent verbs + host-authoritative
+  workshop stash. Peers run the actor half only; the world half becomes a verb.
+  The wrapped mod functions are pinned to the current release — re-check them
+  on a mod update.
+
+  A workbench is TWO entities: the fixture plus a hidden inventory_box 50 m
+  below, linked through m_data.workshop_stashes (a WORLD_MDATA manifest key,
+  touched on both edges).
+]]
+
+-- The fixture lands where the requester asked; the window only has to cover a
+-- prop settling onto the floor.
+local PLACE_SEARCH_R = 3
+
+local _applied = false
+
+-- The mod functions we wrap, assigned in on_game_start(); declared up here
+-- because a closure captures the local itself, not its later value.
+local _orig_toggle_light, _orig_light_pickup, _orig_refuel
+local _orig_pickup, _orig_pickup_obj, _orig_piano_pickup, _orig_radio_pickup
+local _orig_create_object, _orig_func_place_item
+local _orig_get_stash, _orig_use_workshop, _orig_access_stash, _orig_ws_pickup
+
+-- ══ PEER ═════════════════════════════════════════════════════════════════════
+
+-- Read-only resolve out of the table WORLD_MDATA mirrors; never creates.
+local peer_resolve = xrr_use_intent.mdata_box_resolver("workshop_stashes")
+
+-- ── Lamp ─────────────────────────────────────────────────────────────────────
+
+-- Peer body of ui_furniture_light.toggle_light: the tool checks and the
+-- degrade/discharge run locally, the is_on flip is the verb — the lamp answers
+-- when the host's hf_data flush arrives.
+local function peer_toggle_light(obj_id)
+    local se = alife_object(obj_id)
+    if not se then return end
+    local section = se:section_name()
+    local data = hf_obj_manager.get_data(obj_id)
+    if data and data.is_on then
+        xrr_use_intent.request{ verb = "hf:lamp_toggle", obj_id = obj_id, state = false }
+        return
+    end
+
+    local required_tools = parse_list(ini_sys, section, "require_tool")
+    local require_matches = ini_sys:r_bool_ex(section, "require_matches") or false
+    if require_matches then
+        table.insert(required_tools, "matches")
+        table.insert(required_tools, "box_matches")
+    end
+
+    if is_empty(required_tools) then
+        xrr_use_intent.request{ verb = "hf:lamp_toggle", obj_id = obj_id, state = true }
+        return
+    end
+
+    for _, tool in pairs(required_tools) do
+        local obj_item = db.actor:object(tool)
+        if obj_item then
+            if utils_item.is_degradable(obj_item) then
+                utils_item.degrade(obj_item, 0.05)
+            else
+                utils_item.discharge(obj_item)
+            end
+            xrr_use_intent.request{ verb = "hf:lamp_toggle", obj_id = obj_id, state = true }
+            return
+        end
+    end
+
+    actor_menu.set_msg(1, game.translate_string("st_ui_campfire_prereq"), 3)
+end
+
+-- Peer body of UIFurnitureLight:Refuel — the actor half verbatim; the world
+-- half (wrapper.fuel = 1.0) is the verb.
+local function peer_refuel(dlg)
+    local fuel_type = ini_sys:r_string_ex(dlg.section, "fuel_section") or "charcoal"
+    if db.actor:object(fuel_type) then
+        itms_manager.relocate_item_from_actor(db.actor, nil, fuel_type, 1)
+        xrr_use_intent.request{ verb = "hf:lamp_refuel", obj_id = dlg.light_id, state = true }
+        -- The binder caches fuel in the instance and never re-reads replicated
+        -- condition, so keep vanilla's local write; the host writes the same 1.0.
+        local obj = get_object_by_id(dlg.light_id)
+        local wrapper = obj and obj:binded_object() and obj:binded_object().wrapper
+        if wrapper then wrapper.fuel = 1.0 end
+    else
+        actor_menu.set_msg(1, "I don't have any fuel for this.", 3)
+    end
+    dlg:Close()
+end
+
+-- ── Pickup ───────────────────────────────────────────────────────────────────
+
+-- Pickup implementations the host verb fully covers, filled in on_game_start().
+-- An override that isn't in here keeps its vanilla path — routing it would run
+-- only the cascade the host knows about.
+local _routable_pickup = {}
+
+-- Empty-first: the gift leg carries a section + condition only, so a linked
+-- box's contents cannot travel. Re-checked host-side either way.
+local function peer_pickup(obj_id)
+    local stash_id = peer_resolve(obj_id)
+    local box = stash_id and level.object_by_id(stash_id)
+    if box and not box:is_inv_box_empty() then
+        actor_menu.set_msg(1, "Empty the workbench stash before packing it up.", 4)
+        return
+    end
+    xrr_use_intent.request{ verb = "hf:pickup", obj_id = obj_id, state = true }
+end
+
+-- Peer body shared by the four dialogs whose pickup button hand-rolls its own
+-- body (lamp, piano, radio, workbench). The id is read at the call site, before
+-- Close() gets a chance to tear the dialog's fields down.
+local function peer_dialog_pickup(dlg, obj_id)
+    dlg:Close()
+    peer_pickup(obj_id)
+end
+
+-- Peer body of the radial / hold-key entry — the one site that covers every
+-- wrapper class, including subclasses holding a copied base pickup.
+local function peer_pickup_obj(obj)
+    local wrapper = bind_hf_base.get_wrapper(obj:id())
+    if not wrapper then
+        printf("![xrRazom][use] hf:pickup obj=%s: no binder wrapper on this machine — dropped",
+            tostring(obj:id()))
+        return
+    end
+    if not _routable_pickup[wrapper.pickup] then
+        return _orig_pickup_obj(obj)
+    end
+    if not wrapper:is_pickupable() then
+        printf("[xrRazom][use] hf:pickup obj=%s refused locally: is_world_obj",
+            tostring(obj:id()))
+        return
+    end
+    peer_pickup(obj:id())
+end
+
+-- ── Placement (hf:place) ─────────────────────────────────────────────────────
+
+-- Source item of a placement in flight. Vanilla's on_key_press releases its own
+-- item_id upvalue right after create_object, so the peer never hands the id to
+-- the mod and releases in on_ready instead.
+local _place_item = nil
+
+-- Args codec for the envelope's opaque blob. Frame: section|x|y|z|ax|ay|az|
+-- lvid|gvid then one "key=Tvalue" field per hf_data entry, T in b/n/s.
+local function encode_place(section, loc, ang, lvid, gvid, data)
+    -- tostring, never strformat: Anomaly's strformat substitutes %s alone and
+    -- passes every other specifier through as literal text.
+    local f = {
+        section,
+        tostring(loc.x), tostring(loc.y), tostring(loc.z),
+        tostring(ang.x), tostring(ang.y), tostring(ang.z),
+        tostring(lvid), tostring(gvid),
+    }
+    for k, v in pairs(data) do
+        local t = type(v)
+        if t == "boolean" then
+            f[#f + 1] = k .. "=b" .. (v and "1" or "0")
+        elseif t == "number" then
+            f[#f + 1] = k .. "=n" .. tostring(v)
+        elseif t == "string" and not string.find(v, "|", 1, true) then
+            f[#f + 1] = k .. "=s" .. v
+        else
+            printe("![xrRazom][use] hf:place: hf_data['%s'] (%s) not encodable — dropped",
+                tostring(k), t)
+        end
+    end
+    return table.concat(f, "|")
+end
+
+local function decode_place(args)
+    local f = str_explode(args or "", "|", true)
+    if #f < 9 then return nil end
+    local section = f[1]
+    local lvid, gvid = tonumber(f[8]), tonumber(f[9])
+    if section == "" or not (lvid and gvid) then return nil end
+
+    local loc = vector():set(tonumber(f[2]) or 0, tonumber(f[3]) or 0, tonumber(f[4]) or 0)
+    local ang = vector():set(tonumber(f[5]) or 0, tonumber(f[6]) or 0, tonumber(f[7]) or 0)
+    local data = {}
+    for i = 10, #f do
+        local k, tv = string.match(f[i], "^([^=]+)=(.*)$")
+        if k then
+            local tag, raw = string.sub(tv, 1, 1), string.sub(tv, 2)
+            if tag == "b" then
+                data[k] = (raw == "1")
+            elseif tag == "n" then
+                data[k] = tonumber(raw)
+            elseif tag == "s" then
+                data[k] = raw
+            end
+        end
+    end
+    return section, loc, ang, lvid, gvid, data
+end
+
+-- Peer body of the placement's world half. Returns nil like the gated vanilla
+-- create_object, so on_key_press skips transfer_item_data and the release.
+local function peer_place(section, location, rotation, lvid, gvid, item_id)
+    local angle
+    if rotation.w then
+        angle = rotation:to_euler_angles()
+    else
+        angle = vector():set(rotation.x, rotation.y, rotation.z)
+    end
+
+    -- transfer_item_data's payload, assembled at the source: the item's whole
+    -- hf_data table plus the live condition that vanilla writes over it with.
+    local data = {}
+    local src = hf_obj_manager.get_data(item_id)
+    if src then
+        for k, v in pairs(src) do data[k] = v end
+    end
+    local item = get_object_by_id(item_id)
+    if item then data.condition = item:condition() end
+
+    local pos = vector():set(location)
+    -- Furniture of this section already standing here must not satisfy the
+    -- poll — only an id that wasn't there when we asked counts as the answer.
+    local known = {}
+    level.iterate_nearest(pos, PLACE_SEARCH_R, function(o)
+        if o and o:section() == section then known[o:id()] = true end
+        return false
+    end)
+
+    xrr_use_intent.request{
+        verb = "hf:place", obj_id = item_id, state = true,
+        args = encode_place(section, pos, angle, lvid, gvid, data),
+        resolve = function()
+            local hit
+            level.iterate_nearest(pos, PLACE_SEARCH_R, function(o)
+                if o and o:section() == section and not known[o:id()] then
+                    hit = o:id()
+                    return true
+                end
+                return false
+            end)
+            return hit
+        end,
+        on_ready = function()
+            hf_obj_manager.delete_data(item_id)
+            alife_release_id(item_id)
+        end,
+    }
+end
+
+local function peer_create_object(section, location, rotation, lvid, gvid)
+    local item_id = _place_item
+    _place_item = nil
+    -- Only the player's own placement routes to the host; the other caller,
+    -- hf_map_objects' spawns.ltx pass, runs on every machine and stays a no-op.
+    if not (item_id and section and location and rotation) then
+        return _orig_create_object(section, location, rotation, lvid, gvid)
+    end
+    local actor = db.actor
+    peer_place(section, location, rotation,
+        lvid or actor:level_vertex_id(), gvid or actor:game_vertex_id(),
+        item_id)
+end
+
+local function peer_func_place_item(obj)
+    -- Deliberately not a call into vanilla: leaving the mod's own item_id
+    -- upvalue nil is what holds the item until the fixture confirms.
+    local section = ini_sys:r_string_ex(obj:section(), "placeable_section")
+    if not section then return end
+    _place_item = obj:id()
+    placeable_furniture.start_placing_item(section)
+end
+
+-- ── Workshop stash ───────────────────────────────────────────────────────────
+
+local function peer_use_workshop(workbench_id)
+    xrr_use_intent.request{
+        verb = "hf:workshop_stash", obj_id = workbench_id, state = true,
+        resolve = peer_resolve,
+        -- The 0.1 s wait is the mod's own UseWorkshop timing — GetStash may
+        -- have just created the stash, which onlines a tick later.
+        on_ready = function(stash_id)
+            CreateTimeEvent("hf_workshop", "open_workshop_" .. workbench_id, 0.1,
+                ui_furniture_workshop.OpenWorkshop, stash_id)
+        end,
+    }
+end
+
+local function peer_access_stash(dlg)
+    local workbench_id = dlg.obj_id
+    dlg:Close()
+    xrr_use_intent.request{
+        verb = "hf:workshop_stash", obj_id = workbench_id, state = true,
+        resolve = peer_resolve,
+        on_ready = xrr_use_intent.open_box_when_online,
+    }
+end
+
+-- ══ HOST ═════════════════════════════════════════════════════════════════════
+
+-- se-level: works whether or not the fixture is online host-side; the flip
+-- reaches every machine through the hf_data mutation flush.
+local function host_lamp_toggle(obj_id, state)
+    hf_obj_manager.update_data(obj_id, { is_on = (state ~= 0) })
+end
+
+-- binder-level: the live value sits in the binder instance; fall back to
+-- mdata when the fixture is offline host-side (peer on another level).
+local function host_lamp_refuel(obj_id)
+    local wrapper = bind_hf_base.get_wrapper(obj_id)
+    if wrapper then
+        wrapper.fuel = 1.0   -- the binder's own save_data flushes it to hf_data
+    else
+        hf_obj_manager.update_data(obj_id, { condition = 1.0 })
+    end
+end
+
+-- Single-authority pickup; a racing second request finds the entity gone and
+-- no-ops.
+local function host_pickup(obj_id, state, args, sender_netid)
+    -- Without a gift target the release would strand the item.
+    if not sender_netid or sender_netid == "0" then
+        printe("![xrRazom][use] hf:pickup obj=%s: sender netid unresolved — refused",
+            tostring(obj_id))
+        return
+    end
+    local se = alife_object(obj_id)
+    if not se then
+        printf("[xrRazom][use] hf:pickup obj=%s already gone — no-op", tostring(obj_id))
+        return
+    end
+    local data = hf_obj_manager.get_data(obj_id)
+    if data and data.is_world_obj then
+        printe("![xrRazom][use] hf:pickup obj=%s is a world object — refused", tostring(obj_id))
+        return
+    end
+    local item_section = ini_sys:r_string_ex(se:section_name(), "item_section")
+    if not item_section then
+        printe("![xrRazom][use] hf:pickup obj=%s (%s): no item_section — refused",
+            tostring(obj_id), se:section_name())
+        return
+    end
+
+    -- Condition before release: live binder first (lamps burn fuel between
+    -- flushes), mdata second, section default last (props carry no condition).
+    local wrapper = bind_hf_base.get_wrapper(obj_id)
+    local condition = (wrapper and wrapper.fuel) or (data and data.condition) or 1
+
+    -- The linked box goes down in the same step; vanilla's other half —
+    -- evacuating its contents into db.actor — belongs to the requester, hence
+    -- empty-first.
+    local stashes = alife_storage_manager.get_state().workshop_stashes
+    local stash_id = stashes and stashes[obj_id]
+    if stash_id then
+        local box = level.object_by_id(stash_id)
+        if not box then
+            printe("![xrRazom][use] hf:pickup obj=%s: linked stash %s offline host-side — refused",
+                tostring(obj_id), tostring(stash_id))
+            return
+        end
+        if not box:is_inv_box_empty() then
+            printe("![xrRazom][use] hf:pickup obj=%s: linked stash %s not empty — refused",
+                tostring(obj_id), tostring(stash_id))
+            return
+        end
+        stashes[obj_id] = nil
+        alife_release_id(stash_id)
+        -- Both ids are free to be recycled now; a peer left holding this link
+        -- would validate a stranger's box.
+        XrrWorld():TouchWorldMData("workshop_stashes")
+    end
+
+    alife_release_id(obj_id)
+    XrrPlayers():SendGiftSection(sender_netid, item_section, condition)
+end
+
+-- World half only: calls the mod's own create_object rather than a copy that
+-- would drift on a mod update. hf_on_furniture_place is deliberately not fired
+-- — its listener opens a recording prompt, on the wrong machine.
+local function host_place(item_id, state, args, sender_netid)
+    local section, loc, ang, lvid, gvid, data = decode_place(args)
+    if not section then
+        printe("![xrRazom][use] hf:place from %s: unparsable args '%s' — refused",
+            tostring(sender_netid), tostring(args))
+        return
+    end
+    local obj_id = _orig_create_object(section, loc, ang, lvid, gvid)
+    if not obj_id then
+        printe("![xrRazom][use] hf:place %s from %s: create_object failed — refused",
+            section, tostring(sender_netid))
+        return
+    end
+    -- transfer_item_data's world half; the item half ran on the requester.
+    if next(data) then hf_obj_manager.update_data(obj_id, data) end
+    printf("[xrRazom][use] hf:place %s -> id %s (item %s, from %s)",
+        section, tostring(obj_id), tostring(item_id), tostring(sender_netid))
+end
+
+-- World half of GetStash: run the mod's own resolver (which may create the box)
+-- and push the registry the requester polls. Keyed on the entry changing — the
+-- mod drops links too, and an already-linked workbench would otherwise
+-- re-encode the whole registry on every open.
+local function host_get_stash(workbench_id)
+    local stashes = alife_storage_manager.get_state().workshop_stashes
+    local before = stashes and stashes[workbench_id]
+    local stash_id = _orig_get_stash(workbench_id)
+    stashes = alife_storage_manager.get_state().workshop_stashes
+    if before ~= (stashes and stashes[workbench_id]) then
+        XrrWorld():TouchWorldMData("workshop_stashes")
+    end
+    return stash_id
+end
+
+-- The verb's world half is the GetStash WRAP, not _orig_get_stash: it is the
+-- wrap that pushes the registry.
+local function host_workshop_stash(workbench_id)
+    ui_furniture_workshop.GetStash(workbench_id)
+end
+
+-- ══ WIRING ═══════════════════════════════════════════════════════════════════
+
+function on_game_start()
+    if _applied then return end
+    if not (bind_hf_base and hf_obj_manager) then return end
+    _applied = true
+
+    -- ── host verbs ───────────────────────────────────────────────────────────
+    xrr_use_intent.register("hf:lamp_toggle", host_lamp_toggle)
+    xrr_use_intent.register("hf:lamp_refuel", host_lamp_refuel)
+    xrr_use_intent.register("hf:pickup",      host_pickup)
+
+    -- These two run a mod function as their world half, so each is registered
+    -- together with the capture of it; the peer wraps below key off the same.
+    if placeable_furniture and placeable_furniture.create_object then
+        _orig_create_object = placeable_furniture.create_object
+        xrr_use_intent.register("hf:place", host_place)
+    end
+
+    if ui_furniture_workshop and ui_furniture_workshop.GetStash then
+        _orig_get_stash = ui_furniture_workshop.GetStash
+        xrr_use_intent.register("hf:workshop_stash", host_workshop_stash)
+    end
+
+    -- ── peer wraps ───────────────────────────────────────────────────────────
+    if ui_furniture_light and ui_furniture_light.toggle_light then
+        _orig_toggle_light = ui_furniture_light.toggle_light
+        function ui_furniture_light.toggle_light(obj_id)
+            if not XrrIsClient() then return _orig_toggle_light(obj_id) end
+            peer_toggle_light(obj_id)
+        end
+
+        _orig_light_pickup = ui_furniture_light.UIFurnitureLight.Pickup
+        function ui_furniture_light.UIFurnitureLight:Pickup()
+            if not XrrIsClient() then return _orig_light_pickup(self) end
+            peer_dialog_pickup(self, self.light_id)
+        end
+
+        _orig_refuel = ui_furniture_light.UIFurnitureLight.Refuel
+        function ui_furniture_light.UIFurnitureLight:Refuel()
+            if not XrrIsClient() then return _orig_refuel(self) end
+            peer_refuel(self)
+        end
+    end
+
+    -- ⚠ `class "sub" (base)` copies base methods at DEFINITION time, so a wrap
+    -- on hf_binder_wrapper is invisible to subclass instances: pickup intercepts
+    -- at the entry sites, and this wrap is only a net for direct instances. The
+    -- _routable_pickup entries bracket the install in this order deliberately.
+    _orig_pickup = bind_hf_base.hf_binder_wrapper.pickup
+    _routable_pickup[_orig_pickup] = true   -- the copy every subclass holds
+    if bind_workshop_furniture and bind_workshop_furniture.hf_workshop_wrapper then
+        _routable_pickup[bind_workshop_furniture.hf_workshop_wrapper.pickup] = true
+    end
+
+    function bind_hf_base.hf_binder_wrapper:pickup()
+        -- A super-call from a subclass override resolves self.pickup to the
+        -- override, not this wrap — that one takes the vanilla path.
+        if not XrrIsClient() or self.pickup ~= bind_hf_base.hf_binder_wrapper.pickup then
+            return _orig_pickup(self)
+        end
+        peer_pickup(self.object:id())
+        return true
+    end
+    _routable_pickup[bind_hf_base.hf_binder_wrapper.pickup] = true
+
+    if placeable_furniture and placeable_furniture.pickup_obj then
+        _orig_pickup_obj = placeable_furniture.pickup_obj
+        function placeable_furniture.pickup_obj(obj)
+            if not XrrIsClient() then return _orig_pickup_obj(obj) end
+            return peer_pickup_obj(obj)
+        end
+    end
+
+    -- Piano and radio hand-roll a pickup body in their dialogs instead of going
+    -- through the wrapper, so each needs its own entry site.
+    if ui_furniture_piano and ui_furniture_piano.UIFurniturePiano then
+        _orig_piano_pickup = ui_furniture_piano.UIFurniturePiano.Pickup
+        function ui_furniture_piano.UIFurniturePiano:Pickup()
+            if not XrrIsClient() then return _orig_piano_pickup(self) end
+            peer_dialog_pickup(self, self.obj_id)
+        end
+    end
+
+    if placeable_radio and placeable_radio.UIFurnitureRadio then
+        _orig_radio_pickup = placeable_radio.UIFurnitureRadio.Pickup
+        function placeable_radio.UIFurnitureRadio:Pickup()
+            if not XrrIsClient() then return _orig_radio_pickup(self) end
+            peer_dialog_pickup(self, self.obj_id)
+        end
+    end
+
+    if _orig_create_object then
+        _orig_func_place_item = placeable_furniture.func_place_item
+
+        function placeable_furniture.create_object(section, location, rotation, lvid, gvid)
+            if not XrrIsClient() then
+                return _orig_create_object(section, location, rotation, lvid, gvid)
+            end
+            return peer_create_object(section, location, rotation, lvid, gvid)
+        end
+
+        function placeable_furniture.func_place_item(obj)
+            if not XrrIsClient() then return _orig_func_place_item(obj) end
+            peer_func_place_item(obj)
+        end
+    end
+
+    if _orig_get_stash then
+        _orig_use_workshop = ui_furniture_workshop.UseWorkshop
+        _orig_access_stash = ui_furniture_workshop.UIFurnitureWorkshop.AccessStash
+        _orig_ws_pickup    = ui_furniture_workshop.UIFurnitureWorkshop.Pickup
+
+        function ui_furniture_workshop.GetStash(workbench_id)
+            if XrrIsClient() then
+                return peer_resolve(workbench_id)   -- never creates on a peer
+            end
+            return host_get_stash(workbench_id)
+        end
+
+        function ui_furniture_workshop.UseWorkshop(workbench_id)
+            if not XrrIsClient() then return _orig_use_workshop(workbench_id) end
+            peer_use_workshop(workbench_id)
+        end
+
+        -- The other entry into the workbench's pickup override.
+        function ui_furniture_workshop.UIFurnitureWorkshop:Pickup()
+            if not XrrIsClient() then return _orig_ws_pickup(self) end
+            peer_dialog_pickup(self, self.obj_id)
+        end
+
+        function ui_furniture_workshop.UIFurnitureWorkshop:AccessStash()
+            if not XrrIsClient() then return _orig_access_stash(self) end
+            peer_access_stash(self)
+        end
+    end
+end

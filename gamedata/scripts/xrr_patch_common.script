@@ -1,0 +1,910 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+  Разом нас багато. (Together we are many.)
+
+  Module: Common Patch — vanilla-script tweaks that apply on both host and client.
+  Applied once by xrr_callbacks.on_game_start, regardless of role.
+]]
+
+-- decide_items_to_keep → set_weapon_drop_condition indexes
+-- weapon_drop_condition[rank] with the proxy profile's nil rank → crash.
+local function patch_death_manager_proxy_guard()
+    local orig = death_manager.decide_items_to_keep
+    death_manager.decide_items_to_keep = function(npc, npc_id, npc_name)
+        if XrrPlayers():IsPlayerDummy(npc:id()) then return end
+        return orig(npc, npc_id, npc_name)
+    end
+end
+
+-- Every scripted travel path funnels through _G.ChangeLevel: both the join
+-- guard (held until xrr_callbacks sets GameLoaded) and the TRANSITION_PENDING
+-- notice hang off it. XrrSuppressTransitionNotice marks a host-directed reload.
+local function patch_change_level_guard()
+    local orig = ChangeLevel
+    _G.ChangeLevel = function(pos, lvid, gvid, angle, anim)
+        local suppress = _G.XrrSuppressTransitionNotice
+        _G.XrrSuppressTransitionNotice = nil
+        if XrrIsClient() and not _G.GameLoaded then
+            log("[xrRazom] Suppressed vanilla ChangeLevel during co-op join")
+            return
+        end
+        if not suppress and (XrrIsHosted() or XrrIsClient()) then
+            log("[xrRazom] transition accept — sending TRANSITION_PENDING notice")
+            XrrPlayers():SendTransitionPending()
+        end
+        return orig(pos, lvid, gvid, angle, anim)
+    end
+end
+
+-- ── Map-edge transition accept seam ──────────────────────────────────────────
+-- The dialog also serves same-level sr_teleports, which must not notify; only
+-- cross-level map-edge sections appear in txr_routes.routes.
+local map_edge_sections = nil
+local function is_map_edge_route(name)
+    if not map_edge_sections then
+        map_edge_sections = {}
+        local routes = txr_routes and txr_routes.routes
+        if type(routes) == "table" then
+            for _, dests in pairs(routes) do
+                for _, sections in pairs(dests) do
+                    for i = 1, #sections do
+                        map_edge_sections[sections[i]] = true
+                    end
+                end
+            end
+        end
+    end
+    return map_edge_sections[name] == true
+end
+
+-- Notify at the Yes-click; the engine-side dedup latch drops the later
+-- ChangeLevel notice, which lands too late for anyone else to see a fade.
+local function patch_sr_teleport_transition_notice()
+    local cls = ui_sr_teleport and ui_sr_teleport.msg_box_ui
+    if not cls or type(cls.OnMsgOk) ~= "function" then
+        log("[xrRazom] sr_teleport notice: ui_sr_teleport.msg_box_ui missing — skipped")
+        return
+    end
+    local orig = cls.OnMsgOk
+    cls.OnMsgOk = function(self)
+        if (XrrIsHosted() or XrrIsClient()) and self.name and is_map_edge_route(self.name) then
+            log("[xrRazom] map-edge transition accept — sending TRANSITION_PENDING notice")
+            XrrPlayers():SendTransitionPending()
+        end
+        return orig(self)
+    end
+end
+
+-- ── TRANSITION_PENDING receive: fade + input-lock until our own reload ───────
+local transition_fade_on = false
+function OnTransitionPending()
+    if transition_fade_on then return end
+    if not (db and db.actor) then return end
+    transition_fade_on = true
+    log("[xrRazom] transition pending — fade + input lock applied")
+    hide_hud_all()
+    if db.actor:is_talking() then
+        db.actor:stop_talk()
+    end
+    level.add_pp_effector("sleep_fade.ppe", 1313, false)  -- vanilla travel fade id
+    level.disable_input()
+    -- backstop for a transition that never completes; real-time, never saved
+    CreateTimeEvent("xrr_transition_fade", "timeout", 15, function()
+        transition_fade_on = false
+        if db.actor then
+            log("[xrRazom] transition fade timeout — released (no reload arrived)")
+            level.remove_pp_effector(1313)
+            level.enable_input()
+        end
+        return true
+    end)
+end
+
+-- Capture PDA sounds for GAME_NEWS broadcast. Vanilla calls set_sound_play and
+-- give_game_news in either order, so the sound is handed over here and the
+-- broadcast deferred a tick.
+local function patch_news_sound_broadcast()
+    local _orig_ssp = xr_sound.set_sound_play
+    xr_sound.set_sound_play = function(npc_id, sound, ...)
+        if npc_id == AC_ID and sound then
+            xrr_set_news_sound(sound)
+        end
+        return _orig_ssp(npc_id, sound, ...)
+    end
+end
+
+-- Money/item relocate popups are PERSONAL news — every process already shows
+-- its own copy, so keep them off the give_game_news auto-broadcast.
+local function patch_relocate_news_local_only()
+    local function wrap(name)
+        local orig = news_manager[name]
+        if type(orig) ~= "function" then
+            log("[xrRazom][news] INSTALL WARNING: news_manager." .. name .. " missing")
+            return
+        end
+        news_manager[name] = function(...)
+            local mgr = XrrNet()
+            if mgr then mgr:SetNewsBroadcast(false) end
+            local r = orig(...)
+            if mgr then mgr:SetNewsBroadcast(true) end
+            return r
+        end
+    end
+    wrap("relocate_money")
+    wrap("relocate_item")
+end
+
+-- The avatar's own script clsid; vanilla IsStalker's list holds clsid.actor,
+-- never this one.
+local AVATAR_CLSID = nil
+
+-- The vanilla character_community answers "monster" for anything failing
+-- IsStalker, and "monster" is -2000 to every faction — so every avatar would
+-- read as a universal enemy. Return the avatar's own seeded community instead.
+local function patch_character_community_avatar()
+    if not AVATAR_CLSID then
+        log("[xrRazom][common] character_community avatar fix skipped: clsid.xrr_avatar not exposed")
+        return
+    end
+    local orig = character_community
+    _G.character_community = function(obj)
+        if obj and obj:clsid() == AVATAR_CLSID then
+            local c = obj:character_community()
+            if c and c ~= "" then return c end
+        end
+        return orig(obj)
+    end
+end
+
+-- Run `fn` with `_G.IsStalker` avatar-aware; returns (ok, result_or_error).
+local function call_with_proxy_isstalker(fn, ...)
+    local vanilla_IsStalker = _G.IsStalker
+    _G.IsStalker = function(o, c)
+        if not c and o then c = o:clsid() end
+        if c and AVATAR_CLSID and c == AVATAR_CLSID then return true end
+        return vanilla_IsStalker(o, c)
+    end
+    local ok, result = pcall(fn, ...)
+    _G.IsStalker = vanilla_IsStalker
+    return ok, result
+end
+
+-- Exported for the per-mod GAMMA patches. Client objects only: the swap admits
+-- by clsid, but the avatar CSE serves no stalker luabind surface (no alive()).
+_G.XrrAvatarAwareCall = call_with_proxy_isstalker
+
+-- Run `fn` with player identity pointed at `avatar`: db.actor, _G.AC_ID and
+-- IsStalker all answer as the avatar. No pcall here — call_with_proxy_isstalker
+-- already returns (ok, result), and a second layer would bind `ok` as the result.
+local function call_with_player_identity(avatar, fn, ...)
+    local saved_actor, saved_ac_id = db.actor, _G.AC_ID
+    db.actor, _G.AC_ID = avatar, avatar:id()
+    local ok, result = call_with_proxy_isstalker(fn, ...)
+    db.actor, _G.AC_ID = saved_actor, saved_ac_id
+    if not ok then error(result) end
+    return result
+end
+_G.XrrPlayerIdentityCall = call_with_player_identity
+
+-- Mod code in npc_/monster_on_before_hit identifies "the player" as
+-- shit.draftsman:id() == AC_ID, so run a peer's hit under that peer's identity.
+-- The return must pass through verbatim: luabind DISCARDS the hit on false.
+local function patch_before_hit_identity_swap()
+    local function wrap(name)
+        local orig = _G[name]
+        if type(orig) ~= "function" then
+            log("[xrRazom][common] INSTALL FAILED: _G." .. name .. " missing")
+            return
+        end
+        _G[name] = function(victim, shit, bone_id)
+            local drafts = shit and shit.draftsman
+            if drafts and XrrPlayers():IsPlayerDummy(drafts:id()) then
+                return call_with_player_identity(drafts, orig, victim, shit, bone_id)
+            end
+            return orig(victim, shit, bone_id)
+        end
+    end
+    wrap("CAI_Stalker__BeforeHitCallback")
+    wrap("CBaseMonster__BeforeHitCallback")
+    log("[xrRazom][common] before-hit dispatch: peer hits judged as player hits")
+end
+
+local function patch_combat_ignore_proxy_bypass()
+    if not xr_combat_ignore then
+        log("[xrRazom][combat] INSTALL FAILED: xr_combat_ignore module missing")
+        return
+    end
+
+    if not AVATAR_CLSID then
+        log("[xrRazom][combat] INSTALL WARNING: clsid.xrr_avatar not exposed; scoped IsStalker swaps will be a no-op")
+    end
+
+    -- 1. ignore_enemy_by_overrides — never ignore a proxy.
+    local orig_ignore_overrides = xr_combat_ignore.ignore_enemy_by_overrides
+    xr_combat_ignore.ignore_enemy_by_overrides = function(obj, enemy, no_check_job)
+        if enemy and XrrPlayers():IsPlayerDummy(enemy:id()) then
+            return false
+        end
+        return orig_ignore_overrides(obj, enemy, no_check_job)
+    end
+
+    -- 2. is_enemy — direct alive+hostile check for proxies.
+    local orig_is_enemy = xr_combat_ignore.is_enemy
+    xr_combat_ignore.is_enemy = function(obj, enemy, no_memory)
+        if obj and enemy and XrrPlayers():IsPlayerDummy(enemy:id()) then
+            -- The vanilla body skipped here is the SOLE dispatch point of
+            -- on_enemy_eval: dispatch it avatar-aware and honor overrides.
+            local flags = {override = false, result = false}
+            local ok, err = call_with_proxy_isstalker(SendScriptCallback, "on_enemy_eval", obj, enemy, flags)
+            if not ok then
+                log("[xrRazom][combat] on_enemy_eval hook crashed: " .. tostring(err))
+            elseif flags.override then
+                if flags.result then
+                    local st = db.storage[obj:id()]
+                    if st then st.enemy_id = enemy:id() end
+                end
+                return flags.result
+            end
+            local result = obj:alive() and enemy:alive() and obj:relation(enemy) >= 2
+            if result then
+                local st = db.storage[obj:id()]
+                if st then st.enemy_id = enemy:id() end
+            end
+            return result
+        end
+        return orig_is_enemy(obj, enemy, no_memory)
+    end
+
+    -- 3. evaluator_danger:evaluate
+    if xr_danger and xr_danger.evaluator_danger then
+        local cls = xr_danger.evaluator_danger
+        local orig_eval = cls.evaluate
+        function cls:evaluate()
+            local ok, result = call_with_proxy_isstalker(orig_eval, self)
+            if not ok then
+                log("[xrRazom][combat] evaluator_danger crashed: " .. tostring(result))
+                return false
+            end
+            return result
+        end
+    end
+
+    -- 4. heli_combat:is_enemy. Anomaly sandboxes each script into a module
+    -- table, so the class lives at heli_combat.heli_combat; wrapping the class
+    -- method covers every instance via metatable.
+    local heli_cls = heli_combat and heli_combat.heli_combat
+    if heli_cls and heli_cls.is_enemy then
+        local orig_heli_is_enemy = heli_cls.is_enemy
+        function heli_cls:is_enemy(obj)
+            if obj and XrrPlayers():IsPlayerDummy(obj:id()) then
+                local ok, result = call_with_proxy_isstalker(orig_heli_is_enemy, self, obj)
+                if not ok then
+                    log("[xrRazom][combat] heli_combat:is_enemy crashed: " .. tostring(result))
+                    return false
+                end
+                return result
+            end
+            return orig_heli_is_enemy(self, obj)
+        end
+    else
+        log("[xrRazom][heli] heli_combat.heli_combat:is_enemy missing — proxy will never be a heli enemy (Anomaly heli scheme changed?)")
+    end
+end
+
+-- anomaly_on_before_activate rejects anything that is not IsStalker/IsMonster/
+-- bolt, so a zone never wakes for a peer avatar without the scoped swap.
+local function patch_anomaly_before_activate_proxy_bypass()
+    local orig = _G.CCustomZone_BeforeActivateCallback
+    if not orig then
+        log("[xrRazom][anomaly] INSTALL FAILED: _G.CCustomZone_BeforeActivateCallback missing")
+        return
+    end
+    _G.CCustomZone_BeforeActivateCallback = function(zone, obj)
+        if obj and XrrPlayers():IsPlayerDummy(obj:id()) then
+            local ok, result = call_with_proxy_isstalker(orig, zone, obj)
+            if not ok then
+                log("[xrRazom][anomaly] CCustomZone_BeforeActivateCallback crashed: " .. tostring(result))
+                return true
+            end
+            return result
+        end
+        return orig(zone, obj)
+    end
+end
+
+-- "Down to Earth" for peer heli kills: vanilla heli_binder:on_hit credits only
+-- AC_ID or an IsStalker NPC, and a player proxy is neither.
+local function patch_heli_kill_attribution()
+    local heli_b = bind_heli and bind_heli.heli_binder
+    if not (heli_b and heli_b.on_hit) then
+        log("[xrRazom][heli] bind_heli.heli_binder.on_hit missing — peer heli kills won't credit Down to Earth")
+        return
+    end
+    local orig_on_hit = heli_b.on_hit
+    function heli_b:on_hit(power, impulse, hit_type, enemy_id)
+        orig_on_hit(self, power, impulse, hit_type, enemy_id)
+
+        if not (enemy_id and XrrPlayers():IsPlayerDummy(enemy_id)) then return end
+        local st = self.st
+        if not st or st.__xrr_heli_credited then return end
+        local heli = st.heliObject
+        if not (heli and heli:GetfHealth() <= 0.005) then return end   -- only the lethal hit
+        st.__xrr_heli_credited = true
+
+        local peer_netid = XrrPlayers():PlayerDummyPeerNetid(enemy_id)
+        if not peer_netid or peer_netid == 0 then return end
+        local a = XrrAlife()
+        if not a then return end
+
+        local function credit(key)
+            local s = game_statistics.actor_statistics[key]
+            a:SendStatIncrement(peer_netid, key, 1, s and s.rank or 0, s and s.rept or 0)
+        end
+        credit("helicopters_downed")
+        local proxy = db.storage[enemy_id] and db.storage[enemy_id].object
+        if proxy and IsLauncher(proxy:active_item()) then
+            credit("helicopters_downed2")   -- RPG / launcher bonus
+        end
+    end
+end
+
+-- Pay the Bar arena reward to ALL players: both reward dialogs relocate money
+-- only to whoever talks to Arnie, so capture the amount via
+-- dialogs.relocate_money_to_actor and broadcast it on the quest-reward channel.
+local function patch_arena_reward_all()
+    if not (dialogs and dialogs_bar) then return end
+
+    local _capture = nil  -- nil except while an arena reward fn runs
+    if type(dialogs.relocate_money_to_actor) == "function" then
+        local _orig_relocate = dialogs.relocate_money_to_actor
+        dialogs.relocate_money_to_actor = function(fs, ss, m)
+            if _capture ~= nil then _capture = _capture + (tonumber(m) or 0) end
+            return _orig_relocate(fs, ss, m)
+        end
+    end
+
+    local function wrap_reward(name)
+        local fn = dialogs_bar[name]
+        if type(fn) ~= "function" then return end
+        dialogs_bar[name] = function(fs, ss)
+            -- A peer delegates the whole payout to the host; paying itself
+            -- locally would leave the host unpaid, since SendQuestReward fans
+            -- out over the host's peer list, which is empty on a peer.
+            if XrrIsConnected() then
+                local npc = dialogs.who_is_npc(fs, ss)
+                XrrAlife():SendQuestAccept("__" .. name, npc and npc:id() or 0)
+                return
+            end
+            _capture = 0
+            fn(fs, ss)                       -- host gets money (captured via relocate)
+            local m = _capture
+            _capture = nil
+            if m and m > 0 and XrrIsHost() and XrrNet() then
+                XrrAlife():SendQuestReward("__arena_reward", m, "", "")
+                printf("[xrRazom] arena: broadcast reward %s money to peers", tostring(m))
+            end
+        end
+        _G.xrr_story_quest_handlers = _G.xrr_story_quest_handlers or {}
+        _G.xrr_story_quest_handlers["__" .. name] = function(npc_host_id)
+            dialogs_bar[name](nil, nil)   -- the wrap above: pay host + broadcast
+        end
+    end
+    wrap_reward("arena_give_reward")
+    wrap_reward("new_arena_give_reward")
+end
+
+local function alive_proxies()
+    local out = {}
+    local players = XrrPlayers()
+    if not players then return out end
+    for i = 1, players:GetPeerCount() do
+        local cid = players:GetPeerLocalIdAt(i)
+        if cid and cid > 0 and cid ~= 65535 then
+            local obj = level.object_by_id(cid)
+            if obj and obj:alive() then out[#out + 1] = obj end
+        end
+    end
+    return out
+end
+
+function nearest_player_dist_sqr(pos)
+    local best = db.actor and db.actor:alive()
+        and db.actor:position():distance_to_sqr(pos) or math.huge
+    local proxies = alive_proxies()
+    for i = 1, #proxies do
+        local d = proxies[i]:position():distance_to_sqr(pos)
+        if d < best then best = d end
+    end
+    return best
+end
+
+-- Alive player game objects: host actor first, then peer avatars.
+function alive_players()
+    local out = {}
+    if db.actor and db.actor:alive() then out[#out + 1] = db.actor end
+    local proxies = alive_proxies()
+    for i = 1, #proxies do out[#out + 1] = proxies[i] end
+    return out
+end
+
+function nearest_player_obj(pos)
+    local best, best_d
+    local players = alive_players()
+    for i = 1, #players do
+        local d = players[i]:position():distance_to_sqr(pos)
+        if not best_d or d < best_d then best, best_d = players[i], d end
+    end
+    return best
+end
+
+local function any_proxy_in_named_zone(name)
+    local zone = name and db.zone_by_name[name]
+    if not zone then return false end
+    local proxies = alive_proxies()
+    for i = 1, #proxies do
+        if zone:inside(proxies[i]:position()) then return true end
+    end
+    return false
+end
+
+-- Vanilla actor_in_zone / actor_inside_zone test db.actor only; while hosting,
+-- OR in any alive peer avatar's position.
+local function patch_actor_in_zone_team()
+    if not xr_conditions then
+        log("[xrRazom][zone] INSTALL FAILED: xr_conditions module missing")
+        return
+    end
+    local function team_wrap(fname)
+        local orig = xr_conditions[fname]
+        if type(orig) ~= "function" then
+            log("[xrRazom][zone] INSTALL WARNING: xr_conditions." .. fname .. " missing")
+            return
+        end
+        xr_conditions[fname] = function(actor, npc, p)
+            if orig(actor, npc, p) then return true end
+            if XrrIsHosted() and p then
+                for i = 1, #p do
+                    if any_proxy_in_named_zone(p[i]) then return true end
+                end
+            end
+            return false
+        end
+    end
+    team_wrap("actor_in_zone")
+    team_wrap("actor_inside_zone")
+end
+
+-- The arena door machine gates on db.actor_inside_zones, which the restrictor
+-- binder writes for db.actor alone. While hosting, own these three entries and
+-- compute them as "host AND every alive peer avatar inside".
+local ARENA_GATE_ZONES = {
+    bar_arena_waiter     = true,  -- @start: buffer entry closes door 1
+    bar_arena_sr         = true,  -- @wait_actor: pit entry closes door 3
+    bar_arena_waiter_out = true,  -- @outside: exit closes door 1 + pause
+}
+
+local function all_players_in_zone(zone)
+    if not (db.actor and zone:inside(db.actor:position())) then return false end
+    local proxies = alive_proxies()
+    for i = 1, #proxies do
+        if not zone:inside(proxies[i]:position()) then return false end
+    end
+    return true
+end
+
+local function patch_arena_start_gate()
+    local cls = bind_restrictor and bind_restrictor.restrictor_binder
+    if not (cls and xr_conditions) then
+        log("[xrRazom][zone] INSTALL WARNING: arena start gate skipped (module missing)")
+        return
+    end
+
+    -- vanilla's enter edge must not pre-empt the team computation below
+    local orig_enter = cls.on_enter
+    cls.on_enter = function(self, zone, obj)
+        if XrrIsHosted() and zone and ARENA_GATE_ZONES[zone:name()] then return end
+        return orig_enter(self, zone, obj)
+    end
+
+    local orig_inside = xr_conditions.bar_arena_actor_inside
+    if type(orig_inside) == "function" then
+        xr_conditions.bar_arena_actor_inside = function(actor, npc)
+            if not orig_inside(actor, npc) then return false end
+            if XrrIsHosted() then
+                local zone = db.zone_by_name["bar_arena_waiter"]
+                if zone and not all_players_in_zone(zone) then return false end
+            end
+            return true
+        end
+    end
+
+    local owned = false
+    CreateTimeEvent("xrr_arena", "start_gate", 0.5, function()
+        if XrrIsHosted() then
+            owned = true
+            for name in pairs(ARENA_GATE_ZONES) do
+                local zone = db.zone_by_name[name]
+                if zone then
+                    db.actor_inside_zones[name] = all_players_in_zone(zone) and zone or nil
+                end
+            end
+        elseif owned then
+            -- session over: one vanilla-semantics write, then hands off
+            owned = false
+            for name in pairs(ARENA_GATE_ZONES) do
+                local zone = db.zone_by_name[name]
+                if zone then
+                    db.actor_inside_zones[name] =
+                        (db.actor and zone:inside(db.actor:position())) and zone or nil
+                end
+            end
+        end
+        ResetTimeEvent("xrr_arena", "start_gate", 0.5)
+        return false
+    end)
+end
+
+-- Gladiator gear: bar_arena_teleport_2's restore scoop empties the WHOLE box
+-- onto whoever exits, the other player's gear included — so record the ids this
+-- machine deposits at entry and restore exactly that set.
+local _arena_deposit = {}
+
+local function patch_arena_gear_ownership()
+    if not (xr_effects and type(xr_effects.bar_arena_teleport) == "function"
+            and type(xr_effects.bar_arena_teleport_2) == "function") then
+        log("[xrRazom] arena gear ownership: bar_arena_teleport effects missing — skipped")
+        return
+    end
+
+    local _orig_tp = xr_effects.bar_arena_teleport
+    xr_effects.bar_arena_teleport = function(actor, npc, p)
+        if db.actor and (XrrIsHosted() or XrrIsConnected()) then
+            _arena_deposit = {}
+            local ids = {}
+            db.actor:inventory_for_each(function(item)
+                _arena_deposit[item:id()] = true
+                ids[#ids + 1] = item:id()
+            end)
+            -- The module record dies with the Lua VM; a save+load mid-match
+            -- must still restore the right owner's gear. The host's copy stays
+            -- machine-local (xrr_local_ pstor), never crossing the wire.
+            local csv = #ids > 0 and table.concat(ids, ",") or nil
+            if XrrIsConnected() then
+                XrrPlayers():SetPeerVar("arena_deposit", csv or "")
+            else
+                save_var(db.actor, "xrr_local_arena_deposit", csv)
+            end
+        end
+        return _orig_tp(actor, npc, p)
+    end
+
+    local _orig_tp2 = xr_effects.bar_arena_teleport_2
+    xr_effects.bar_arena_teleport_2 = function(actor, npc, p)
+        if not (XrrIsHosted() or XrrIsConnected()) then
+            return _orig_tp2(actor, npc, p)
+        end
+        -- vanilla bar_arena_teleport_2 body with two deviations: the restore is
+        -- ownership-filtered, and a peer never runs the purge — it would
+        -- release shared-id entities locally.
+        actor_effects.disable_effects_timer(100)
+        hide_hud_all()
+        local box2 = get_story_object("bar_arena_inventory_box_2")
+        if box2 then
+            db.actor:inventory_for_each(function(item)
+                db.actor:transfer_item(item, box2)
+            end)
+        end
+        if not XrrIsConnected() then
+            xr_zones.purge_arena_items("bar_arena")
+        end
+        level.add_pp_effector("blink.ppe", 234, false)
+        db.actor:set_actor_position(patrol("t_walk_2"):point(0))
+        local dir = patrol("t_look_2"):point(0):sub(patrol("t_walk_2"):point(0))
+        db.actor:set_actor_direction(-dir:getH())
+        local box = get_story_object("bar_arena_inventory_box")
+        if box then
+            if not next(_arena_deposit) then
+                local csv
+                if XrrIsConnected() then
+                    csv = XrrPlayers():GetPeerVar("arena_deposit")
+                else
+                    csv = load_var(db.actor, "xrr_local_arena_deposit", nil)
+                end
+                if type(csv) == "string" and csv ~= "" then
+                    for id in string.gmatch(csv, "%d+") do
+                        _arena_deposit[tonumber(id)] = true
+                    end
+                    printf("[xrRazom] arena: deposit record recovered (%s)", csv)
+                end
+            end
+            local mine, n = _arena_deposit, 0
+            box:iterate_inventory_box(function(b, item)
+                if mine[item:id()] then
+                    mine[item:id()] = nil
+                    b:transfer_item(item, db.actor)
+                    n = n + 1
+                end
+            end, box)
+            printf("[xrRazom] arena: restored %s own item(s) from the gear box",
+                   tostring(n))
+        end
+        _arena_deposit = {}
+        if XrrIsConnected() then
+            XrrPlayers():SetPeerVar("arena_deposit", "")
+        else
+            save_var(db.actor, "xrr_local_arena_deposit", nil)
+        end
+    end
+end
+
+-- Mirror sr_timer HUD countdowns onto peers (cosmetic — completion still flows
+-- through the synced info portion). The static renders only on the machine
+-- whose restrictor enters the section, so broadcast start/stop.
+local function patch_sr_timer_broadcast()
+    if not sr_timer then
+        log("[xrRazom][zone] INSTALL WARNING: sr_timer module missing — peers won't see HUD timers")
+        return
+    end
+    local orig_set = sr_timer.set_scheme
+    if type(orig_set) == "function" then
+        sr_timer.set_scheme = function(obj, ini, scheme, section, gulag_name)
+            orig_set(obj, ini, scheme, section, gulag_name)
+            if XrrIsHosted() and ini and ini:section_exist(section) then
+                local ttype       = ini:r_string_ex(section, "type") or "inc"
+                local start_value = ini:r_float_ex(section, "start_value") or 0
+                local timer_id    = ini:r_string_ex(section, "timer_id") or "hud_timer"
+                local str         = ini:r_string_ex(section, "string") or ""
+                XrrWorld():SendHudTimer(1, timer_id, str,
+                    ttype == "dec" and 1 or 0, math.floor(start_value))
+            end
+        end
+    end
+    local cls = sr_timer.action_timer
+    if cls and type(cls.deactivate) == "function" then
+        local orig_deact = cls.deactivate
+        function cls:deactivate(delta)
+            if XrrIsHosted() and self.st then
+                XrrWorld():SendHudTimer(0, self.st.timer_id or "hud_timer", "", 0, 0)
+            end
+            return orig_deact(self, delta)
+        end
+    end
+end
+
+-- Sleeping-bag / tent pack-up, host-authoritative. Teardown rides the stash
+-- map-spot-removal seam, but vanilla releases the prop without removing its
+-- spot through the Lua binding — hence the reimplemented pack-up.
+local function patch_sleepbag_packup()
+    if not (item_tent and item_tent.use_compression_bag) then return end
+    local SLEEP_SPOT = "ui_pda2_actor_sleep_location"
+
+    local function nearest_deployed(section, dist)
+        local found
+        level.iterate_nearest(db.actor:position(), dist, function(o)
+            if o and o:section() == section then found = o; return true end
+            return false
+        end)
+        return found
+    end
+
+    -- Peer: the prop is a host-owned anchor it must not release locally; the
+    -- host's spot removal echoes back as STASH_REMOVE.
+    local function peer_packup(prop, used_obj, give_section)
+        local host_id = XrrAlife():StashHostId(prop:id())
+        if not host_id or host_id == 0 then return end  -- untracked prop: don't half-swap
+        XrrAlife():RequestEntityDespawn(host_id)
+        if xrr_spawn_actor_item then xrr_spawn_actor_item(give_section) end
+        if used_obj then alife_release_id(used_obj:id()) end   -- consume the bag
+    end
+
+    -- Host: pack up ONE named prop — vanilla's pairs-order pick can release a
+    -- different prop than the one whose spot was removed when two are in range.
+    local function host_packup(prop_id, used_obj, give_section, tracking_tbl)
+        level.map_remove_object_spot(prop_id, SLEEP_SPOT)
+        local se = alife_object(prop_id)
+        if se then alife_release(se) end
+        alife_create_item(give_section, db.actor)            -- return the deployable
+        if used_obj then
+            local su = alife_object(used_obj:id())
+            if su then alife_release(su) end                 -- consume the bag
+        end
+        if tracking_tbl then tracking_tbl[prop_id] = nil end
+    end
+
+    local _orig_comp = item_tent.use_compression_bag
+    function item_tent.use_compression_bag(obj_c, dist)
+        if not db.actor then return end
+        if XrrIsClient() then
+            local bed = nearest_deployed("ph_sleepbag", dist or 1.5)
+            if bed then peer_packup(bed, obj_c, "itm_sleepbag") end
+            return
+        end
+        if XrrIsHosted() then
+            local bed = nearest_deployed("ph_sleepbag", dist or 1.5)
+            if not bed then return end
+            host_packup(bed:id(), obj_c, "itm_sleepbag",
+                item_tent.get_spawned_sleepbags and item_tent.get_spawned_sleepbags())
+            return
+        end
+        _orig_comp(obj_c, dist)
+    end
+
+    -- Peer: vanilla resolves the tent through spawned_tents, a table the peer
+    -- never populates — scan for the physical prop instead.
+    local _orig_nearby_tent = item_tent.get_nearby_tent
+    function item_tent.get_nearby_tent(dist, result)
+        if not (XrrIsClient() and db.actor) then return _orig_nearby_tent(dist, result) end
+        local tent = nearest_deployed("ph_tent", dist or 3.5)
+        if not tent then return nil end
+        return (result == true) and tent:id() or true
+    end
+
+    -- Vanilla start_timer resolves itm_tent_bag_func from the module env at use
+    -- time, so this override is picked up by the deferred level.add_call.
+    local _orig_tent_bag = item_tent.itm_tent_bag_func
+    function item_tent.itm_tent_bag_func()
+        if not db.actor then return end
+        local bag = db.actor:object("itm_tent_bag")
+        if XrrIsClient() then
+            local tent = nearest_deployed("ph_tent", 3.5)
+            if tent then peer_packup(tent, bag, "itm_tent") end
+            return
+        end
+        if XrrIsHosted() then
+            local id = item_tent.get_nearby_tent(3.5, true)
+            if not id then return end
+            host_packup(id, bag, "itm_tent",
+                item_tent.get_spawned_tents and item_tent.get_spawned_tents())
+            return
+        end
+        _orig_tent_bag()
+    end
+end
+
+-- ── Avatar-killer death dispatch ─────────────────────────────────────────────
+-- xr_motivator's death_callback gates npc_on_death_callback on IsStalker /
+-- IsMonster, so an avatar killer never dispatches it. Vanilla's own dispatch
+-- stays gated out, so a listener crediting a peer here counts exactly once.
+local function patch_motivator_death_dispatch()
+    local binder = xr_motivator and xr_motivator.motivator_binder
+    if not binder or type(binder.death_callback) ~= "function" then
+        log("[xrRazom][death] INSTALL FAILED: xr_motivator.motivator_binder.death_callback missing")
+        return
+    end
+    local orig = binder.death_callback
+    binder.death_callback = function(self, victim, who)
+        orig(self, victim, who)
+        if victim and who and XrrPlayers():IsPlayerDummy(who:id()) then
+            SendScriptCallback("npc_on_death_callback", victim, who)
+            local st = db.storage[victim:id()]
+            if st then
+                st.death_time = game.get_game_time()
+                st.death_by_id = who:id()
+            end
+        end
+    end
+end
+
+-- online_npc_on_death refuses avatar killers at its own IsStalker gate. It is
+-- registered by function value before we load, so patching the module table
+-- alone changes nothing — re-register the wrapper in its place.
+local function patch_game_relations_avatar_killer()
+    local orig = game_relations and game_relations.online_npc_on_death
+    if type(orig) ~= "function" then
+        log("[xrRazom][death] INSTALL FAILED: game_relations.online_npc_on_death missing")
+        return
+    end
+    local function wrapped(victim, killer)
+        if victim and killer and XrrPlayers():IsPlayerDummy(killer:id()) then
+            local ok, err = call_with_proxy_isstalker(orig, victim, killer)
+            if not ok then
+                log("[xrRazom][death] online_npc_on_death crashed for avatar killer: " .. tostring(err))
+            end
+            return
+        end
+        return orig(victim, killer)
+    end
+    game_relations.online_npc_on_death = wrapped
+    UnregisterScriptCallback("npc_on_death_callback", orig)
+    RegisterScriptCallback("npc_on_death_callback", wrapped)
+end
+
+-- Stalker kills by an avatar: counters travel to the owning peer, the
+-- classification stays vanilla's — ⚠ restating those thresholds here would be a
+-- second source that can disagree. Re-registered by value like game_relations.
+local function patch_game_statistics_avatar_killer()
+    local orig = game_statistics and game_statistics.npc_on_death_callback
+    if type(orig) ~= "function" then
+        log("[xrRazom][death] INSTALL FAILED: game_statistics.npc_on_death_callback missing")
+        return
+    end
+    local function wrapped(victim, killer)
+        orig(victim, killer)
+        if not (victim and killer) then return end
+        -- Host-only: on a client this would log an RPC drop per kill.
+        if not XrrIsHost() then return end
+        if not XrrPlayers():IsPlayerDummy(killer:id()) then return end
+
+        local netid = XrrPlayers():PlayerDummyPeerNetid(killer:id())
+        if not netid or netid == "0" then return end
+
+        local p = { character_community(killer), character_community(victim) }
+        local stat
+        if xr_conditions.is_factions_friends(nil, nil, p) then
+            stat = "killed_stalkers_f"
+        elseif xr_conditions.is_factions_enemies(nil, nil, p) then
+            stat = "killed_stalkers_e"
+        else
+            stat = "killed_stalkers_n"
+        end
+
+        -- 0/0 rank/rept: the peer applies each stat's own actor-table values,
+        -- and engine rank/rep rides PEER_PROGRESS_DELTA — sending it here too
+        -- would double-credit.
+        local a = XrrAlife()
+        if not a then return end
+        a:SendStatIncrement(netid, "killed_stalkers", 1, 0, 0)
+        a:SendStatIncrement(netid, stat, 1, 0, 0)
+    end
+    game_statistics.npc_on_death_callback = wrapped
+    UnregisterScriptCallback("npc_on_death_callback", orig)
+    RegisterScriptCallback("npc_on_death_callback", wrapped)
+end
+
+-- Dynamic news drops peer kills at its IsStalker gates. Both methods take `who`
+-- second, and the manager registers `self`, so methods resolve at dispatch time
+-- — a class patch covers every instance and the GAMMA override.
+local function patch_dynamic_news_avatar()
+    local cls = dynamic_news_manager and dynamic_news_manager.DynamicNewsManager
+    if not cls then
+        log("[xrRazom][news] INSTALL FAILED: DynamicNewsManager missing")
+        return
+    end
+    local function wrap(name)
+        local orig = cls[name]
+        if type(orig) ~= "function" then
+            log("[xrRazom][news] INSTALL WARNING: DynamicNewsManager:" .. name .. " missing")
+            return
+        end
+        cls[name] = function(self, first, who)
+            if who and XrrPlayers():IsPlayerDummy(who:id()) then
+                local ok, result = call_with_proxy_isstalker(orig, self, first, who)
+                if not ok then
+                    log("[xrRazom][news] " .. name .. " crashed for avatar: " .. tostring(result))
+                    return
+                end
+                return result
+            end
+            return orig(self, first, who)
+        end
+    end
+    wrap("monster_on_death_callback") -- (victim, who)
+    wrap("RadioInHeli")               -- (sender, who)
+end
+
+function apply()
+    AVATAR_CLSID = clsid and clsid.xrr_avatar
+    patch_character_community_avatar()
+    patch_death_manager_proxy_guard()
+    patch_change_level_guard()
+    patch_sr_teleport_transition_notice()
+    patch_news_sound_broadcast()
+    patch_relocate_news_local_only()
+    patch_combat_ignore_proxy_bypass()
+    patch_before_hit_identity_swap()
+    patch_motivator_death_dispatch()
+    patch_game_relations_avatar_killer()
+    patch_game_statistics_avatar_killer()
+    patch_dynamic_news_avatar()
+    patch_anomaly_before_activate_proxy_bypass()
+    patch_heli_kill_attribution()
+    patch_arena_reward_all()
+    patch_actor_in_zone_team()
+    patch_arena_start_gate()
+    patch_arena_gear_ownership()
+    patch_sr_timer_broadcast()
+    patch_sleepbag_packup()
+end
+
+-- No Lua caller: the engine resolves this through _G on TRANSITION_PENDING.
+_G.OnTransitionPending = OnTransitionPending

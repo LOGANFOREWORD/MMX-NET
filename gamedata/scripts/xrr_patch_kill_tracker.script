@@ -1,0 +1,56 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+  Разом нас багато. (Together we are many.)
+
+  Module: Ishmaeel's Kill Tracker (Milspec PDA, GAMMA) — avatar kill attribution.
+
+  new_kill logs every peer kill with killer "The Zone": its killer branch and
+  safename() both filter on vanilla IsStalker, which never recognizes the avatar
+  clsid. Run them under the scoped avatar-aware swap (XrrAvatarAwareCall) when
+  the killer is a peer avatar.
+
+  new_kill is registered by function value on npc_on_death_callback and
+  monster_on_death_callback in the mod's on_game_start (which runs before ours),
+  so the module-table patch alone would not change the dispatched callback —
+  re-register the wrapper in its place. safename resolves through the module
+  table at call time, so its wrap needs no re-registration.
+]]
+
+function on_game_start()
+    local ikt = ish_kill_tracker
+    if not ikt then return end -- mod absent (plain Anomaly / different loadout)
+
+    local orig_safename = ikt.safename
+    if type(orig_safename) == "function" then
+        ikt.safename = function(obj)
+            if obj and XrrPlayers():IsPlayerDummy(obj:id()) then
+                local ok, result = XrrAvatarAwareCall(orig_safename, obj)
+                if ok then return result end
+                return nil
+            end
+            return orig_safename(obj)
+        end
+    end
+
+    local orig_new_kill = ikt.new_kill
+    if type(orig_new_kill) ~= "function" then
+        log("[xrRazom][killtracker] INSTALL FAILED: ish_kill_tracker.new_kill missing")
+        return
+    end
+    local function wrapped_new_kill(victim, killer)
+        if victim and killer and XrrPlayers():IsPlayerDummy(killer:id()) then
+            local ok, err = XrrAvatarAwareCall(orig_new_kill, victim, killer)
+            if not ok then
+                log("[xrRazom][killtracker] new_kill crashed for avatar killer: " .. tostring(err))
+            end
+            return
+        end
+        return orig_new_kill(victim, killer)
+    end
+    ikt.new_kill = wrapped_new_kill
+    UnregisterScriptCallback("npc_on_death_callback", orig_new_kill)
+    UnregisterScriptCallback("monster_on_death_callback", orig_new_kill)
+    RegisterScriptCallback("npc_on_death_callback", wrapped_new_kill)
+    RegisterScriptCallback("monster_on_death_callback", wrapped_new_kill)
+    log("[xrRazom][killtracker] avatar kill attribution installed")
+end

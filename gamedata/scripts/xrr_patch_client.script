@@ -1,0 +1,1174 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+  Разом нас багато. (Together we are many.)
+
+  Module: Client Patch — disables all simulation systems that the host controls.
+  Applied once by xrr_callbacks.on_game_start when XrrIsClient().
+]]
+
+local NOP         = function() end
+local RETURN_TRUE  = function() return true end
+local RETURN_FALSE = function() return false end
+
+-- Drop a script callback another module registered before this patch runs:
+-- axr_main's registry keys on the function OBJECT, so overwriting the module
+-- field suppresses nothing.
+local function unregister_cb(name, tbl, field)
+    local fn = tbl and tbl[field]
+    if type(fn) ~= "function" then return false end
+    UnregisterScriptCallback(name, fn)
+    return true
+end
+
+-- Sentinel id handed to item_tent when a peer sleeping-bag deploy is forwarded
+-- to the host; u16(-1) is the engine's invalid-object id, so it never collides.
+local XRR_SLEEPBAG_STUB_ID = 65535
+
+-- Captured inside apply(), not at file scope: mods REPLACE these functions at
+-- their own file scope, so a file-scope capture here would wrap whichever
+-- version happened to load first.
+local _old_item_parts_evaluate
+local _old_item_parts_func_disassembly
+local _old_utils_item_detach_addon
+
+-- Mirror of item_parts' file-local d_flag (the Alt-hold disassembly safety),
+-- unreachable from here.
+local xrr_dis_key_flag = false
+
+-- Mutant-corpse loot state, shared between the apply() wraps and
+-- on_mutant_loot_state below.
+local _mutant_orig_start = nil
+local _mutant_remote_id  = nil   -- local corpse id while a host-mediated loot UI is up
+local _mutant_close_tbl  = nil   -- staged for xrr_get_mutant_close_table
+local _mutant_ea_wait    = nil   -- corpse id whose STATE must wait for the FDDA
+                                 -- enhanced_animations skinning-anim re-entry
+local _mutant_ea_local   = nil   -- corpse id whose EA re-entry is a vanilla-local
+                                 -- session (crow / unmapped corpse)
+
+function apply()
+    _old_item_parts_evaluate         = item_parts.evaluate_parts
+    _old_item_parts_func_disassembly = item_parts.func_disassembly
+    _old_utils_item_detach_addon     = utils_item.detach_addon
+
+    -- Vanilla's deferred queue keys on a raw id it never re-validates, so a
+    -- recycled id destroys somebody else's entity; its `objects_to_release` is
+    -- file-local, hence the full replacement of both entry points.
+    if safe_release_manager and not safe_release_manager._xrr_fingerprinted then
+        local pending = {}   -- id -> section fingerprint at queue time
+
+        safe_release_manager.release = function(se_obj)
+            if not se_obj then return end
+            local ok, sec = pcall(function() return se_obj:section_name() end)
+            sec = ok and sec or "?"
+
+            -- The gate must sit here, not in the drain: the drain's online arm
+            -- force-switches the entity offline before any release runs.
+            if XrrIsConnected() and xrr_is_host_owned(se_obj.id) then
+                printf("[xrRazom][srm] refused host-owned id=%s sec=%s parent=%s",
+                       tostring(se_obj.id), tostring(sec), tostring(se_obj.parent_id))
+                return
+            end
+
+            pending[se_obj.id] = sec
+            printf("[xrRazom][srm] queued id=%s sec=%s online=%s",
+                   tostring(se_obj.id), tostring(sec), tostring(se_obj.online))
+        end
+
+        safe_release_manager.execute_destroy_callback = function()
+            if is_empty(pending) then return false end
+            local sim = alife()
+            if not sim then return false end
+
+            for id, want_sec in pairs(pending) do
+                local se_obj = alife_object(id)
+                if not se_obj then
+                    pending[id] = nil
+                else
+                    local ok, sec = pcall(function() return se_obj:section_name() end)
+                    if ok and sec ~= want_sec then
+                        printf("[xrRazom][srm] id=%s recycled (%s -> %s) - entry dropped, NOT releasing",
+                               tostring(id), tostring(want_sec), tostring(sec))
+                        pending[id] = nil
+                    elseif se_obj.online then
+                        sim:set_switch_online(id, false)
+                        sim:set_switch_offline(id, true)
+                        se_obj:switch_offline()
+                    else
+                        -- binder gone → safe to release
+                        local obj = db.storage[id] and db.storage[id].object
+                        if not obj then
+                            alife_record(se_obj, false)
+                            sim:release(se_obj, true)
+                            pending[id] = nil
+                        end
+                    end
+                end
+            end
+            return false
+        end
+
+        AddUniqueCall(safe_release_manager.execute_destroy_callback)
+        safe_release_manager._xrr_fingerprinted = true
+        printf("[xrRazom][srm] deferred-release queue is now id+section fingerprinted")
+    end
+
+    -- ── release_item_manager: peer-session-gate the aged-item release timer ──
+    -- It would release host-owned ground items off this machine's own marking
+    -- table; kept armed so vanilla behaviour resumes when the session ends.
+    if release_item_manager and release_item_manager.clear
+        and not release_item_manager._xrr_peer_gated then
+        local orig_clear = release_item_manager.clear
+        release_item_manager.clear = function()
+            if XrrIsConnected() then
+                ResetTimeEvent(0, "release_item", 5)
+                return false
+            end
+            return orig_clear()
+        end
+        release_item_manager._xrr_peer_gated = true
+        printf("[xrRazom] release_item_manager.clear() is now peer-session-gated")
+    end
+
+    -- Bar arena is host-authoritative: park the driver restrictors' scheme tick.
+    -- Doors/utility zones and bar_arena_triger stay live — they react to
+    -- host-synced infos and self-run the peer's exit.
+    local ARENA_DRIVER_RESTR = {
+        bar_arena_sr               = true,  -- OLD-arena master state machine
+        bar_arena_sr_start         = true,  -- entry/buffer stage (timeout driver)
+        bar_arena_sr_shluz         = true,  -- airlock stage (door advance)
+        bar_arena_sr_fight         = true,  -- fight stage
+        bar_arena_rank_checker     = true,  -- reads the PEER's rank → wrong gating
+        bar_arena_check_death      = true,  -- arena death detection
+        bar_arena_totalizator      = true,  -- MLR totalizator machine (untested)
+        bar_arena_totalizator_remove = true,
+    }
+    -- bar_arena_comment_* stay live: comment_fight_1 drives the gladiator exit.
+    local function is_arena_driver_restr(name)
+        if not name then return false end
+        return ARENA_DRIVER_RESTR[name] == true
+    end
+
+    -- The announcer machines are sequential @1→@8 ladders a fresh join restarts
+    -- at the LTX default; comment_1's chain also fires bar_arena_teleport_2, the
+    -- exit. The rung is derived from the permanent bar_arena_fight_N_done infos.
+    local ARENA_COMMENT_MACHINES = {
+        bar_arena_comment_1      = true,  -- announcer + exit driver
+        bar_arena_comment_1_0000 = true,  -- second announcer voice
+    }
+
+    -- An ACTIVE fight_N info names the current rung outright (it outlives
+    -- fight_N_done in the kill→exit window); otherwise the first rung without a
+    -- _done. Second return: the fight is in flight past its intro.
+    local function arena_ladder_rung()
+        for i = 1, 8 do
+            if has_alife_info("bar_arena_fight_" .. i) then
+                return i, has_alife_info("bar_arena_fight_begin")
+                       or has_alife_info("bar_arena_fight_" .. i .. "_done")
+            end
+        end
+        for i = 1, 8 do
+            if not has_alife_info("bar_arena_fight_" .. i .. "_done") then
+                return i, false
+            end
+        end
+        return nil, false   -- ladder complete → machines rest at @nil
+    end
+
+    local function arena_realign_comment_machines()
+        local rung, in_fight = arena_ladder_rung()
+        local target, valid
+        if not rung then
+            target = "sr_idle@nil"
+            valid  = { [target] = true }
+        elseif in_fight then
+            -- Rejoin mid-match: position past the intro. @soundN stays valid so
+            -- a normally-playing intro isn't cut when fight_begin lands mid-sound.
+            target = "sr_idle@sound" .. rung .. "_end"
+            valid  = {
+                [target] = true,
+                ["sr_idle@sound" .. rung]                   = true,
+                ["sr_idle@sound" .. rung .. "_end" .. rung] = true,
+            }
+        else
+            target = "sr_idle@" .. rung
+            valid  = {
+                [target] = true,
+                ["sr_idle@sound" .. rung]                   = true,
+                ["sr_idle@sound" .. rung .. "_end"]         = true,
+                ["sr_idle@sound" .. rung .. "_end" .. rung] = true,
+            }
+        end
+        for name in pairs(ARENA_COMMENT_MACHINES) do
+            local obj = db.zone_by_name[name]
+            local st  = obj and db.storage[obj:id()]
+            if st and st.ini and st.active_section and not valid[st.active_section] then
+                printf("[xrRazom] arena: %s realigned %s -> %s",
+                       name, tostring(st.active_section), target)
+                xr_logic.switch_to_section(obj, st.ini, target)
+            end
+        end
+    end
+
+    -- Exit safety net: even a correctly-aligned exit hangs on two local sound
+    -- playbacks. Disarm is the _arena_exit_ran flag — the exit point can sit
+    -- inside the pit radius, so distance alone can't tell exited from fighting.
+    local ARENA_PIT_RADIUS    = 30
+    local ARENA_EXIT_GRACE_MS = 12000
+    local _arena_exit_ran     = false
+    local function arena_arm_exit_watchdog()
+        local fight_n
+        for i = 1, 8 do
+            if has_alife_info("bar_arena_fight_" .. i) then
+                fight_n = i
+                break
+            end
+        end
+        if not fight_n then return end
+        local lvl         = level.name()
+        local anchor      = patrol("t_way"):point(0)   -- gladiator spawn point
+        local grace_start = nil
+        _arena_exit_ran   = false
+        RemoveTimeEvent("xrr_arena", "exit_watch")
+        CreateTimeEvent("xrr_arena", "exit_watch", 1, function()
+            if not db.actor or level.name() ~= lvl then return true end
+            if _arena_exit_ran then return true end   -- normal exit happened
+            if db.actor:position():distance_to(anchor) > ARENA_PIT_RADIUS then
+                return true   -- left the pit some other way
+            end
+            if has_alife_info("bar_arena_fight_" .. fight_n .. "_done")
+                and not has_alife_info("bar_arena_fight_" .. fight_n) then
+                grace_start = grace_start or time_global()
+                if time_global() - grace_start >= ARENA_EXIT_GRACE_MS then
+                    printf("[xrRazom] arena: exit watchdog fired for fight_%s",
+                           tostring(fight_n))
+                    xr_effects.bar_arena_teleport_2(db.actor, nil)
+                    arena_realign_comment_machines()
+                    return true
+                end
+            end
+            ResetTimeEvent("xrr_arena", "exit_watch", 1)
+            return false
+        end)
+    end
+
+    if xr_effects and type(xr_effects.bar_arena_teleport_2) == "function" then
+        local _orig_arena_tp2 = xr_effects.bar_arena_teleport_2
+        xr_effects.bar_arena_teleport_2 = function(actor, npc, p)
+            _arena_exit_ran = true
+            return _orig_arena_tp2(actor, npc, p)
+        end
+    end
+
+    -- Rejoin mid-match: the triger restarts at @idle and would replay the whole
+    -- entry chain (cutscene, gear deposit, re-teleport); position it past that,
+    -- undoing the @wait_N disable_ui its first update may have run.
+    local function arena_realign_triger(obj, st)
+        local rung, in_fight = arena_ladder_rung()
+        if not (rung and in_fight) then return end
+        local cur = st.active_section
+        if cur == "sr_idle@fight" or cur == "sr_idle@wait_finish"
+            or cur == "sr_idle@pause" or cur == "sr_idle@wait_pause" then
+            return
+        end
+        printf("[xrRazom] arena: bar_arena_triger realigned %s -> sr_idle@wait_finish (fight in flight)",
+               tostring(cur))
+        xr_logic.switch_to_section(obj, st.ini, "sr_idle@wait_finish")
+        if xr_effects and type(xr_effects.enable_ui) == "function" then
+            xr_effects.enable_ui(db.actor, nil)
+        end
+        arena_arm_exit_watchdog()
+    end
+
+    -- Re-check alignment at fight start; fight_begin flips the derivation to the
+    -- in-fight branch above.
+    RegisterScriptCallback("actor_on_info_callback", function(actor, info)
+        if type(info) == "string"
+            and (string.match(info, "^bar_arena_fight_%d$")
+                 or info == "bar_arena_fight_begin") then
+            arena_realign_comment_machines()
+        end
+    end)
+
+    local _orig_phys_update = bind_physic_object.generic_physics_binder.update
+    bind_physic_object.generic_physics_binder.update = function(self, delta)
+        if not self.initialized and db.actor then
+            self.loaded = false
+        end
+        _orig_phys_update(self, delta)
+    end
+
+    local _orig_restr_update = bind_restrictor.restrictor_binder.update
+    bind_restrictor.restrictor_binder.update = function(self, delta)
+        if self.__xrr_arena_parked then return end
+        if not self.initialized and db.actor then
+            if self.object and is_arena_driver_restr(self.object:name()) then
+                self.__xrr_arena_parked = true
+                printf("[xrRazom] arena: parked driver restrictor %s on peer",
+                       self.object:name())
+                return
+            end
+            self.loaded = false
+        end
+        _orig_restr_update(self, delta)
+        if not self.__xrr_arena_aligned and self.object then
+            local nm = self.object:name()
+            if ARENA_COMMENT_MACHINES[nm] or nm == "bar_arena_triger" then
+                local st = db.storage[self.object:id()]
+                if st and st.active_section then
+                    self.__xrr_arena_aligned = true
+                    if nm == "bar_arena_triger" then
+                        arena_realign_triger(self.object, st)
+                    else
+                        arena_realign_comment_machines()
+                    end
+                end
+            end
+        end
+    end
+
+    -- Block all alife spawning on the client side.
+    _G.alife_create = function(sec, pos, lid, gid, id, state)
+        -- item_tent's sleepbag branch dereferences se_obj.id inline (CTD under
+        -- this block), so it is forwarded to the host with a stub id.
+        if not id and sec == "ph_sleepbag" and db.actor and XrrWorld then
+            local p = pos or db.actor:position()
+            XrrWorld():SendPeerStashDeploy(sec, p.x, p.y, p.z,
+                lid or db.actor:level_vertex_id(), gid or db.actor:game_vertex_id(),
+                ui_item.get_sec_name("itm_sleepbag"), "ui_pda2_actor_sleep_location", "")
+            return { id = XRR_SLEEPBAG_STUB_ID }
+        end
+        if id or (sec and string.match(sec, "level_changer")) then
+            return alife():xrr_create_direct(sec, pos, lid, gid, id, state)
+        end
+    end
+
+    -- A peer owns its own actor, so alife_create_item for that owner routes
+    -- through xrr_spawn_actor_item instead of dying on the block above. t rides
+    -- the post-processor, so t.ammo lands as one box, not vanilla's split.
+    local function owner_is_local_actor(owner)
+        if not (owner and db.actor) then return false end
+        if type(owner) == "table" then return owner[4] == AC_ID end
+        if type(owner.id) == "function" then return owner:id() == AC_ID end
+        return owner.id == AC_ID
+    end
+
+    -- Vanilla's ItemProcessor accepts a "section__uses" spelling; the
+    -- client-spawn takes a bare section.
+    local function extract_uses(section)
+        local sec, uses = string.match(section, "^(.*)__(%d)$")
+        if sec and ini_sys:section_exist(sec) then return sec, tonumber(uses) end
+        return section
+    end
+
+    local _orig_create_item = _G.alife_create_item
+    _G.alife_create_item = function(section, owner, t)
+        if not (section and owner_is_local_actor(owner)) then
+            return _orig_create_item(section, owner, t)
+        end
+        local sec, uses = extract_uses(section)
+        local id = xrr_spawn_actor_item(sec)
+        if id == -1 then
+            printe("![xrRazom] client-spawn refused [%s] for the local actor", tostring(sec))
+            return
+        end
+        if uses then alife_process_item(sec, id, { uses = uses }) end
+        if t then alife_process_item(sec, id, t) end
+        return alife_object(id)
+    end
+
+    -- Drop the sleep-marker add for the stub id only — vanilla sleep zones share
+    -- the same spot type and must still draw normally.
+    local _xrr_orig_map_add_ser = level.map_add_object_spot_ser
+    level.map_add_object_spot_ser = function(spot_id, spot, text)
+        if spot_id == XRR_SLEEPBAG_STUB_ID then return end
+        return _xrr_orig_map_add_ser(spot_id, spot, text)
+    end
+
+    -- Engine-side alife-spawn gate: every Lua-facing alife():create / register is
+    -- blocked at the binding; peer spawns go through xrr_create_direct or
+    -- SetClientCreateBypass.
+    XrrNet():SetClientCreateGate(true)
+    xrr_register_cleanup(function() XrrNet():SetClientCreateGate(false) end)
+
+    -- Bar gladiator loadout: vanilla bar_arena_teleport spawns the gear via
+    -- alife_create, a no-op here — capture the sections and re-spawn each.
+    if xr_effects and type(xr_effects.bar_arena_teleport) == "function" then
+        local _orig_arena_tp = xr_effects.bar_arena_teleport
+        local _orig_ac       = _G.alife_create
+        local _capturing     = nil   -- a table only while bar_arena_teleport runs
+
+        _G.alife_create = function(sec, pos, lid, gid, id, state)
+            if _capturing and sec then
+                _capturing[#_capturing + 1] = sec
+            end
+            return _orig_ac(sec, pos, lid, gid, id, state)
+        end
+
+        xr_effects.bar_arena_teleport = function(actor, npc, p)
+            _capturing = {}
+            _orig_arena_tp(actor, npc, p)   -- gear → box (works); loadout spawn fails (no-op)
+            local loadout = _capturing
+            _capturing = nil
+            local n = 0
+            for _, sec in ipairs(loadout) do
+                if xrr_spawn_actor_item(sec) ~= -1 then n = n + 1 end
+            end
+            printf("[xrRazom] arena: peer match loadout = %s/%s item(s) via client-spawn",
+                   tostring(n), tostring(#loadout))
+            arena_arm_exit_watchdog()
+        end
+    end
+
+    -- Vanilla mints and re-rolls the per-part table on whichever machine looks at
+    -- the item first, so the peer evaluates only its own inventory; host-owned
+    -- tables arrive minted and track host re-rolls via ITEM_STATE(SE_DATA).
+    item_parts.evaluate_parts = function(obj)
+        local parent = obj and obj:parent()
+        if parent and parent:id() == AC_ID then
+            return _old_item_parts_evaluate(obj)
+        end
+    end
+
+    -- Host-authoritative: a detach inside a box/corpse needs alife spawns the
+    -- client gate blocks — the addon parents to the CONTAINER, and section-swap
+    -- weapons clone through alife():register. Actor-inventory detach stays local.
+    utils_item.detach_addon = function(wpn, addon, typ, ignore)
+        local parent = wpn and wpn:parent()
+        if parent and parent:id() ~= AC_ID then
+            local typ_code = (typ == "scope" and 0) or (typ == "sil" and 1) or (typ == "gl" and 2)
+            if typ_code then
+                XrrWorld():SendContainerDetach(parent:id(), wpn:id(), typ_code)
+            end
+            return
+        end
+        return _old_utils_item_detach_addon(wpn, addon, typ, ignore)
+    end
+
+    -- Host-authoritative: unloading inside a box/corpse would spawn the ammo
+    -- through a local server spawn the host never sees (dupe). Actor-inventory
+    -- unload stays local.
+    local _old_action_unload = ui_inventory.UIInventory.Action_Unload
+    ui_inventory.UIInventory.Action_Unload = function(self, obj, bag)
+        obj = self:CheckItem(obj, "Action_Unload")
+        local parent = obj and obj:parent()
+        if parent and parent:id() ~= AC_ID then
+            XrrWorld():SendContainerUnload(parent:id(), obj:id())
+            return
+        end
+        return _old_action_unload(self, obj, bag)
+    end
+
+    -- Host-authoritative: the parts spawn needs alife the client gate blocks.
+    -- Vanilla gives parts to the item's PARENT, so they land in the container.
+    -- The local tool wear is optimistic: a refused forward costs one tool-use.
+    item_parts.func_disassembly = function(obj, obj_d)
+        local parent = obj and obj:parent()
+        if parent and parent:id() ~= AC_ID then
+            obj_d = obj_d or item_parts.get_suitable_dtool(obj)
+            if not item_parts.is_suitable_dtool(obj, obj_d) then
+                -- vanilla's own missing-tool messaging
+                if IsWeapon(obj) then
+                    actor_menu.set_item_news('fail', 'weapon', "st_dis_text_3", " ")
+                else
+                    news_manager.send_tip(db.actor,
+                        game.translate_string("st_news_dis_items"), nil, "swiss_knife", 6000)
+                end
+                return
+            end
+            local chk = ui_options.get("control/general/disassembly_warning")
+            if chk and (not xrr_dis_key_flag) then
+                actor_menu.set_item_news("success", "detail", "st_awr_ctrl")
+                return
+            end
+            local diss_tools = GetItemList("disassemble")
+            utils_item.degrade(obj_d, diss_tools[obj_d:section()])
+            game_statistics.increment_statistic("items_disassembled")
+            actor_effects.play_item_fx("disassemble_metal_fast")
+            XrrWorld():SendContainerDisassemble(parent:id(), obj:id(), obj_d:section())
+            return
+        end
+        return _old_item_parts_func_disassembly(obj, obj_d)
+    end
+
+    -- Alt-flag tracking for the arm above (same key as item_parts' own pair).
+    RegisterScriptCallback("on_key_press", function(key)
+        if key == DIK_keys["DIK_LMENU"] then xrr_dis_key_flag = true end
+    end)
+    RegisterScriptCallback("on_key_release", function(key)
+        if key == DIK_keys["DIK_LMENU"] then xrr_dis_key_flag = false end
+    end)
+
+    -- Death / loot: host spawns corpse contents. create_release_item stays live
+    -- for the mod wrapper chain; the leaves below make the vanilla body inert.
+    death_manager.create_item            = NOP
+    death_manager.try_spawn_ammo         = NOP
+    death_manager.spawn_cosmetics        = NOP
+    death_manager.set_weapon_drop_condition = NOP
+    death_manager.keep_item              = RETURN_FALSE
+    -- Money is minted host-side; converting here would mint a divergent amount.
+    item_money.actor_on_loot_money       = NOP
+    -- The story-id branch evaluates a condlist, and %+info% side effects
+    -- replicate. init_drop_settings refills the table at every actor spawn.
+    death_manager.item_by_story_id       = {}
+    local _xrr_orig_init_drop_settings   = death_manager.init_drop_settings
+    death_manager.init_drop_settings = function(...)
+        _xrr_orig_init_drop_settings(...)
+        death_manager.item_by_story_id = {}
+    end
+    treasure_manager.try_spawn_treasure  = NOP
+    -- Stash loot rolls an independent math.random per machine.
+    treasure_manager.create_random_stash = NOP
+    -- Mirror NPC weapons come from host sync (ensure_weapon).
+    xrs_rnd_npc_loadout.create_item_on_npc = NOP
+    -- A peer's inventory is host-restored, so the new-game gear roll is skipped.
+    itms_manager.new_game_equippment = function()
+        if not has_alife_info("start_equippment_handled") then
+            give_info("start_equippment_handled")
+        end
+        printf("[xrRazom] new_game_equippment suppressed for peer (inventory is host-restored)")
+        -- must return true or the delay_new_game_autosave time event re-fires
+        -- every tick for the session
+        return true
+    end
+    -- Host-side eDeath spawns box loot, and the peer's own DESTROYABLE_DESTROY
+    -- handler fires eDeath too.
+    function xr_box.ph_item_box:spawn_items() end
+    -- Vanilla bug: reset_all_relations uses factions_table_all whose column order
+    -- mismatches game_relations.ltx. The C++ table is already correct; don't overwrite it.
+    game_relations.reset_all_relations   = function() end
+    guaranteed_loot.check                = NOP
+    guaranteed_loot.npc_on_use           = NOP
+    guaranteed_loot.on_game_start        = NOP
+    xr_logic.create_items                = NOP
+    xr_logic.spawn_items                 = NOP
+
+    -- Trader restock is host-authoritative: allow the trade profile setup the
+    -- pricing UI needs, block buy_supplies.
+    local _orig_trade_update = trade_manager.update
+    trade_manager.update = function(npc, force_refresh)
+        if not npc then return end
+        local id = npc:id()
+        local tm_entry = trade_manager.get_trade_profile(id)
+        if tm_entry and not tm_entry.resupply_time then
+            local Y, M, D, h, m, s, ms = game.get_game_time():get(0,0,0,0,0,0,0)
+            tm_entry.resupply_time = { Y=Y, M=M, D=D, h=h, m=m, s=s, ms=ms }
+        end
+        _orig_trade_update(npc, false)
+    end
+
+    -- Mirrors run no logic, so their local trade_init is always the
+    -- trade_generic fallback; the host-sent profile wins over it.
+    local _orig_trade_init = trade_manager.trade_init
+    trade_manager.trade_init = function(npc, cfg)
+        local forced = npc and XrrTraderProfiles and XrrTraderProfiles[npc:id()]
+        return _orig_trade_init(npc, forced or cfg)
+    end
+
+    -- Vanilla's trader test reads a `trade` line in db.storage[id].section_logic,
+    -- which a mirror never has; the host ships the verdict as the NPC_FLAGS
+    -- trader bit. Patched on the utility so every consumer sees it.
+    local _orig_is_trader = utils_obj.is_trader
+    utils_obj.is_trader = function(...)
+        local npc = ...
+        if npc and XrrAlife():IsNpcTrader(npc:id()) then return true end
+        return _orig_is_trader(...)
+    end
+
+    -- Debug launcher: use client-aware despawn.
+    ui_debug_launcher.release_obj = function()
+        local obj = level.get_target_obj()
+        if not obj then return end
+        local name = obj:name()
+        alife_release_client_id(obj:id())
+        printf("-[xrRazom] %s despawned via client", name)
+    end
+
+    -- Task fail is host-authoritative: honour only the forced status set by
+    -- OnForcedTaskState or the local set_task_failed/set_task_cancelled wraps,
+    -- never a locally-derived condlist fail.
+    function task_manager.CRandomTask:task_fail(p1)
+        if db.actor == nil or device().precache_frame > 1 then return false end
+        local tsk = self.task_info[p1]
+        if not tsk or tsk.forced_status ~= "fail" then return false end
+        tsk.forced_status = nil
+        tsk.last_check_task = "fail"
+        return true
+    end
+
+    -- tasks_defense state lives in mdata, absent on a fresh-join peer (nil-index
+    -- fatal): seed the default. The announce roll is host-owned.
+    tasks_defense.load_state({})
+    UnregisterScriptCallback("actor_on_first_update", tasks_defense.actor_on_first_update)
+    tasks_defense.actor_on_first_update = NOP
+
+    -- World item / door spawning: host responsibility.
+    game_setup.try_spawn_world_item = NOP
+    ph_door.try_to_open_door        = NOP
+    ph_door.try_to_close_door       = NOP
+
+
+    -- Task functors that reference host-only data.
+    task_functor.smart_control_task_target_functor = NOP
+    tasks_clear_map.mutants_in_map                 = NOP
+
+    -- NPC state machines: host drives all NPC behaviour.
+    state_mgr_direction.turn          = NOP
+    state_mgr_direction.look_at_object = NOP
+
+    -- Weather / effects: host-only.
+    xr_effects.set_weather     = NOP
+    xr_effects.setup_companion_task = NOP
+    xr_effects.spawn_corpse    = NOP
+    utils_obj.create_squad     = NOP
+
+    -- Inventory-gated scripted kills (X16's "no good_psy_helmet → kill_actor")
+    -- re-evaluate every tick, and a rejoin puts the actor in the level before the
+    -- host's gear lands. Deferred, not bypassed: an unequipped player still dies.
+    local _kill_actor = xr_effects.kill_actor
+    xr_effects.kill_actor = function(actor, npc, p)
+        if XrrNet():JoinSettling() then
+            printf("[xrRazom] kill_actor deferred — world/gear restore still in flight")
+            return
+        end
+        _kill_actor(actor, npc, p)
+    end
+
+    -- Anomaly fields: host manages dynamic anomalies.
+    bind_anomaly_field.load_state         = NOP
+    bind_anomaly_field.dyn_anomalies_refresh = NOP
+    bind_anomaly_field.dyn_anomalies_suffle  = NOP
+    bind_anomaly_field.dyn_anomalies_update  = NOP
+    bind_anomaly_field.dyn_anomalies_spawn   = NOP
+    bind_anomaly_zone.force_spawn_artefacts  = NOP
+
+    -- PDA / NPC net-spawn: managed by host.
+    pda.npc_on_net_spawn = NOP
+
+    -- Dialogs: block host-only side-effects, forward companion ops via RPC.
+    dialogs.drx_sl_give_sl_task = NOP
+
+    -- Bounty squad spawning: host only.
+    sim_squad_bounty.try_spawn    = NOP
+    sim_squad_bounty.spawn_timer  = RETURN_TRUE
+    sim_squad_bounty.state_timer  = RETURN_TRUE
+    sim_squad_bounty.on_game_start = NOP
+    tasks_chimera_scan.spawn_on_squad_member = NOP
+
+
+    -- Stop respawns on client.
+    alife_storage_manager.get_state().stop_respawns = true
+
+    -- Sim board: client does not create/assign squads.
+    function sim_board.simulation_board:create_squad()             return nil end
+    function sim_board.simulation_board:create_squad_at_named_location() return nil end
+    function sim_board.simulation_board:assign_squad_to_smart()   return nil end
+
+    -- New-game world generation belongs to the host. Suppressing the whole method
+    -- also drops its SendScriptCallback, so no mod's fill_start_position hook runs
+    -- — those spawn through the gated creators and most deref the nil back.
+    function sim_board.simulation_board:fill_start_position()      return nil end
+
+    -- The faction war is the host's simulation, and warfare registers its
+    -- callbacks unconditionally in its own on_game_start, so they must go by
+    -- function object. save_state / load_state stay: peer-local persistence.
+    unregister_cb("smart_terrain_on_update",     smart_terrain_warfare, "smart_terrain_on_update")
+    unregister_cb("squad_on_update",             sim_squad_warfare,     "squad_on_update")
+    unregister_cb("squad_on_npc_death",          sim_squad_warfare,     "squad_on_npc_death")
+    unregister_cb("actor_on_update",             warfare,               "actor_on_update")
+    unregister_cb("server_entity_on_unregister", warfare,               "squad_on_unregister")
+
+    -- The host owns the smart-terrain simulation. The actor-local bookkeeping
+    -- stays: vanilla and mods read dist_to_actor / nearest_to_actor_smart
+    -- (dist-to-smart condlists, companion escort, campfire-save gates).
+    function smart_terrain.se_smart_terrain:try_respawn() end
+    function smart_terrain.se_smart_terrain:update()
+        local se_actor = alife():actor()
+        self.dist_to_actor = self.online and self.position:distance_to(se_actor.position) or math.huge
+
+        if self.online then
+            local nearest = smart_terrain.nearest_to_actor_smart
+            if nearest.id then
+                if nearest.id == self.id then
+                    nearest.dist = self.dist_to_actor
+                elseif self.dist_to_actor < nearest.dist then
+                    nearest.id   = self.id
+                    nearest.dist = self.dist_to_actor
+                end
+            else
+                nearest.id   = self.id
+                nearest.dist = self.dist_to_actor
+            end
+        end
+
+        self.disabled = true
+    end
+
+    -- Mob walker: host controls mob pathing.
+    function mob_walker.mob_walker:update() end
+    function mob_walker.mob_walker:waypoint_callback() end
+
+    -- Sim squads: host manages all squad logic.
+    function sim_squad_scripted.sim_squad_scripted:update() end
+    function sim_squad_scripted.sim_squad_scripted:check_online_status() end
+    function sim_squad_scripted.sim_squad_scripted:remove_squad() end
+    function sim_squad_scripted.sim_squad_scripted:sim_available() end
+
+    -- Spy tasks: disabled on client.
+    xr_conditions.validate_spy_task       = RETURN_FALSE
+    task_status_functor.spy_task_status_functor = NOP
+    utils_obj.switch_online               = NOP
+    task_functor.spy_task_target_functor  = function(task_id, field, p, tsk)
+        if not (field == "target" and tsk and db.actor) then return end
+        return tsk.current_target or tsk.task_giver_id
+    end
+
+    -- Artefact spawning: host only.
+    function bind_anomaly_zone.anomaly_zone_binder:spawn_artefact_randomly() end
+
+    -- News: suppress ALL dynamic news on peer (host broadcasts via GAME_NEWS RPC).
+    function dynamic_news_manager.DynamicNewsManager:TickNews() return true end
+    function dynamic_news_manager.DynamicNewsManager:TickQuick() return true end
+    function dynamic_news_manager.DynamicNewsManager:TickSpecial() return true end
+    function dynamic_news_manager.DynamicNewsManager:TickTask() return true end
+    function dynamic_news_manager.DynamicNewsManager:TickRandom() return true end
+    function dynamic_news_manager.DynamicNewsManager:TickCompanion() return true end
+    function dynamic_news_manager.DynamicNewsManager:npc_on_death_callback() end
+    function dynamic_news_manager.DynamicNewsManager:monster_on_death_callback() end
+    function dynamic_news_manager.DynamicNewsManager:npc_on_get_all_from_corpse() end
+    function dynamic_news_manager.DynamicNewsManager:WelcomeToNetwork() end
+
+    -- Corpse release: host despawns corpses.
+    function release_body_manager.Crelease_body:clear() end
+
+    -- Wounded / patrol evaluators: host drives NPC combat decisions.
+    function xr_wounded.evaluator_wound:evaluate()       return false end
+
+    -- Wounded scheme never instantiates on a mirror, so vanilla is_wounded is
+    -- always false; host wound state rides the NPC pstor snapshot instead.
+    local function pstor_wounded_state(npc_id)
+        local st = db.storage[npc_id]
+        local s = st and st.pstor and st.pstor.wounded_state
+        return s ~= nil and tostring(s) or "nil"
+    end
+    function xr_wounded.is_wounded(npc)
+        return npc ~= nil and pstor_wounded_state(npc:id()) ~= "nil"
+    end
+    function xr_wounded.is_heavy_wounded_by_id(npc_id)
+        return pstor_wounded_state(npc_id) ~= "nil"
+    end
+    function xr_patrol.evaluator_patrol_end:evaluate()   return false end
+    function xr_patrol.evaluator_patrol_comm:evaluate()  return false end
+    function xr_patrol.action_patrol:execute()           action_base.execute(self) end
+    function xr_patrol.action_commander:execute()        action_base.execute(self) end
+    function xr_camper.action_patrol:process_danger()    end
+    function xr_camper.evaluator_end:evaluate()          return false end
+    function xr_camper.evaluator_close_combat:evaluate() return false end
+    function xr_camper.action_patrol:execute()           action_base.execute(self) end
+    function xr_animpoint.animpoint:update()             end
+    function xr_animpoint.evaluator_need_animpoint:evaluate()  return false end
+    function xr_animpoint.evaluator_reach_animpoint:evaluate() return false end
+
+    -- All AI evaluators return false: NPC brain is driven by host.
+    function axr_beh.evaluator_beh:evaluate()                        return false end
+    function axr_fight_from_cover.evaluator_fight_from_cover:evaluate() return false end
+    function axr_npc_vs_box.evaluator_npc_vs_box:evaluate()          return false end
+    function axr_npc_vs_heli.evaluator_npc_vs_heli:evaluate()        return false end
+    function axr_radio_in_heli.evaluator_radio_in_heli:evaluate()    return false end
+    function axr_stalker_panic.evaluator_stalker_panic:evaluate()    return false end
+    function axr_turn_on_campfire.eva_turn_on_campfire:evaluate()    return false end
+    function post_combat_idle.evaluator_combat_enemy:evaluate()      return false end
+    function rx_ff.evaluator_dont_shoot:evaluate()                   return false end
+    function xr_abuse.evaluator_abuse:evaluate()                     return false end
+    function xr_campfire_point.evaluator_need_job:evaluate()         return false end
+    function xr_combat_camper.evaluator_combat_camper:evaluate()     return false end
+    function xr_combat_camper.evaluator_see:evaluate()               return false end
+    function xr_combat_monolith.evaluator_combat_monolith:evaluate() return false end
+    function xr_combat_monolith.evaluator_see:evaluate()             return false end
+    function xr_combat_monolith.evaluator_close:evaluate()           return false end
+    function xr_combat_monolith.evaluator_on_pos:evaluate()          return false end
+    function xr_combat_zombied.evaluator_combat_zombied:evaluate()   return false end
+    function xr_combat.evaluator_check_combat:evaluate()             return false end
+    function xr_combat.evaluator_enemy:evaluate()                    return false end
+    function xr_companion.evaluator_need_companion:evaluate()        return false end
+    function xr_corpse_detection.evaluator_corpse:evaluate()         return false end
+    function xr_cover.evaluator_need_cover:evaluate()                return false end
+    function xr_danger.evaluator_danger:evaluate()                   return false end
+    function xr_danger.evaluator_check_danger:evaluate()             return false end
+    function xr_gather_items.eva_gather_itm:evaluate()               return false end
+    function xr_gather_items.evaluator_gather_items:evaluate()       return false end
+    function xr_help_wounded.evaluator_wounded_exist:evaluate()      return false end
+    function xr_reach_task.evaluator_reached_task_location:evaluate() return false end
+    function xr_remark.evaluator_need_remark:evaluate()              return false end
+    function xr_smartcover.evaluator_use_smartcover_in_combat:evaluate() return false end
+    function xr_smartcover.evaluator_need_smartcover:evaluate()      return false end
+    function xr_walker.evaluator_need_walker:evaluate()              return false end
+    function xrs_facer.evaluator_facer:evaluate()                    return false end
+    function xrs_facer.evaluator_steal_up:evaluate()                 return false end
+    function xrs_kill_wounded.eva_kill_wounded:evaluate()            return false end
+
+    -- State manager evaluators.
+    function state_mgr_animation.eva_state_mgr_animation:evaluate()      return false end
+    function state_mgr_animstate.eva_state_mgr_animstate:evaluate()      return false end
+    function state_mgr_bodystate.eva_state_mgr_bodystate:evaluate()      return false end
+    function state_mgr_direction.eva_state_mgr_direction:evaluate()      return false end
+    function state_mgr_mental.eva_state_mgr_mental:evaluate()            return false end
+    function state_mgr_movement.eva_state_mgr_movement:evaluate()        return false end
+    function state_mgr_smartcover.eva_state_mgr_smartcover_need:evaluate() return false end
+    function state_mgr_weapon.eva_state_mgr_weapon:evaluate()            return false end
+    function state_mgr.eva_state_mgr_end:evaluate()                      return false end
+    function state_mgr.eva_state_mgr_locked:evaluate()                   return false end
+    function state_mgr.evaluator_state_mgr_idle_alife:evaluate()         return false end
+
+    -- Movement / animation update loops: host drives.
+    function state_mgr_animation.animation:set_state() end
+    function state_mgr_animation.animation:update_anim() end
+    function xrs_facer.action_facer:execute() end
+    function axr_beh.action_beh:set_desired_target() end
+
+    -- NPC strafing helpers: return identity movement.
+    utils_obj.try_to_strafe      = function(npc, v) return utils_obj.lmove(npc, v, v) end
+    utils_obj.try_go_aside_object = function(npc, v) return utils_obj.lmove(npc, v, v) end
+    utils_obj.try_go_backward    = function(npc, v) return utils_obj.lmove(npc, v, v) end
+
+    -- State/move manager full disable.
+    function state_mgr.state_manager:update() end
+    function move_mgr.move_mgr:update() end
+    function move_mgr.move_mgr:initialize() self.__disable = true end
+
+    -- Combat ignore: client never evaluates enemy status.
+    xr_combat_ignore.is_enemy = RETURN_FALSE
+
+    -- UICreateStash:OnAccept's alife_create("inv_backpack") returns nil under the
+    -- block above; the marker comes back via MAP_SPOT_DELTA STASH_ADD.
+    if item_backpack and item_backpack.UICreateStash then
+        function item_backpack.UICreateStash:OnAccept()
+            local actor = db.actor
+            if not actor then return end
+            local pos = actor:position()
+            local txt = self.input and self.input:GetText() or ""
+            local hint = (txt and txt ~= "") and txt
+                or strformat(game.translate_string("st_itm_stash_of_character"),
+                             actor:character_name())
+            XrrWorld():SendPeerStashDeploy("inv_backpack",
+                pos.x, pos.y, pos.z,
+                actor:level_vertex_id(),
+                actor:game_vertex_id(),
+                hint, "treasure", self.section or "")
+            actor_menu.set_msg(1, game.translate_string("st_stash_created"), 4)
+            -- self.id was set in UICreateStash:Reset(obj) at dialog open.
+            if self.id then alife_release_id(self.id) end
+            self:Close()
+        end
+    end
+
+    -- Quick Release (itm_actor_backpack): vanilla's own handler no-ops under the
+    -- block above, and the item transfer must wait for the STASH_ADD anchor.
+    local qr_keep_items = utils_data.collect_section(
+        ini_file("items\\settings\\backpack_stash.ltx"),
+        "actor_backpack_keep_items", true)
+    local qr_seq = 0
+    RegisterScriptCallback("actor_on_item_use", function(obj)
+        if not (obj and obj:section() == "itm_actor_backpack") then return end
+        local actor = db.actor
+        if not actor then return end
+        local backpack = actor:item_in_slot(13)
+        if not backpack then return end  -- vanilla handler shows the message
+        local b_id = backpack:id()
+
+        local pos = vector():set(actor:position())
+        -- Older stashes stacked on this spot must not swallow the transfer:
+        -- remember them so the poll below only accepts the fresh anchor.
+        local known = {}
+        level.iterate_nearest(pos, 2, function(o)
+            if o and o:section() == "inv_backpack" then known[o:id()] = true end
+            return false
+        end)
+
+        XrrWorld():SendPeerStashDeploy("inv_backpack",
+            pos.x, pos.y, pos.z,
+            actor:level_vertex_id(), actor:game_vertex_id(),
+            strformat(game.translate_string("st_itm_stash_of_character"),
+                      actor:character_name()),
+            "treasure", backpack:section())
+        actor_menu.set_msg(1, game.translate_string("st_stash_created"), 4)
+        alife_release_id(b_id)
+
+        qr_seq = qr_seq + 1
+        local my_seq = qr_seq
+        local attempts = 0
+        CreateTimeEvent("xrr_qr_backpack", my_seq, 0.25, function()
+            local box
+            level.iterate_nearest(pos, 2, function(o)
+                if o and o:section() == "inv_backpack" and not known[o:id()] then
+                    box = o
+                    return true
+                end
+                return false
+            end)
+            if not box then
+                attempts = attempts + 1
+                if attempts > 60 then  -- ~15 s: give up, items stay with the actor
+                    log("[xrRazom] quick-release: stash anchor never onlined, items kept")
+                    return true
+                end
+                ResetTimeEvent("xrr_qr_backpack", my_seq, 0.25)
+                return false
+            end
+            -- Vanilla item_backpack transfer filter, verbatim.
+            db.actor:iterate_inventory(function(temp, item)
+                if (item and item:id() ~= b_id and qr_keep_items[item:section()] == nil) then
+                    if (IsAmmo(item) ~= true) or (item_backpack.is_ammo_for_wpn(item:section()) ~= true) then
+                        if (ini_sys:r_bool_ex(item:section(), "quest_item", false) == false) then
+                            if (db.actor:is_on_belt(item) == false and item_backpack.is_in_slot(item) == false) then
+                                db.actor:transfer_item(item, box)
+                            end
+                        end
+                    end
+                end
+            end)
+            return true
+        end)
+    end)
+
+    -- Psy phantoms: mirrors skip shedule_Update (CCustomMonster early-return),
+    -- so monster_on_update never fires; use a periodic spatial query instead.
+    local _phantom_sec_cache = {}
+    xrr_register_cleanup(function() _phantom_sec_cache = {} end)  -- ids are per-session
+    local function _phantom_section(npc)
+        local id = npc:id()
+        local v = _phantom_sec_cache[id]
+        if v ~= nil then return v end
+        local sec = npc:section()
+        if ini_sys:r_bool_ex(sec, "can_spawn_phantom", false) then
+            v = ini_sys:r_string_ex(sec, "spawn_phantom") or false
+        else
+            v = false
+        end
+        _phantom_sec_cache[id] = v
+        return v
+    end
+
+    -- Throttle to vanilla's 5000 ms cadence: CreateTimeEvent re-fires every frame
+    -- once elapsed, and the phantom count only updates async.
+    local _phantom_next = 0
+    CreateTimeEvent("xrr", "xrr_peer_phantoms", 5, function()
+        if not db.actor then return false end
+        local tg = time_global()
+        if tg < _phantom_next then return false end
+        _phantom_next = tg + 5000
+        level.iterate_nearest(db.actor:position(), 30, function(obj)
+            local cls = obj:clsid()
+            if not (IsMonster(nil, cls) or IsStalker(nil, cls)) then return false end
+            if not obj:alive() then return false end
+            if not XrrMirrors():IsMirror(obj:id()) then return false end
+            local sec = _phantom_section(obj)
+            if sec and phantom_manager.dynamic_phantom_count(sec) <= 2 then
+                local dir = vector_rotate_y(db.actor:direction(),
+                    math.random() * 90 - 45)
+                local r = 15 + math.random() * 15
+                local pos = vector():set(obj:position())
+                pos:add(dir:mul(r))
+                phantom_manager.spawn_dynamic_phantom(sec, pos)
+                return true
+            end
+            return false
+        end)
+        return false
+    end)
+
+    -- Player stashes (inv_backpack) must persist until empty, unlike real
+    -- treasure spots.
+    RegisterScriptCallback("actor_on_item_take_from_box", function(box, itm)
+        if not box then return end
+        if box:section() == "inv_backpack" and not box:is_inv_box_empty() then
+            return
+        end
+        local id = box:id()
+        local had_spot = false
+        for _, spot in ipairs({"treasure", "treasure_searched", "treasure_unique"}) do
+            if level.map_has_object_spot(id, spot) ~= 0 then
+                level.map_remove_object_spot(id, spot)
+                had_spot = true
+            end
+        end
+        local had_flag = not had_spot
+            and _G.xrr_treasure_boxes and _G.xrr_treasure_boxes[id]
+        if had_flag then
+            _G.xrr_treasure_boxes[id] = nil
+            XrrWorld():SendPeerStashCleaned(id)
+        end
+    end)
+
+    -- Vanilla would alife_release the host-owned box locally — a CSE freed under
+    -- a live CObject. Empty-first: item transfers ride the container rails on
+    -- their own clock, so a non-empty box could be released mid-transfer.
+    RegisterScriptCallback("actor_on_stash_remove", function(data)
+        if not data then return end
+        data.cancel = true
+        local id = data.stash_id
+        local box = id and level.object_by_id(id)
+        if not box then return end
+        if not box:is_inv_box_empty() then
+            actor_menu.set_msg(1, "Empty the stash before packing it up.", 4)
+            return
+        end
+        xrr_use_intent.request{ verb = "xrr:stash_pickup", obj_id = id, state = true }
+    end)
+
+    if item_tent then
+        function item_tent.itm_tent_func()
+            local actor = db.actor
+            if not actor then return end
+            local sec = "itm_tent"
+            local placeable = ini_sys:r_string_ex(sec, "placeable_section") or "ph_tent"
+            local dir = actor:direction()
+            local pos = actor:position():add(dir:mul(3))
+            XrrWorld():SendPeerStashDeploy(placeable,
+                pos.x, pos.y, pos.z,
+                level.vertex_id(pos),
+                actor:game_vertex_id(),
+                ui_item.get_sec_name(sec),
+                "ui_pda2_actor_sleep_location", "")
+            alife_create_item("itm_tent_bag", actor)   -- pack-up bag, as vanilla
+        end
+    end
+
+    -- use_place ("Place" action): vanilla's local alife_create returns nil here
+    -- and CTDs. Forwarded with the __no_spot sentinel; facing angle is dropped.
+    if itms_manager and itms_manager.use_place then
+        function itms_manager.use_place(obj)
+            local p = obj and obj:parent()
+            if not (db.actor and p and p:id() == AC_ID) then return end
+            local section = obj:section()
+            alife_release_id(obj:id())
+            local pos = db.actor:position()
+            pos:add(device().cam_dir:mul(1.2))
+            pos.y = db.actor:position().y + 1
+            printf("[xrRazom] use_place peer-forward: %s", section)
+            XrrWorld():SendPeerStashDeploy(section,
+                pos.x, pos.y, pos.z,
+                db.actor:level_vertex_id(),
+                db.actor:game_vertex_id(),
+                "", "__no_spot", "")
+        end
+    end
+
+    -- Mutant-corpse loot: only the rolled table and the looted flag are
+    -- host-owned. FDDA enhanced_animations wraps ui_mutant_loot.start at module
+    -- load (so _mutant_orig_start is EA's wrap) and re-enters it with ea_flag.
+    _mutant_orig_start = ui_mutant_loot.start
+    ui_mutant_loot.start = function(obj, ...)
+        if not obj then return _mutant_orig_start(obj, ...) end
+        local id = obj:id()
+        local ea = _G.enhanced_animations
+
+        if ea and ea.ea_flag then
+            -- EA anim-end re-entry: must reach the real start synchronously
+            -- (EA indexes ui_mutant_loot.GUI right after this call).
+            if _mutant_ea_local == id then
+                _mutant_ea_local = nil
+                return _mutant_orig_start(obj, ...)   -- crow/local: pure vanilla
+            end
+            -- This path bypasses the use-callback's looted gate, so re-assert it
+            -- here; the cache must never fall through to a local roll.
+            if se_load_var(id, obj:name(), "looted") then
+                save_var(obj, "looted", true)
+                return _mutant_orig_start(obj, ...)
+            end
+            if load_var(obj, "loot", nil) == nil then
+                save_var(obj, "loot", {})
+            end
+            _mutant_remote_id = id
+            return _mutant_orig_start(obj, ...)
+        end
+
+        if not XrrWorld():SendMutantLootRequest(id) then
+            -- Remember the id so an EA anim-end re-entry stays vanilla too.
+            if ea and ea.enable_animations and ea.mutant_loot_mod then
+                _mutant_ea_local = id
+            end
+            return _mutant_orig_start(obj, ...)
+        end
+        -- Undo the local open-lock monster_on_actor_use_callback just set; the
+        -- host verdict decides.
+        se_save_var(id, obj:name(), "looted", false)
+        -- EA re-enters start at anim end, so STATE must only cache the table.
+        if ea and ea.enable_animations and ea.mutant_loot_mod then
+            _mutant_ea_wait = id
+        end
+    end
+
+    -- UI closed: write the remaining table back to the host and release its lock,
+    -- for host-mediated sessions only — a crow's local UI must not send.
+    local _orig_mutant_set_state = ui_mutant_loot.UIMutantLoot.SetMutantState
+    ui_mutant_loot.UIMutantLoot.SetMutantState = function(self, is_more_loot, obj_mutant)
+        _orig_mutant_set_state(self, is_more_loot, obj_mutant)
+        local obj = obj_mutant or level.object_by_id(self.id)
+        if not (obj and obj:id() == _mutant_remote_id) then return end
+        _mutant_remote_id = nil
+        local more = is_more_loot
+        if more == nil then more = not is_empty(self.loot) end
+        _mutant_close_tbl = self.loot or {}
+        XrrWorld():SendMutantLootClose(obj:id(), more and true or false)
+    end
+end
+
+-- Host replied to our MUTANT_LOOT REQUEST (routed via xrr_net_client).
+function on_mutant_loot_state(local_id, verdict, tbl)
+    local obj = level.object_by_id(local_id)
+    local ea_wait = (_mutant_ea_wait == local_id)
+    _mutant_ea_wait = nil
+    if not obj then return end
+
+    if verdict == 0 then
+        -- FillList reads this cache instead of rolling; the looted mirror a
+        -- previous denial may have set is cleared with it.
+        save_var(obj, "loot", tbl or {})
+        save_var(obj, "looted", nil)
+        if ea_wait then
+            -- EA's anim-end re-entry opens the UI from the cache; the local flag
+            -- stays clear so an EA abort self-heals on the next use press.
+            return
+        end
+        se_save_var(local_id, obj:name(), "looted", true)
+        if _mutant_remote_id == local_id then return end   -- UI already up (EA fallback raced)
+        _mutant_remote_id = local_id
+        _mutant_orig_start(obj, local_id, obj:section(), obj:clsid())
+        if not (ui_mutant_loot.GUI and ui_mutant_loot.GUI:IsShown()) then
+            -- UI didn't open (another loot window up / empty-table edge):
+            -- release the host lock right away so the corpse isn't wedged.
+            _mutant_remote_id = nil
+            local more = not is_empty(tbl or {})
+            se_save_var(local_id, obj:name(), "looted", not more)
+            _mutant_close_tbl = tbl or {}
+            XrrWorld():SendMutantLootClose(local_id, more)
+        end
+    elseif verdict == 1 or verdict == 2 then
+        -- Mirror the denial into both gates — the se flag (use-callback) and the
+        -- pstor looted var (FillList, EA's direct start) — so no path rolls.
+        save_var(obj, "loot", {})
+        save_var(obj, "looted", true)
+        se_save_var(local_id, obj:name(), "looted", true)
+        if verdict == 1 then      -- nothing to loot (already looted / empty roll)
+            actor_menu.set_msg(1, "st_body_useless", 3)
+        else                      -- decayed
+            actor_menu.set_msg(1, game.translate_string("st_body_decayed"), 4)
+        end
+    elseif verdict == 3 then      -- someone else has the UI open — retry later
+        if ea_wait then
+            -- Transient gate so the EA re-entry shows "useless" instead of
+            -- rolling; cleared by the next granted STATE.
+            save_var(obj, "looted", true)
+        end
+        actor_menu.set_msg(1, game.translate_string("st_xrr_mutant_body_busy"), 3)
+    end
+end
+
+-- No Lua caller: the engine pulls (and clears) the staged remaining-loot table
+-- when it writes CLOSE.
+function xrr_get_mutant_close_table()
+    local t = _mutant_close_tbl
+    _mutant_close_tbl = nil
+    return t
+end
+_G.xrr_get_mutant_close_table = xrr_get_mutant_close_table

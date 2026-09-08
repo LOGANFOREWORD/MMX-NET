@@ -1,0 +1,300 @@
+
+*******************************************************************
+S.T.A.L.K.E.R. Anomaly changes in version 1.5.2 since version 1.5.1
+*******************************************************************
+
+====
+GAME
+====
+
+Fixes
+-----
+
+- Fixed gasmask shader, water droplets and condensation is rendered properly now.
+- Fixed emissive geometry, lamps, TVs, and other geometry using emissive shaders doesn't change while holding a PDA/detector
+- Fixed Detectors using sefllightl instead of the selflight_det shader.
+- Fixed double clicking lag when moving items in inventory
+- Fixed a visual bug upon exiting inventory while dragging an item cell around
+- Fixed a few missing/incorrect CLSIDs in scripts
+- Baby burer now stops crying when you open the door
+- Trying to sleep while bleeding or irradiated no longer breaks timers
+- Weapon hud editor no longer crashes when pressing apply
+- Lowered hud offset changes in the hud editor now apply in real time
+- Stalker and mutant population sliders should now apply correctly
+- Fixed broken actor_on_weapon_jammed callback
+- Fixed PKM Zulus and Protecta Aim reticles
+- Fixed MK14 C-More dot
+- _G.random_key_table returns nil if empty table is passed instad of false
+- added checks for emtpy table on random key table uses
+- removed leftovers use_aim_bullet = true
+- fixed the mismatch between rank values and their names
+- one trader was still selling old (non working) mines item
+- crafting no longer gives you the old non working explosives
+- colt kimber added to spawn blacklist (broken animation)
+- ammo wheel should work correctly on guns in grenade launcher mode now
+- Removed no longer existing console commands from default_controls.ltx
+- Fixed rare crash in surge_manager.script
+- Added missing helmet overlay for isg nosorog
+- Fixed exclusion of binocs from the delayed repair feature
+- Fixed combat ignore not checking enemy for enemy_ignore condition if object itself has no db storage overrides
+- Fixed small errors in w_indoor_ambient.ltx and fetch_list.ltx
+- Fixed no emissions in outskirts
+- Fixed incorrect round function in _g.script
+- Changed Anisotropic Filtering option steps to 0,4,8,16
+- Removed "survival mode is not compatible with survival mode"
+- Possible fix for some config files being corrupted after a game crash
+- Fixed ammo aggregation for stashes and corpses
+- Fixed inventory scroll bar being stuck or  "hard to scroll"
+- Fixed southern Agroprom exit to Garbage teleporting to the northern exit when cancelled
+- Fix input lock when the players dies from Psy Damage as a Monolith member
+- Disabled the non-functional tab bar for looted PDAs
+- Fixed binocs not remembering zoom level
+- Fixed cut off breathing sound on high framerates
+
+QoL
+---
+
+- Allow PDA keybind while the inventory is open
+- added on_get_item_cost callback to edit item prices on the fly in trading screens
+- callstack and nice error message when using some funcs incorrectly
+- Right clicking an item in the inventory no longer blocks movement
+- Reduced light humming noise volume to be easier on the ears
+- Looted PDAs no longer go into the player's PDA slot
+
+Modding
+-------
+
+- Added actor_on_hud_animation_mark script callback
+- Added all CLSIDs to lua_help.script
+- Added item postion/orientation to the weapon hud editor
+- Added new callbacks "actor_on_hud_animation_play" and "actor_on_movement_changed" to scripts
+- Added on_before_key_press callback which can be used to cancel any keypress
+- Added changes for improved "actor_on_hud_animation_play" and "on_before_key_press" callbacks
+- Add getter for psy health
+- Added wildcard ltx loading for outfits and outfit upgrades
+- Added "AddCallback" function to add your own callbacks into axr_main
+- Added "actor_on_before_hit_belt" and "actor_on_item_before_pickup" callbacks
+
+======
+ENGINE
+======
+
+Fixes
+-----
+
+- Fixed crash when loading restrictions
+- Added crash messages for broken model/animation instead of empty stack trace
+- Attempt to fix rare crash when using binocs or scopes with identification module
+- Fixed issue with some animations / hand motions (FDDA)
+- PDA Fixes
+- Game tutorials (campfire, sleep) no longer reset the PDA screen
+- Removed sprint detection code and replaced with OnMovementChanged function
+- Removed blood effect when anomalies destroy inanimate objects like boxes
+- Added missing keybind script exports
+- Scripts no longer freeze when trying to play a missing sound file
+- Fixed broken flashlight draw animation
+- Spamming zoom in/out no longer allows rapid fire for shotguns
+- Removed Lost Alpha bone hiding code - vanilla bone hiding code no longer glitches NPC models
+- Freelook no longer gets stuck when talking to a NPC while using freelook
+- Player can no longer pick up bolts thrown with infinite bolts option enabled
+- Poltergeist corpse is no longer bugged on death, modders can remove code in bind_monster.script or use a different binder to keep the corpse for other purposes
+- Removed use_aim_bullet
+- Fixed game.play_hud_anm not working correctly if last argument is true
+- Detector/Device animation fixes
+- Fixed script animations showing floating arms for one frame
+- Fixed some incorrect animation parameters like blending on show animation
+- Pressing Escape to exit the "Pause" screen no longer breaks timers
+- Another small Detector/Device fix
+- Removed the unused eMagEmpty weapon state which was rarely causing animation issues
+- It's now possible to quicksave/quickload while all other inputs besides movement are blocked
+- Switching the left and right mouse button now works as expected
+- Fixed keys getting "stuck" on alt tab
+- Release all keyboard/mouse buttons when level input is disabled
+- Fixed crash if npc has a killer ID but is not dead
+- Fixed rare crash with getting current date
+- Fixed rare crash when null string is passed to UI text input box
+- Fixed sndCloseEmpty typo for shotgun classes
+- Fixed first person weapon jitter
+- Fixed clipping noise when anomalies/camfires are enabled
+- level.object_by_id(nil) no longer returns the actor object
+- Mouse 4 and higher now work correctly when bound to the Use key (to open doors, put out campfires, etc)
+- Fixed "hide_detector" script function not working
+- Fixed HUD permanently hidden when quickloading during a controller psy attack
+- Fixed "compressed" body on set_visual_name for real this time
+- Added :close() function for script ini_file
+- Fixed lighting on weapons (was most visible on DX8)
+- Fixed binoc zoom behavior
+- Fixed fixed player_hud_script
+
+QoL
+---
+
+- Improved PDA input code
+- It's now possible to open the inventory without having to manually hide the PDA first
+
+Modding
+-------
+
+- Enabled lua stack trace for script crashes
+- Pass hit damage to _G.CActor__BeforeHitCallback before applying belt item immunities, apply those after the callback
+- Improved/cleaned player_hud code (bone callbacks, missing script hud animations are handled correctly now)
+- Added actor_on_hud_animation_mark callback
+- Added a script function to get the bone name of a model by id
+- Added item position to hud adjust
+- It's now possible to load loose particle effects/groups
+- Loose particles overwrite existing ones inside particles.xr
+- The game no longer needs particles.xr to launch
+- Added animation play callback which can be used to change the animation name and other properties before the engine plays it
+- Added script exports to read/change cam effector power and read its length + check if the effector is active
+- Added script export to get/set weapon pending and misfire state
+- Added script export to get weapon zoom type (normal/gl/alt aim offset)
+- Animators can now use different animations for device zoom in/out again
+- animation play callback is no longer called for npcs
+- Made the time_factor console command available without using debug mode
+- on_before_key_press callback will be called even if level input is disabled
+- Added missing callbacks to shotgun reloads and weapon misfires
+- Added "actor_stop_look_at_point" function
+- Reenabled debug message when trying to use a destroyed object
+- Improved actor_on_hud_animation_play callback
+- It's now possible to place (static) wallmarks without random rotation by adding an extra argument at the end (false = no random rotation)
+- Added "set_cone" for script lights to change the cone size of spot lights
+- Added volumetric light support for artefacts
+- Trying to use a destroyed game object will now print an error with the ID of the object
+- Added "rotate" and "aspect" attributes to be used in the minimap xml, both are true by default for vanilla behavior
+- game.world2ui(pos, true) will calculate position in hud space (to "attach" ui to a weapon bone for example)
+- Added script functions to get/set artefact immunities
+- Added a script function to make the actor pick up an item
+- Added a script function to read the userdata of a visual model
+- Added script functions to override the player first person hands model
+- Added script functions to set weapon firemode and view/manage grenade launcher attachment related stuff
+- Added AllowCursor and AllowCenterCursor script functions for UIs
+- Added _G.CActor__HitArtefactsOnBelt callback
+- Added bind_stalker_ext.actor_on_item_before_pickup callback
+- Added XML script exports
+- Added script functions to freeze and unfreeze physics shells
+- Replaced pickup_item with 1.6 take_item script function
+
+=====
+FILES
+=====
+
+Any addon that includes any of the following files will not
+work with version 1.5.2 of Anomaly and needs to be updated!
+-----------------------------------------------------------
+
+bin\AnomalyDX10.exe
+bin\AnomalyDX10AVX.exe
+bin\AnomalyDX11.exe
+bin\AnomalyDX11AVX.exe
+bin\AnomalyDX8.exe
+bin\AnomalyDX8AVX.exe
+bin\AnomalyDX9.exe
+bin\AnomalyDX9AVX.exe
+bin\VerifiedDX11.exe
+db\configs\configs.db0
+db\configs\scripts.db0
+db\meshes\meshes_dynamics.db0
+db\meshes\meshes_weapons.db0
+db\sounds\sounds.db0
+db\sounds\sounds_ambient.db0
+db\textures\textures_weapons.db0
+db\shaders.db0
+gamedata\configs\creatures\game_relations.ltx
+gamedata\configs\default_controls.ltx
+gamedata\configs\environment\weathers\w_indoor_ambient.ltx
+gamedata\configs\items\items\items_devices.ltx
+gamedata\configs\items\outfits\base_includes.ltx
+gamedata\configs\items\outfits\o_assault_vest.ltx
+gamedata\configs\items\outfits\o_exoskeleton.ltx
+gamedata\configs\items\outfits\o_lcs.ltx
+gamedata\configs\items\outfits\o_nbc.ltx
+gamedata\configs\items\outfits\o_nosorog.ltx
+gamedata\configs\items\outfits\o_proto_exo.ltx
+gamedata\configs\items\outfits\o_ps5.ltx
+gamedata\configs\items\outfits\upgrades\upgrade_includes.ltx
+gamedata\configs\items\settings\craft.ltx
+gamedata\configs\items\settings\fetch_list.ltx
+gamedata\configs\items\trade\trade_mercenary_meeker.ltx
+gamedata\configs\items\weapons\m_dynamo_hand.ltx
+gamedata\configs\items\weapons\m_mounted.ltx
+gamedata\configs\items\weapons\w_ash12.ltx
+gamedata\configs\items\weapons\w_aug_a3.ltx
+gamedata\configs\items\weapons\w_fal.ltx
+gamedata\configs\items\weapons\w_famas3.ltx
+gamedata\configs\items\weapons\w_fnc.ltx
+gamedata\configs\items\weapons\w_m82.ltx
+gamedata\configs\items\weapons\w_mp412.ltx
+gamedata\configs\items\weapons\w_pb.ltx
+gamedata\configs\items\weapons\w_remington700.ltx
+gamedata\configs\items\weapons\w_saiga.ltx
+gamedata\configs\items\weapons\w_sks.ltx
+gamedata\configs\items\weapons\w_svt40.ltx
+gamedata\configs\items\weapons\w_type63.ltx
+gamedata\configs\items\weapons\w_vepr12.ltx
+gamedata\configs\items\weapons\w_wa2000.ltx
+gamedata\configs\misc\surge_manager.ltx
+gamedata\configs\plugins\actor_effects.ltx
+gamedata\configs\plugins\radio_zone_fm.ltx
+gamedata\configs\plugins\spawner_blacklist.ltx
+gamedata\configs\scripts\labx8\lx8_toilet_burer.ltx
+gamedata\configs\scripts\labx8\lx8_toilet_door.ltx
+gamedata\configs\sr_teleport_sections.ltx
+gamedata\configs\text\eng\_game_version.xml
+gamedata\configs\text\eng\st_mm_faction_select.xml
+gamedata\configs\text\eng\ui_st_loadscreen.xml
+gamedata\configs\text\rus\_game_version.xml
+gamedata\configs\text\rus\st_mm_faction_select.xml
+gamedata\configs\text\rus\ui_st_loadscreen.xml
+gamedata\meshes\anomaly_weapons\wpn_m14\wpn_mk14_c-more_hud.ogf
+gamedata\meshes\anomaly_weapons\wpn_pkm\wpn_pkm_zulus_hud.ogf
+gamedata\meshes\anomaly_weapons\wpn_protecta\wpn_protecta_aim_hud.ogf
+gamedata\meshes\dynamics\devices\dev_detector_09\dev_detector_09_hud.ogf
+gamedata\meshes\dynamics\devices\dev_detector_1\dev_detector_1_hud.ogf
+gamedata\meshes\dynamics\devices\dev_detector_3\dev_detector_3_hud.ogf
+gamedata\meshes\dynamics\devices\dev_detector_4\dev_detector_4_hud.ogf
+gamedata\meshes\dynamics\devices\dev_dosimeter\dosimeter_hud.ogf
+gamedata\scripts\_g.script
+gamedata\scripts\arszi_psy.script
+gamedata\scripts\actor_effects.script
+gamedata\scripts\actor_status.script
+gamedata\scripts\axr_main.script
+gamedata\scripts\axr_trade_manager.script
+gamedata\scripts\bind_stalker_ext.script
+gamedata\scripts\dynamic_news_helper.script
+gamedata\scripts\game_setup.script
+gamedata\scripts\inventory_upgrades.script
+gamedata\scripts\item_cooking.script
+gamedata\scripts\item_weapon.script
+gamedata\scripts\level_input.script
+gamedata\scripts\lua_help.script
+gamedata\scripts\pda.script
+gamedata\scripts\sim_squad_scripted.script
+gamedata\scripts\smart_terrain.script
+gamedata\scripts\surge_manager.script
+gamedata\scripts\tasks_fetch.script
+gamedata\scripts\ui_debug_wpn_hud.script
+gamedata\scripts\ui_inventory.script
+gamedata\scripts\ui_mm_faction_select.script
+gamedata\scripts\ui_options.script
+gamedata\scripts\ui_pda_npc_tab.script
+gamedata\scripts\ui_sleep_dialog.script
+gamedata\scripts\ui_workshop.script
+gamedata\scripts\utils_item.script
+gamedata\scripts\utils_ui.script
+gamedata\scripts\xr_combat_ignore.script
+gamedata\scripts\xr_state.script
+gamedata\scripts\xr_zones_sound.script
+gamedata\shaders\r2\accum_emissive_det.ps
+gamedata\shaders\r2\accum_emissivel.ps
+gamedata\shaders\r2\common_brdf.h
+gamedata\shaders\r2\gasmask_drops.ps
+gamedata\shaders\r2\gasmask_dudv.ps
+gamedata\shaders\r2\models_selflight_det.s
+gamedata\shaders\r3\accum_emissive_det.ps
+gamedata\shaders\r3\accum_emissivel.ps
+gamedata\shaders\r3\common_brdf.h
+gamedata\shaders\r3\gasmask_drops.ps
+gamedata\shaders\r3\gasmask_dudv.ps
+gamedata\shaders\r3\models_selflight_det.s
+gamedata\sounds\ambient\special\light_humming.ogg
+gamedata\textures\wpn\wpn_addons\wpn_addon_scope_ekp-8-02\wpn_addon_scope_ekp-8-02_sight.dds

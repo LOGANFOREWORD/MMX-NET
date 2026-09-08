@@ -1,0 +1,693 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+  Разом нас багато. (Together we are many.)
+]]
+
+-- Nickname cache: populated on HELLO, used in OnClientReady, cleared on disconnect.
+local player_nicknames = {}
+-- Ready set: peer is in-game on the real level (CLIENT_READY received).
+-- Tips and map ops are only safe after this point.
+local player_ready = {}
+
+-- Join-phase tips go through the time-event pump: give_game_news fired straight from
+-- RPC dispatch can run inside MapManager::Update iteration and crash. The counter keeps
+-- keys unique so a second tip isn't swallowed by the still-pending first.
+local tip_seq = 0
+local function deferred_tip(key_suffix, text, duration)
+    tip_seq = tip_seq + 1
+    CreateTimeEvent(0, "xrr_join_tip_" .. tostring(key_suffix) .. "_" .. tip_seq, 0, function()
+        if db.actor then
+            news_manager.send_tip(db.actor, text, nil, "nano", duration or 6000)
+        end
+        return true
+    end)
+end
+
+-- True when the host holds saved state for this peer; a returning peer skips
+-- faction select and goes straight to LOAD_LEVEL.
+local function has_peer_file(peer_netid)
+    local nick = player_nicknames[peer_netid]
+    if not nick then return false end
+    return XrrPlayers():HasPeerData(nick)
+end
+
+-- No Lua caller: the engine calls this on the host when a client's HELLO is
+-- accepted. Heavy sync is deferred to OnClientReady.
+function OnPlayerConnected(player_netid, nickname)
+    log("[xrRazom][Server] Player connected: " .. tostring(nickname) .. " id=" .. tostring(player_netid))
+    if player_netid == XrrNet():GetMySNETID() then return end
+
+    player_nicknames[player_netid] = nickname
+
+    if level.present() and level.name() ~= "fake_start" and db.actor then
+        local pos = db.actor:position()
+        local nick = player_nicknames[player_netid] or ""
+        if has_peer_file(player_netid) then
+            deferred_tip(tostring(player_netid) .. "_conn",
+                string.format(game.translate_string("ui_xrr_join_loading"), nick))
+            local faction = XrrPlayers():GetPeerFaction(nick)
+            XrrPlayers():SendLoadLevel(player_netid, level.name(),
+                db.actor:level_vertex_id(), db.actor:game_vertex_id(),
+                pos.x, pos.y, pos.z, faction)
+        else
+            deferred_tip(tostring(player_netid) .. "_conn",
+                string.format(game.translate_string("ui_xrr_join_creating"), nick))
+            -- game_mode_flags: bit 0 = story_mode, bit 1 = warfare
+            local flags = 0
+            if not has_alife_info("story_mode_disabled") then flags = flags + 1 end
+            if alife_storage_manager.get_state().enable_warfare_mode then flags = flags + 2 end
+            -- Economy tier: drives the peer's loadout point budget and item availability.
+            local eco_tier = math.floor(tonumber(game_difficulties.get_eco_factor("type")) or 1)
+            XrrPlayers():SendShowStart(player_netid, level.name(),
+                db.actor:level_vertex_id(), db.actor:game_vertex_id(),
+                pos.x, pos.y, pos.z, flags, eco_tier)
+        end
+    end
+end
+
+-- No Lua caller: the engine calls this once the peer's actor is alive on the real
+-- level (CLIENT_READY) — the first moment heavy sync is safe.
+function OnClientReady(player_netid, visual, faction, x, y, z, lvid, gvid, weapon_section, active_slot, is_returning, nickname)
+    -- Dedup is engine-side: this runs once per peer per level transition.
+    log("[xrRazom][Server] Client ready: id=" .. tostring(player_netid)
+        .. " visual=" .. tostring(visual) .. " faction=" .. tostring(faction)
+        .. " pos=(" .. tostring(x) .. "," .. tostring(y) .. "," .. tostring(z) .. ")"
+        .. " lvid=" .. tostring(lvid) .. " gvid=" .. tostring(gvid)
+        .. " weapon=" .. tostring(weapon_section) .. " slot=" .. tostring(active_slot)
+        .. " returning=" .. tostring(is_returning))
+
+    -- The engine passes nickname because it survives level transitions;
+    -- player_nicknames is Lua-local and clears on VM restart.
+    local nick = nickname or player_nicknames[player_netid]
+                 or ("peer " .. tostring(player_netid))
+    player_nicknames[player_netid] = nick
+    local is_level_transition = player_ready[player_netid]
+    player_ready[player_netid] = true
+    if db.actor and not is_level_transition then
+        deferred_tip(tostring(player_netid) .. "_joined",
+            string.format(game.translate_string("ui_xrr_join_joined"), nick))
+    end
+
+    XrrPlayers():EmitJoinSyncTo(player_netid)
+
+    if lvid and gvid then
+        XrrPlayers():SpawnPeerProxy(
+            player_netid, nick, visual or "", faction or "",
+            weapon_section or "", active_slot or 0,
+            x, y, z, lvid, gvid)
+    end
+
+
+    -- RF receiver: REPLACE bulk, overwriting whatever the peer's own item_radio rolled.
+    local rf_key = "Sync_RF_" .. tostring(player_netid)
+    CreateTimeEvent(0, rf_key, 2, function()
+        if xrr_patch_radio and xrr_patch_radio.broadcast_bulk then
+            xrr_patch_radio.broadcast_bulk()
+        end
+        return true
+    end)
+
+    -- Zone FM: re-announce each channel — the live stream skipped this peer while it
+    -- was still loading.
+    local fm_key = "Sync_RadioFM_" .. tostring(player_netid)
+    CreateTimeEvent(0, fm_key, 3, function()
+        if xrr_patch_radio_fm and xrr_patch_radio_fm.broadcast_all then
+            xrr_patch_radio_fm.broadcast_all()
+        end
+        return true
+    end)
+end
+
+function OnPlayerDisconnected(player_netid, nickname)
+    log("[xrRazom][Server] Player disconnected: " .. tostring(nickname) .. " id=" .. tostring(player_netid))
+    local was_ready = player_ready[player_netid]
+    player_nicknames[player_netid] = nil
+    player_ready[player_netid] = nil
+    xrr_release_mutant_loot_locks(player_netid)
+    -- Drop the released proxy from the heli-combat target set NOW — the
+    -- throttled poll in xrr_callbacks races the next heli AI tick.
+    if xrr_callbacks and xrr_callbacks.heli_purge_proxy_targets then
+        xrr_callbacks.heli_purge_proxy_targets()
+    end
+    -- The proxy is already released by the time this fires.
+    if db.actor then
+        local name = (nickname and nickname ~= "") and nickname or ("peer " .. tostring(player_netid))
+        if was_ready then
+            deferred_tip(tostring(player_netid) .. "_left",
+                string.format(game.translate_string("ui_xrr_join_left"), name), 10000)
+        else
+            deferred_tip(tostring(player_netid) .. "_left_early",
+                string.format(game.translate_string("ui_xrr_join_left_early"), name))
+        end
+    end
+end
+
+-- No Lua caller: raised engine-side for a picked faction, a HELLO rejection
+-- (queued and drained once the level is live), and the "still loading" refusal.
+-- Strings only — a netid must never cross luabind as a number.
+function OnJoinNotice(nick, stage, arg)
+    nick = tostring(nick or "")
+    local text
+    if stage == "char" then
+        text = string.format(game.translate_string("ui_xrr_join_char_picked"),
+            nick, game.translate_string(tostring(arg or "")))
+    elseif stage == "reject" then
+        -- arg is the close-reason token; free-text reasons pass through unchanged.
+        text = string.format(game.translate_string("ui_xrr_join_rejected"),
+            nick, game.translate_string(tostring(arg or "")))
+    elseif stage == "waiting" then
+        text = string.format(game.translate_string("ui_xrr_waiting_for_player"), nick)
+    else
+        return
+    end
+    deferred_tip(nick .. "_" .. tostring(stage), text)
+end
+
+-- Peer asks the host to release an alife entity it owns (wired by xrr_patch_workshop
+-- for NPC-trader-owned crafting ingredients).
+function OnEntityDespawnRequest(server_id)
+    if not XrrIsHosted() then return end  -- host-side peer-request handler (XrrIsHost is true in solo)
+    if not server_id or server_id == 0 or server_id == 65535 then return end
+    local se = alife_object(server_id)
+    if not se then return end
+    -- Class gate: the request names a bare id, so a stale one could release a creature
+    -- or a player avatar — refuse loudly instead.
+    local cls = se:clsid()
+    if IsStalker(nil, cls) or IsMonster(nil, cls) then
+        printf("![xrRazom] despawn request refused: id=%s (%s) is a creature", server_id, se:section_name())
+        return
+    end
+    if XrrPlayers and XrrPlayers():IsPlayerDummy(server_id) then
+        printf("![xrRazom] despawn request refused: id=%s is a player avatar", server_id)
+        return
+    end
+    -- Remove the map spot via the Lua binding BEFORE the release: that fires the
+    -- stash-removal seam (STASH_REMOVE); engine cleanup of a released prop's spot won't.
+    local sec = se:section_name()
+    if sec == "ph_sleepbag" or sec == "ph_tent" then
+        level.map_remove_object_spot(server_id, "ui_pda2_actor_sleep_location")
+        if sec == "ph_sleepbag" and item_tent and item_tent.get_spawned_sleepbags then
+            item_tent.get_spawned_sleepbags()[server_id] = nil
+        elseif sec == "ph_tent" and item_tent and item_tent.get_spawned_tents then
+            item_tent.get_spawned_tents()[server_id] = nil
+        end
+    end
+    alife_release(se)
+end
+
+-- The peer's own on_before_save_input chain already allowed this; the host's chain is a
+-- second, independent gate.
+function OnPeerQuicksaveRequest(requester_netid)
+    if not (db.actor and db.actor:alive()) then return end
+
+    local flags = { ret = false }
+    SendScriptCallback("on_before_save_input", flags, 2, game.translate_string("st_ui_save"))
+    if flags.ret == true then
+        log("[xrRazom] PEER_QUICKSAVE_REQUEST refused by host save gate")
+        XrrPlayers():SendPeerScreenMsg(requester_netid, 1, "")
+        return
+    end
+
+    local flist = getFS():file_list_open_ex("$game_saves$",
+        bit_or(FS.FS_ListFiles, FS.FS_RootOnly),
+        "*" .. ui_load_dialog.saved_game_extension)
+    local f_cnt = flist and flist:Size() or 0
+
+    local inc = 0
+    if f_cnt > 0 then
+        flist:Sort(FS.FS_sort_by_modif_down)
+        for it = 0, f_cnt - 1 do
+            local file_name = flist:GetAt(it):NameFull():sub(0, -6):lower()
+            local d = tonumber(string.match(file_name, "quicksave_(%d+)"))
+            if d then inc = d break end
+        end
+    end
+
+    inc = (inc >= ui_options.get("other/quicksave_cnt")) and 1 or inc + 1
+    exec_console_cmd("save " .. (user_name() or "") .. " - quicksave_" .. inc)
+end
+
+-- Peer asks the host to deploy a placeable (backpack stash / tent): its own
+-- alife():create is blocked. The stash seam broadcasts STASH_ADD to all peers.
+function OnPeerStashDeploy(section, x, y, z, lvid, gvid, hint, spot_type, item_section)
+    if not XrrIsHosted() then return end  -- host-side peer-request handler (XrrIsHost is true in solo)
+    if not (section and section ~= "") then
+        log("[xrRazom] OnPeerStashDeploy: empty section, ignoring")
+        return
+    end
+    spot_type = (spot_type and spot_type ~= "") and spot_type or "treasure"
+    local pos = vector():set(x or 0, y or 0, z or 0)
+    local se_obj = alife():create(section, pos, lvid or 0, gvid or 0)
+    if not se_obj then
+        log("[xrRazom] OnPeerStashDeploy: alife():create failed section=" .. tostring(section))
+        return
+    end
+    -- "__no_spot": plain world placement (peer itms_manager.use_place), no bookkeeping.
+    if spot_type == "__no_spot" then
+        log("[xrRazom] OnPeerStashDeploy: placed srv=" .. tostring(se_obj.id)
+            .. " section=" .. tostring(section) .. " (no spot)")
+        return
+    end
+    local txt = (hint and hint ~= "") and hint
+        or strformat(game.translate_string("st_itm_stash_of_character"),
+                     db.actor and db.actor:character_name() or "")
+    level.map_add_object_spot_ser(se_obj.id, spot_type, txt)
+
+    if spot_type == "treasure" then
+        local m_data = alife_storage_manager.get_state()
+        m_data.player_created_stashes = m_data.player_created_stashes or {}
+        if item_section and item_section ~= "" then
+            m_data.player_created_stashes[se_obj.id] = item_section
+        end
+    elseif spot_type == "ui_pda2_actor_sleep_location" then
+        -- item_tent's spawned_tents / spawned_sleepbags drive its pack-up logic.
+        if section == "ph_tent" and item_tent and item_tent.get_spawned_tents then
+            item_tent.get_spawned_tents()[se_obj.id] = true
+        elseif section == "ph_sleepbag" and item_tent and item_tent.get_spawned_sleepbags then
+            item_tent.get_spawned_sleepbags()[se_obj.id] = true
+        end
+    end
+
+    log("[xrRazom] OnPeerStashDeploy: created srv=" .. tostring(se_obj.id)
+        .. " section=" .. tostring(section) .. " spot=" .. tostring(spot_type)
+        .. " pos=(" .. tostring(x) .. "," .. tostring(y) .. "," .. tostring(z) .. ")")
+end
+
+-- Reward stashes assign content late, after the box is already online, so re-run the
+-- eager spawn once it lands. Host-gated: peers call set_random_stash for the map hint.
+local _xrr_set_random_stash_wrapped = false
+local function xrr_wrap_set_random_stash()
+    if _xrr_set_random_stash_wrapped then return end
+    if not (treasure_manager and treasure_manager.set_random_stash) then return end
+    _xrr_set_random_stash_wrapped = true
+
+    local _orig = treasure_manager.set_random_stash
+    treasure_manager.set_random_stash = function(no_spot, hint, bonus_items, id, dbg)
+        local ret = _orig(no_spot, hint, bonus_items, id, dbg)
+        -- ret is the box id only when content landed (caches[ret] set to a string).
+        if ret and not dbg and XrrIsHost() and xrr_ensure_box_loot then
+            xrr_ensure_box_loot(ret)
+        end
+        return ret
+    end
+end
+
+function on_game_start()
+    xrr_register_cleanup(function()
+        player_nicknames = {}
+        player_ready = {}
+        xrr_reset_mutant_loot_locks()
+    end)
+    xrr_wrap_set_random_stash()
+    xrr_wrap_mutant_loot_host()
+end
+
+function xrr_on_stash_cleaned(host_id)
+    local m_data = alife_storage_manager.get_state()
+    local section = ""
+    if m_data.player_created_stashes then
+        local s = m_data.player_created_stashes[host_id]
+        if type(s) == "string" and s ~= "" then section = s end
+        m_data.player_created_stashes[host_id] = nil
+    end
+    if item_tent then
+        local tents = item_tent.get_spawned_tents and item_tent.get_spawned_tents()
+        if tents then tents[host_id] = nil end
+        local bags = item_tent.get_spawned_sleepbags and item_tent.get_spawned_sleepbags()
+        if bags then bags[host_id] = nil end
+    end
+    -- caches[id] == true = generated, unfound treasure (tent/sleepbag cleans are never
+    -- in caches). Clearing the entry also stops the host's own
+    -- actor_on_item_take_from_box firing a duplicate.
+    local was_treasure = false
+    if treasure_manager and treasure_manager.caches then
+        was_treasure = treasure_manager.caches[host_id] == true
+        treasure_manager.caches[host_id] = nil
+    end
+    -- Host-authoritative "Stash found": shown locally, the news hook broadcasts
+    -- GAME_NEWS. A player-created stash returns a non-empty section and must not count.
+    if section == "" and was_treasure then
+        game_statistics.increment_statistic("stashes_found")
+        news_manager.send_treasure(1)
+    end
+    return section
+end
+
+-- Returns true if items were freshly spawned (caller must defer the send). Gate on
+-- treasure_manager.caches[id]: a string = content planned, spawn now; true = already
+-- spawned; false/nil = empty or looted. It is persisted, so a box whose content was
+-- assigned in a prior session is recovered too.
+function xrr_ensure_box_loot(box_id)
+    local box = level.object_by_id(box_id)
+    if not box or not IsInvbox(box) then return false end
+    if type(treasure_manager.caches[box_id]) ~= "string" then return false end
+    log("[xrRazom][Server] Pre-spawning box loot for peer request id=" .. tostring(box_id))
+    treasure_manager.try_spawn_treasure(box)
+    return true
+end
+
+-- Host: true if this box is a treasure that has/had content. Sources the
+-- CONTAINER_CONTENTS is_treasure bit.
+function xrr_is_treasure_box(box_id)
+    return (treasure_manager and treasure_manager.caches
+        and treasure_manager.caches[box_id] == true) or false
+end
+
+-- Host: refresh stock before serving a peer's TRADER_STOCK request — vanilla only
+-- restocks traders near the HOST actor. trade_manager.update self-gates on resupply_time.
+function xrr_prepare_trader_stock(npc_id)
+    local npc = level.object_by_id(npc_id)
+    if npc and IsStalker(npc) and npc:alive() then
+        trade_manager.update(npc, false)
+    end
+end
+
+-- Host: the trader's live trade cfg path (items\trade\*.ltx), sent inside
+-- TRADER_STOCK_RESP; peer mirrors never run xr_logic. "" = no profile known.
+function xrr_get_trader_cfg(npc_id)
+    return trade_manager.get_trade_profile(npc_id, "cfg_ltx") or ""
+end
+
+-- Host: peer asked to detach an addon from a weapon inside a box/corpse. The spawns
+-- land in the container and the content push carries the result back to every peer.
+function xrr_host_on_container_detach(item_id, typ)
+    local obj = level.object_by_id(item_id)
+    if obj then
+        utils_item.detach_addon(obj, nil, typ)
+    end
+end
+
+-- ============================================================
+-- CONTAINER-ITEM DISASSEMBLY
+-- ============================================================
+-- Host executor for a peer's forwarded disassembly. Bypasses item_parts.func_disassembly:
+-- its Alt-warning gate reads the HOST's own MCM + key state and would veto a remote
+-- request. Actor-facing side effects belong to the REQUESTER, so they are suppressed for
+-- a window — costing the host player's own news line inside it.
+local dis_suppress_until = 0
+local dis_wraps_installed = false
+
+local function install_disassembly_suppression()
+    if dis_wraps_installed then return end
+    dis_wraps_installed = true
+    local orig_news = actor_menu.set_item_news
+    actor_menu.set_item_news = function(...)
+        if time_global() < dis_suppress_until then return end
+        return orig_news(...)
+    end
+    local orig_fx = actor_effects.play_item_fx
+    actor_effects.play_item_fx = function(...)
+        if time_global() < dis_suppress_until then return end
+        return orig_fx(...)
+    end
+    local orig_stat = game_statistics.increment_statistic
+    game_statistics.increment_statistic = function(key, ...)
+        if key == "items_disassembled" and time_global() < dis_suppress_until then return end
+        return orig_stat(key, ...)
+    end
+    -- Vanilla delays the part spawn 3 s to match the disassembly animation, which plays
+    -- on the PEER — reading false here spawns immediately instead of stacking that delay
+    -- on top of the round trip.
+    local orig_anim = actor_effects.is_animations_on
+    actor_effects.is_animations_on = function(...)
+        if time_global() < dis_suppress_until then return false end
+        return orig_anim(...)
+    end
+end
+
+function xrr_host_on_container_disassemble(item_id, tool_section, avatar_id)
+    local obj = level.object_by_id(item_id)
+    if not obj then
+        printf("![xrRazom] host_disassemble: item %s not live", tostring(item_id))
+        return
+    end
+    local avatar = avatar_id and avatar_id ~= 65535 and level.object_by_id(avatar_id)
+    local tool = avatar and tool_section and tool_section ~= ""
+                 and avatar:object(tool_section) or nil
+    if not tool then
+        -- The peer validated its tool before sending, so reaching here means the
+        -- avatar is out of step.
+        printf("![xrRazom] host_disassemble: tool [%s] not in avatar %s — refused",
+            tostring(tool_section), tostring(avatar_id))
+        return
+    end
+
+    install_disassembly_suppression()
+    dis_suppress_until = time_global() + 5000
+
+    if IsWeapon(obj) then
+        item_parts.disassembly_weapon(obj, tool)
+    elseif IsOutfit(obj) or IsHeadgear(obj) then
+        item_parts.disassembly_outfit(obj, tool)
+    else
+        item_parts.disassembly_item(obj, tool)
+    end
+    log("[xrRazom] host_disassemble: [" .. obj:section() .. "](" .. tostring(item_id)
+        .. ") with [" .. tool_section .. "] for avatar " .. tostring(avatar_id))
+end
+
+-- ============================================================
+-- MUTANT LOOT (host-authoritative virtual loot)
+-- ============================================================
+-- Mutant-part loot never exists as items in the corpse: vanilla rolls a per-client table
+-- at UI open (pstor "loot") and gates re-looting on the se_save_var "looted" flag, which
+-- it also sets at OPEN as a lock. This section extends that open-lock over the wire:
+-- REQUEST takes it, the host rolls once, CLOSE writes the remainder back.
+
+-- host_id -> owner peer netid (string) while that peer has the loot UI open.
+local mutant_loot_locks = {}
+
+local ini_mutant_loot = ini_file("items\\settings\\mutant_loot.ltx")
+local MUTANT_LOOT_DECAY = ini_mutant_loot:r_float_ex("mutant_loot_mod", "decay_time") or 7200
+
+-- Peer wants to open a mutant corpse. Returns verdict (+ loot table when 0):
+--   0 = ok, table follows   1 = nothing to loot   2 = decayed   3 = in use
+function OnMutantLootRequest(host_id, peer_netid)
+    if not XrrIsHosted() then return 1 end
+    local obj = level.object_by_id(host_id)
+    if not obj then return 1 end
+    local name = obj:name()
+
+    local owner = mutant_loot_locks[host_id]
+    if owner == peer_netid then
+        -- Re-open by the lock owner (double press / lost STATE): idempotent.
+        return 0, load_var(obj, "loot", {})
+    end
+    if owner then return 3 end
+    -- Host player's own loot UI is up for this corpse: "in use", not "nothing to loot".
+    local gui = ui_mutant_loot.GUI
+    if gui and gui:IsShown() and gui.id == host_id then return 3 end
+    -- Flag may be boolean true (player-UI path) or string "true" (NPC path).
+    if se_load_var(host_id, name, "looted") then return 1 end
+
+    local st = db.storage[host_id]
+    if st and st.death_time
+       and game.get_game_time():diffSec(st.death_time) > MUTANT_LOOT_DECAY then
+        se_save_var(host_id, name, "looted", true)
+        xr_corpse_detection.set_valuable_loot(host_id, false)
+        return 2
+    end
+
+    -- Vanilla open-lock (monster_on_actor_use_callback does the same locally). Mirror it
+    -- into the pstor "looted" var too: FillList checks that one, so the host's EA-anim
+    -- direct start shows "useless" instead of opening the peer-held table.
+    se_save_var(host_id, name, "looted", true)
+    save_var(obj, "looted", true)
+    xr_corpse_detection.set_valuable_loot(host_id, false)
+
+    -- Roll once, exactly like UIMutantLoot:FillList — but pass the corpse as
+    -- npc so the host actor doesn't collect the peer's guide-article unlock.
+    local loot = load_var(obj, "loot", nil)
+    if not loot then
+        loot = {}
+        ui_mutant_loot.loot_mutant(obj:section(), obj:clsid(), loot, obj, true, obj)
+        save_var(obj, "loot", loot)
+    end
+    if is_empty(loot) then
+        -- Nothing rolled: terminal — flag stays set, no lock to hold.
+        XrrWorld():SendMutantLootedEdge(host_id, true)
+        return 1
+    end
+
+    mutant_loot_locks[host_id] = peer_netid
+    return 0, loot
+end
+
+-- Peer closed the loot UI: write the remaining table back, release the lock.
+function OnMutantLootClose(host_id, more_loot, tbl, peer_netid)
+    if not XrrIsHosted() then return end
+    if mutant_loot_locks[host_id] ~= peer_netid then
+        log("[xrRazom][Server] stale MUTANT_LOOT close id=" .. tostring(host_id))
+        return
+    end
+    mutant_loot_locks[host_id] = nil
+    local obj = level.object_by_id(host_id)
+    if not obj then return end
+    save_var(obj, "loot", tbl or {})
+    se_save_var(host_id, obj:name(), "looted", not more_loot)
+    if more_loot then
+        save_var(obj, "looted", nil)
+    else
+        save_var(obj, "looted", true)
+    end
+    xr_corpse_detection.set_valuable_loot(host_id, more_loot and true or false)
+    XrrWorld():SendMutantLootedEdge(host_id, not more_loot)
+end
+
+-- Disconnect with the loot UI open: release the lock so the corpse isn't wedged.
+function xrr_release_mutant_loot_locks(peer_netid)
+    for corpse_id, owner in pairs(mutant_loot_locks) do
+        if owner == peer_netid then
+            mutant_loot_locks[corpse_id] = nil
+            local obj = level.object_by_id(corpse_id)
+            if obj then
+                se_save_var(corpse_id, obj:name(), "looted", false)
+                save_var(obj, "looted", nil)
+                xr_corpse_detection.set_valuable_loot(corpse_id, true)
+                XrrWorld():SendMutantLootedEdge(corpse_id, false)
+            end
+        end
+    end
+end
+
+-- Session cleanup. Module-scope, not local: on_game_start's cleanup closure sits ABOVE
+-- this section, where a `local` would not be in scope.
+function xrr_reset_mutant_loot_locks()
+    mutant_loot_locks = {}
+end
+
+-- Host-local looting must reach the peers' looted flags too. Module-scope for the same
+-- call-site-above reason as the reset function.
+local _mutant_loot_wrapped = false
+function xrr_wrap_mutant_loot_host()
+    if _mutant_loot_wrapped then return end
+    if not (ui_mutant_loot and ui_mutant_loot.UIMutantLoot) then return end
+    _mutant_loot_wrapped = true
+
+    -- Host player OPENED the mutant-loot flow: vanilla set the looted=true open-lock
+    -- locally only, so broadcast the edge. With EA animations it fires twice, harmlessly.
+    local _orig_start = ui_mutant_loot.start
+    ui_mutant_loot.start = function(obj, ...)
+        if XrrIsHosted() and obj
+           and se_load_var(obj:id(), obj:name(), "looted") then
+            XrrWorld():SendMutantLootedEdge(obj:id(), true)
+        end
+        return _orig_start(obj, ...)
+    end
+
+    -- Host player closed the mutant-loot UI: broadcast the flag edge (true =
+    -- fully looted; false = loot left, clears a transient deny on peers).
+    local _orig_set_state = ui_mutant_loot.UIMutantLoot.SetMutantState
+    ui_mutant_loot.UIMutantLoot.SetMutantState = function(self, is_more_loot, obj_mutant)
+        _orig_set_state(self, is_more_loot, obj_mutant)
+        if not XrrIsHosted() then return end
+        local obj = obj_mutant or level.object_by_id(self.id)
+        if obj then
+            local looted = se_load_var(obj:id(), obj:name(), "looted") and true or false
+            XrrWorld():SendMutantLootedEdge(obj:id(), looted)
+        end
+    end
+
+    -- Host NPC field-dressed a mutant (xr_corpse_detection.get_all_from_corpse:
+    -- real spawn call, npc ~= actor; the caller flips "looted" right after).
+    local _orig_loot_mutant = ui_mutant_loot.loot_mutant
+    ui_mutant_loot.loot_mutant = function(section, cls, loot_table, npc, dont_create, victim)
+        _orig_loot_mutant(section, cls, loot_table, npc, dont_create, victim)
+        if XrrIsHosted() and victim and npc and not dont_create and npc:id() ~= AC_ID then
+            XrrWorld():SendMutantLootedEdge(victim:id(), true)
+        end
+    end
+end
+
+-- ============================================================
+-- PLACED-STASH PACK-UP ("xrr:stash_pickup" use-intent verb)
+-- ============================================================
+-- Covers every placed-stash flow that funnels through actor_on_stash_remove (backpacks,
+-- HF crates, trashcans); the peer half lives in xrr_patch_client. Contents are not
+-- handled: peer and host both refuse a non-empty box, so a release can't race transfers.
+
+local function host_stash_pickup(obj_id, state, args, sender_netid)
+    if not sender_netid or sender_netid == "0" then
+        printe("![xrRazom][use] xrr:stash_pickup obj=%s: sender netid unresolved — refused",
+            tostring(obj_id))
+        return
+    end
+    local se = alife_object(obj_id)
+    if not se then
+        printf("[xrRazom][use] xrr:stash_pickup obj=%s already gone — no-op", tostring(obj_id))
+        return
+    end
+    local m_data = alife_storage_manager.get_state()
+    local item_section = m_data.player_created_stashes and m_data.player_created_stashes[obj_id]
+    if not item_section then
+        printe("![xrRazom][use] xrr:stash_pickup obj=%s (%s): not a player-created stash — refused",
+            tostring(obj_id), se:section_name())
+        return
+    end
+    -- Emptiness is a live-object read; an offline box can't be verified, so a
+    -- host on another level refuses (retryable) rather than risk contents.
+    local box = level.object_by_id(obj_id)
+    if not box then
+        printe("![xrRazom][use] xrr:stash_pickup obj=%s: box offline host-side — refused",
+            tostring(obj_id))
+        return
+    end
+    if not box:is_inv_box_empty() then
+        printe("![xrRazom][use] xrr:stash_pickup obj=%s: box not empty host-side — refused",
+            tostring(obj_id))
+        return
+    end
+
+    level.map_remove_object_spot(obj_id, "treasure")
+    m_data.player_created_stashes[obj_id] = nil
+    alife_release(se)
+    XrrPlayers():SendGiftSection(sender_netid, item_section, 1)
+end
+xrr_use_intent.register("xrr:stash_pickup", host_stash_pickup)
+
+-- A peer's ground pickup is an engine-side reparent: no vanilla take callback fires, and
+-- neither contract fits (npc_on_item_take handlers read the taker as a stalker,
+-- actor_on_item_take means the local player). Ids, not objects — the taker's class lies.
+AddScriptCallback("xrr_on_peer_item_take")
+
+function xrr_host_on_peer_item_take(avatar_id, item_id)
+    SendScriptCallback("xrr_on_peer_item_take", avatar_id, item_id)
+end
+
+-- ============================================================
+-- PDA RANKINGS / NPC MESSAGES (host handlers)
+-- ============================================================
+
+function OnRankingRequest(conn, actor_rank)
+    if xrr_patch_pda and xrr_patch_pda.on_ranking_request then
+        xrr_patch_pda.on_ranking_request(conn, actor_rank)
+    end
+end
+
+function OnPdaStashReveal(box_id, spot_type, hint)
+    if xrr_patch_pda and xrr_patch_pda.on_pda_stash_reveal then
+        xrr_patch_pda.on_pda_stash_reveal(box_id, spot_type, hint)
+    end
+end
+
+-- Export the engine-called entry points to _G (xray scripts run in a module env
+-- via setfenv, so a plain module function is not visible to the engine).
+_G.OnPlayerConnected        = OnPlayerConnected
+_G.OnPlayerDisconnected     = OnPlayerDisconnected
+_G.OnClientReady            = OnClientReady
+_G.OnJoinNotice             = OnJoinNotice
+_G.OnPeerStashDeploy        = OnPeerStashDeploy
+_G.OnEntityDespawnRequest   = OnEntityDespawnRequest
+_G.OnPeerQuicksaveRequest   = OnPeerQuicksaveRequest
+_G.xrr_on_stash_cleaned     = xrr_on_stash_cleaned
+_G.xrr_ensure_box_loot      = xrr_ensure_box_loot
+_G.xrr_is_treasure_box      = xrr_is_treasure_box
+_G.xrr_prepare_trader_stock = xrr_prepare_trader_stock
+_G.xrr_get_trader_cfg       = xrr_get_trader_cfg
+_G.OnRankingRequest          = OnRankingRequest
+_G.OnPdaStashReveal          = OnPdaStashReveal
+_G.OnMutantLootRequest       = OnMutantLootRequest
+_G.OnMutantLootClose         = OnMutantLootClose
+_G.xrr_host_on_peer_item_take        = xrr_host_on_peer_item_take
+_G.xrr_host_on_container_detach      = xrr_host_on_container_detach
+_G.xrr_host_on_container_disassemble = xrr_host_on_container_disassemble

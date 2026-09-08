@@ -1,0 +1,97 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+  Разом нас багато. (Together we are many.)
+
+  Intra-level quest/dialog actor-teleport sync.
+
+  Cross-level transitions are synced in C++ (LOAD_LEVEL / PEER_LEVEL_REQUEST).
+  This patch covers the vanilla xr_effects.teleport_actor(actor, npc, p) effect
+  fired by quests via LTX on_info = %=teleport_actor(walk_path:look_path)%;
+  without sync only the triggering player moves.
+
+  Host-authoritative: the wrapper resolves the destination but never moves the
+  actor — it routes through the host, which broadcasts one TELEPORT_ALL that
+  each machine applies, gated in C++ by apply_teleport_filtered (level + radius
+  + dedup). Radius is the initiator's MCM value, on the wire.
+
+  Scope: actor teleports only. NPC/squad teleports and sr_teleport (random
+  anomaly zones) are intentionally untouched.
+]]
+
+local _orig_teleport_actor = nil
+
+-- Sentinel heading for "no look path" (avoids a separate bool arg on the
+-- SendTeleport* luabind call); must match XRR_TP_NO_DIR engine-side.
+local TP_NO_DIR = 1.0e10
+
+-- pcall-guarded: a bad path name falls back to the original effect instead of
+-- half-applying.
+local function resolve_dest(p)
+    return pcall(function()
+        local point = patrol(p[1])
+        local dest  = point:point(0)
+        if p[2] ~= nil then
+            local heading = -patrol(p[2]):point(0):sub(dest):getH()
+            return dest, heading, true
+        end
+        return dest, 0, false
+    end)
+end
+
+local function teleport_actor_wrapper(actor, npc, p)
+    -- Solo / disabled / not in a session → exact vanilla behaviour.
+    if not get_console_cmd(1, "xrr_sync_teleport") or not (XrrIsHosted() or XrrIsConnected())
+       or not db.actor or not XrrNet() or not (p and p[1]) then
+        return _orig_teleport_actor(actor, npc, p)
+    end
+
+    local ok, dest, heading, has_dir = resolve_dest(p)
+    if not ok or not dest then
+        return _orig_teleport_actor(actor, npc, p)
+    end
+
+    -- Pre-teleport position drives the radius gate on every recipient; gvid
+    -- pins the destination level for the same-level guard.
+    local o       = db.actor:position()
+    local gvid    = db.actor:game_vertex_id()
+    local send_h  = has_dir and heading or TP_NO_DIR  -- sentinel = no look path
+
+    if XrrIsHost() then
+        XrrNet():SendTeleportAll(dest.x, dest.y, dest.z, send_h,
+                                    o.x, o.y, o.z, gvid)
+    else
+        XrrNet():SendTeleportRequest(dest.x, dest.y, dest.z, send_h,
+                                        o.x, o.y, o.z, gvid)
+    end
+    -- Deliberately do NOT call _orig: the host's TELEPORT_ALL echo teleports us
+    -- (and nearby teammates) through OnTeleportApply.
+end
+
+-- No Lua caller: the engine fires this on the host and on every in-range peer.
+-- The level / radius / dedup gate already ran there; just move the actor.
+function OnTeleportApply(x, y, z, heading, has_dir)
+    if not db.actor then return end
+    local pos = vector():set(x, y, z)
+    -- Small XZ spread so a stacked party doesn't land on a single point.
+    -- Kept to ±0.5 m so a teleport destination near a level changer isn't
+    -- nudged across its boundary into an unwanted transition.
+    pos.x = pos.x + (math.random() - 0.5) * 1.0
+    pos.z = pos.z + (math.random() - 0.5) * 1.0
+    db.actor:set_actor_position(pos)
+    if has_dir then
+        db.actor:set_actor_direction(heading)
+    end
+end
+_G.OnTeleportApply = OnTeleportApply
+
+-- Self-applied via on_game_start: xr_effects loads before us, so capturing the
+-- original here is safe.
+function on_game_start()
+    if not (xr_effects and type(xr_effects.teleport_actor) == "function") then
+        log("[xrRazom] teleport sync: xr_effects.teleport_actor missing — skipped")
+        return
+    end
+    _orig_teleport_actor = xr_effects.teleport_actor
+    xr_effects.teleport_actor = teleport_actor_wrapper
+    log("[xrRazom] teleport sync: wrapped xr_effects.teleport_actor")
+end

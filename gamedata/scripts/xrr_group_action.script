@@ -1,0 +1,55 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+  Разом нас багато. (Together we are many.)
+
+  Group-action gate: actions that move the party or the shared clock (fast
+  travel, book time-skips, sleep) require everyone gathered first. Sleep keeps
+  its own tighter radius and tip; everything else takes the session setting.
+]]
+
+-- Session-consistent rules: a connected peer reads the values the host pushed
+-- through the options/ authority overlay (xrr_travel_settings_authority);
+-- host and solo read the local console variable.
+local OVERLAY_PREFIX = "options/xrrazom/xrr_session/"
+
+-- The manager when the host has pushed `key`, else nil — solo play and an older
+-- host both fall back to the local console variable.
+local function overlay(key)
+    if not (XrrIsConnected and XrrIsConnected()) then return nil end
+    local net = XrrNet()
+    return (net and net:McmOverlayTag(key) >= 0) and net or nil
+end
+
+-- Also the options page's curr functors, which render from the main menu —
+-- where xrr_core may not have loaded its predicates yet.
+function gather_radius()
+    local key = OVERLAY_PREFIX .. "gather_radius"
+    local net = overlay(key)
+    if net then return net:McmOverlayNumber(key) end
+    return tonumber(get_console_cmd(0, "xrr_gather_radius")) or 10
+end
+
+-- Governs the fast-travel / backpack-travel gate only; book time-skips and
+-- sleep keep theirs unconditionally.
+function party_fast_travel()
+    local key = OVERLAY_PREFIX .. "party_fast_travel"
+    local net = overlay(key)
+    if net then return net:McmOverlayBool(key) end
+    return get_console_cmd(1, "xrr_party_fast_travel") and true or false
+end
+
+-- True = blocked (tip shown). Works on both roles: each machine measures its
+-- own actor against every avatar proxy it can see. Travel and book skips take
+-- the session radius and tip; sleep passes its own tighter pair, so every
+-- group action gates through this one check.
+function veto_if_ungathered(radius, msg_key)
+    if not (XrrIsHosted() or XrrIsConnected()) then return false end
+    local r = radius or gather_radius()
+    if not XrrPlayers():AnyPeerBeyond(r) then return false end
+    if db.actor then
+        news_manager.send_tip(db.actor,
+            string.format(game.translate_string(msg_key or "st_xrr_travel_peers_far"),
+                          math.floor(r + 0.5)), nil, nil, 4000)
+    end
+    return true
+end

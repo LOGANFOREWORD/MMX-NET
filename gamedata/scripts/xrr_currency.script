@@ -1,0 +1,7 @@
+-- xrRazom: single source of truth for the in-game currency suffix.
+-- Money is a plain integer in the engine; route display through here so the
+-- unit (st_xrr_currency in ui_xrrazom.xml) is defined once.
+
+function suffix()
+	return game.translate_string("st_xrr_currency")
+end

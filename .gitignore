@@ -1,0 +1,56 @@
+﻿# MMX-Net — overlay + source; no dump Anomaly intero / secrets
+
+# Secrets
+.env
+.env.*
+*.pem
+*github_pat*
+dist/gh-auth*
+
+# Build .NET
+**/bin/
+**/obj/
+*.user
+*.suo
+
+# Base gioco / binari enormi (restano sul PC)
+/bin/
+/db/
+/MT/
+/tools/
+/appdata/
+/BACKUP*/
+/MMX - Online/
+
+# Dist artifacts grandi / locali
+/dist/download/
+/dist/update/*.zip
+/dist/update-feed/
+/dist/installer/*.zip
+/dist/installer/*.exe
+/dist/user/
+/dist/devkit/
+/dist/_script_list.txt
+/dist/*.zip
+/dist/AnomalyCoop*
+/dist/gh-auth*
+
+# Machine-local steam ids
+ac_steam_shortcut_id.txt
+ac_steam_library_ok.txt
+
+# Launcher self-contained (rebuild: toolkit/deploy_mmx_net_launcher.ps1)
+/*.exe
+
+# Temp / editor
+*.log
+*.tmp
+.vs/
+.vscode/
+*.pdb
+Thumbs.db
+desktop.ini
+**/shaders_cache/
+**/savedgames/
+*.bak
+*.bak_*

@@ -1,0 +1,8 @@
+﻿{
+    "Name":  "Anomaly Coop",
+    "Version":  "0.1.1",
+    "Channel":  "dev",
+    "Protocol":  "89",
+    "Engine":  "ST",
+    "Notes":  "Path auto da cartella exe; HEALTH chiaro se manca base Anomaly+xrRazom; pack ripara script/DLL minimi; feed update."
+}

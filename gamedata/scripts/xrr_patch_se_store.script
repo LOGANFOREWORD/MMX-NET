@@ -1,0 +1,34 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+
+  Module: se_object store patch — the runtime voice for
+  alife_storage_manager.get_state().se_object[id].
+
+  A plain Lua table the engine only touches at save/load, so there is no C++
+  seam. Without a trigger the seed's blob rider states an entity's mod state
+  once, at creation, and every later change is invisible forever.
+
+  A _G wrap is the whole hook — no mod localizes se_save_var at load time. Both
+  roles voice: the host owns world / container / NPC state, each machine owns
+  its own actor's inventory. This only says "id touched"; C++ classifies,
+  gates on change and coalesces.
+]]
+
+local _applied = false
+
+function on_game_start()
+	if _applied then return end
+	_applied = true
+
+	local orig = se_save_var
+	_G.se_save_var = function(id, name, varname, val)
+		orig(id, name, varname, val)
+		-- Numeric ids only: se_object is a plain Lua table and vanilla accepts
+		-- any key type, but the luabind u32 parameter would raise "no matching
+		-- overload" and break the caller mid-write. A non-numeric key is never
+		-- an alife id, so there is nothing to replicate anyway.
+		if type(id) == "number" and (XrrIsHosted() or XrrIsConnected()) then
+			XrrWorld():MarkSeObjectDirty(id)
+		end
+	end
+end

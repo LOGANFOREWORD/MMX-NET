@@ -1,0 +1,280 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+  Разом нас багато. (Together we are many.)
+
+  Module: RF receiver (item_radio "detector_radio") frequency tables, host-
+  authoritative. The host owns RF_stashes / RF_targets; peers apply a bulk
+  RF_BIND at join (REPLACE) plus mid-game deltas, resolving host-canonical wire
+  ids to local ids via XrrAlife():GetLocalItemIDByHostID.
+
+  on_rf_bind has no Lua caller here: xrr_net_client.OnRfBind delivers it.
+]]
+
+local UNMAPPED = 65535  -- GetLocalItemIDByHostID's "no mapping" sentinel
+
+-- ============================================================
+-- BINARY BLOB HELPERS  (same layout as xrr_patch_pda)
+-- ============================================================
+local function blob_w_u8(t, v)  t[#t+1] = string.char(v % 256) end
+local function blob_w_u16(t, v)
+    v = math.floor(v)
+    t[#t+1] = string.char(v % 256, math.floor(v / 256) % 256)
+end
+local function blob_w_u32(t, v)
+    v = math.floor(v)
+    t[#t+1] = string.char(v % 256, math.floor(v / 256) % 256,
+                          math.floor(v / 65536) % 256, math.floor(v / 16777216) % 256)
+end
+local function blob_w_str(t, s)
+    s = s or ""
+    blob_w_u16(t, #s)
+    if #s > 0 then t[#t+1] = s end
+end
+
+local _bp, _bd = 1, ""
+local function blob_r_init(data) _bd = data; _bp = 1 end
+local function blob_r_u8()
+    local v = string.byte(_bd, _bp); _bp = _bp + 1; return v
+end
+local function blob_r_u16()
+    local lo, hi = string.byte(_bd, _bp), string.byte(_bd, _bp + 1)
+    _bp = _bp + 2; return lo + hi * 256
+end
+local function blob_r_u32()
+    local b1, b2, b3, b4 = string.byte(_bd, _bp, _bp + 3)
+    _bp = _bp + 4; return b1 + b2 * 256 + b3 * 65536 + b4 * 16777216
+end
+local function blob_r_str()
+    local len = blob_r_u16()
+    if len == 0 then return "" end
+    local s = string.sub(_bd, _bp, _bp + len - 1)
+    _bp = _bp + len; return s
+end
+
+-- ============================================================
+-- PACK
+-- ============================================================
+-- stashes : { [level_name] = { [id] = freq } }   (nil = none)
+-- targets : { [id] = { freq = f, dist = d } }     (nil = none)
+-- removes : { host_id, ... }  target host ids to drop on the peer  (nil = none)
+local function pack_rf(is_bulk, stashes, targets, removes)
+    local t = {}
+    blob_w_u8(t, is_bulk and 1 or 0)
+
+    local levels = {}
+    if stashes then
+        for lvl in pairs(stashes) do levels[#levels + 1] = lvl end
+    end
+    blob_w_u8(t, #levels)
+    for _, lvl in ipairs(levels) do
+        blob_w_str(t, lvl)
+        local ids = stashes[lvl]
+        local cnt = 0
+        for _ in pairs(ids) do cnt = cnt + 1 end
+        blob_w_u16(t, cnt)
+        for id, freq in pairs(ids) do
+            blob_w_u32(t, id)
+            blob_w_u16(t, freq)
+        end
+    end
+
+    local tids = {}
+    if targets then
+        for id in pairs(targets) do tids[#tids + 1] = id end
+    end
+    blob_w_u16(t, #tids)
+    for _, id in ipairs(tids) do
+        local v = targets[id]
+        blob_w_u32(t, id)
+        blob_w_u16(t, v.freq or 0)
+        blob_w_u16(t, v.dist or 200)
+    end
+
+    -- target removals (host ids)
+    removes = removes or {}
+    blob_w_u16(t, #removes)
+    for _, id in ipairs(removes) do
+        blob_w_u32(t, id)
+    end
+
+    return table.concat(t)
+end
+
+local function broadcast(blob)
+    local a = XrrAlife and XrrAlife()
+    if a then a:SendRfBind(blob, #blob) end
+end
+
+-- ============================================================
+-- HOST: outbound
+-- ============================================================
+-- Full table to all peers, REPLACE semantics; sent at each join
+-- (xrr_net_server.OnClientReady).
+function broadcast_bulk()
+    if not (item_radio and XrrIsHosted and XrrIsHosted()) then return end
+    broadcast(pack_rf(true, item_radio.RF_stashes, item_radio.RF_targets))
+end
+
+local _prev_targets = {}
+
+-- Only a PLAYER parent counts as pocketed — any-parent would also kill the fate
+-- task's target, which tasks_fate registers while the pda sits in a corpse.
+local function player_holder_ids()
+    local out = {}
+    if db.actor then out[db.actor:id()] = true end
+    local players = XrrPlayers()
+    if not players then return out end
+    for i = 1, players:GetPeerCount() do
+        local cid = players:GetPeerLocalIdAt(i)
+        if cid and cid > 0 and cid ~= 65535 then out[cid] = true end
+    end
+    return out
+end
+
+-- Sweeps targets a player pocketed: a pickup re-parents the alife item instead
+-- of unregistering it, and vanilla validate_RF_targets only drops ones whose
+-- se_object is gone.
+local function host_diff_removals()
+    if not item_radio then return end
+
+    local holders = player_holder_ids()
+    local gone = {}
+    for host_id in pairs(item_radio.RF_targets) do
+        local se = alife_object(host_id)
+        if (not se) or holders[se.parent_id] then gone[#gone + 1] = host_id end
+    end
+    for _, host_id in ipairs(gone) do
+        item_radio.clear_target(host_id)
+    end
+
+    local cur = {}
+    for id in pairs(item_radio.RF_targets) do cur[id] = true end
+    local removed = {}
+    for id in pairs(_prev_targets) do
+        if not cur[id] then removed[#removed + 1] = id end
+    end
+    _prev_targets = cur
+    if #removed > 0 then
+        broadcast(pack_rf(false, nil, nil, removed))
+    end
+end
+
+-- ============================================================
+-- PEER: inbound + target reconcile
+-- ============================================================
+-- Stashes are all.spawn objects (host id == peer local id). Quest targets are
+-- runtime-spawned, so they park by host id until the mirror exists — re-keyed
+-- if the local id changes across an offline/online cycle.
+local _pending = {}   -- [host_id] = { freq, dist }
+local _applied = {}   -- [host_id] = local_id currently written into RF_targets
+local _recon_tg = 0
+
+-- host id → peer local id, or nil if not (yet) mirrored. all.spawn objects are
+-- unmapped but identity-resident, so callers fall back to the host id.
+local function resolve_local(host_id)
+    local a = XrrAlife and XrrAlife()
+    local lid = a and a:GetLocalItemIDByHostID(host_id)
+    if (not lid) or (lid == UNMAPPED) then return nil end
+    return lid
+end
+
+local function reconcile_targets()
+    if not item_radio then return end
+    for host_id, v in pairs(_pending) do
+        local lid = resolve_local(host_id)
+        if lid and _applied[host_id] ~= lid then
+            local prev = _applied[host_id]
+            if prev then item_radio.RF_targets[prev] = nil end
+            item_radio.RF_targets[lid] = { freq = v.freq, dist = v.dist }
+            _applied[host_id] = lid
+        end
+    end
+end
+
+function on_rf_bind(blob)
+    if not item_radio then return end
+    if XrrIsHost and XrrIsHost() then return end  -- host owns the tables
+
+    blob_r_init(blob)
+    local is_bulk = blob_r_u8()
+    if is_bulk == 1 then
+        item_radio.RF_stashes = {}
+        item_radio.RF_targets = {}
+        _pending = {}
+        _applied = {}
+    end
+
+    -- Stashes (all.spawn identity; honour a mirror map entry if one exists).
+    local level_count = blob_r_u8()
+    for _ = 1, level_count do
+        local lvl = blob_r_str()
+        local cnt = blob_r_u16()
+        item_radio.RF_stashes[lvl] = item_radio.RF_stashes[lvl] or {}
+        local bucket = item_radio.RF_stashes[lvl]
+        for _ = 1, cnt do
+            local id   = blob_r_u32()
+            local freq = blob_r_u16()
+            bucket[resolve_local(id) or id] = freq
+        end
+    end
+
+    -- Targets (runtime; parked by host id, reconciled to a local id as it appears).
+    local tcount = blob_r_u16()
+    for _ = 1, tcount do
+        local id   = blob_r_u32()
+        local freq = blob_r_u16()
+        local dist = blob_r_u16()
+        _pending[id] = { freq = freq, dist = dist }
+    end
+
+    -- Removals drop from _pending too, or the reconcile poll revives them.
+    local rcount = blob_r_u16()
+    for _ = 1, rcount do
+        local host_id = blob_r_u32()
+        _pending[host_id] = nil
+        local lid = _applied[host_id]
+        if lid then item_radio.RF_targets[lid] = nil end
+        _applied[host_id] = nil
+    end
+
+    reconcile_targets()
+end
+
+-- ============================================================
+-- APPLY (host-side delta hooks + peer reconcile poll)
+-- ============================================================
+function on_game_start()
+    if not item_radio then return end
+
+    -- HOST: a quest registered an RF target → push the delta. Read back from the
+    -- table to forward what item_radio actually stored (it defaults nil freq/dist).
+    local _orig_add_target = item_radio.add_target
+    item_radio.add_target = function(id, freq, dist)
+        _orig_add_target(id, freq, dist)
+        if XrrIsHosted and XrrIsHosted() then
+            local v = item_radio.RF_targets[id]
+            if v then broadcast(pack_rf(false, nil, { [id] = v })) end
+        end
+    end
+
+    -- HOST: a quest registered an RF stash → push the delta.
+    local _orig_add_stash = item_radio.add_stash
+    item_radio.add_stash = function(lvl, id, freq)
+        _orig_add_stash(lvl, id, freq)
+        if XrrIsHosted and XrrIsHosted() and lvl
+           and item_radio.RF_stashes[lvl] and item_radio.RF_stashes[lvl][id] then
+            broadcast(pack_rf(false, { [lvl] = { [id] = item_radio.RF_stashes[lvl][id] } }, nil))
+        end
+    end
+
+    RegisterScriptCallback("actor_on_update", function()
+        local tg = time_global()
+        if tg < _recon_tg then return end
+        _recon_tg = tg + 2000
+        if XrrIsHost and XrrIsHost() then
+            if XrrIsHosted and XrrIsHosted() then host_diff_removals() end
+        elseif next(_pending) then
+            reconcile_targets()
+        end
+    end)
+end

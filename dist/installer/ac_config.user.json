@@ -1,0 +1,9 @@
+{
+  "useSteam": true,
+  "friendsProfile": true,
+  "autoUpdateGame": false,
+  "preferDirectSteam": false,
+  "checkUpdatesOnStart": true,
+  "updateChannel": "dev",
+  "updateFeedUrl": ""
+}

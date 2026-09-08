@@ -1,0 +1,220 @@
+--[[
+  xrRazom — the peer m_data surrogate.
+
+  A peer never saves, so vanilla never fires the `save_state` / `load_state`
+  registry for it. collect() and apply() fire that registry outside the save
+  path — harvest at clean leave / transition, apply at the next join — and
+  live_key() reads m_data directly between those boundaries, one key per tick.
+  Both fires run against the REAL m_data, since mods read `get_state()` rather
+  than the callback argument; the manifest is what bounds the blob.
+]]
+
+-- Top-level m_data keys that belong to the peer alone; a key absent here stays
+-- empty every session. Never list a key another channel replicates live — this
+-- blob applies last and would beat it.
+manifest = {
+	-- Skill System (haru_skills) — skill name → level.
+	"skills_levels",
+
+	-- Doom-like weapon inspection — section name → seen flag.
+	"inspected_weapons",
+
+	-- Psy health (arszi_psy).
+	"psy_table",
+
+	-- Body Health System head-injury state (zzz_player_injuries).
+	"head_tbl",
+
+	-- Undercover / Modular Tweaks disguise flag (gameplay_disguise).
+	"disguise_state",
+
+	-- Campfires seen on the map — keyed by world ids, valid on both machines.
+	"visited_campfires",
+
+	-- SortingPlus favourite / junk marks — keyed by item SECTION, not id.
+	"rax_favorite_itms",
+	"rax_junk_itms",
+
+	-- BaS NVG scope toggle.
+	"snk_bas_nvg_flag",
+
+	-- Per-weapon ADS / grenade-mode FOV overrides (scope_fov_mcm), keyed by
+	-- weapon section.
+	"snk_saved_hud_fov",
+	"snk_saved_gl_fov",
+
+	-- Radio tuning frequency (item_radio).
+	"RF_freq",
+
+	-- "Angered the garrison" flags (Bar peace zone, Duty outpost).
+	"gameplay_peace_zone",
+	"gameplay_duty_outpost_storage_data",
+
+	-- Artefact perk cooldowns (perk_based_artefacts) — effect name → threshold
+	-- on a campaign-absolute timebase.
+	"perk_based_artefacts_cooldowns",
+}
+
+-- Log the collected key list at every harvest.
+--   run_string xrr_peer_mdata.dump_keys = true
+dump_keys = false
+
+-- Log the slowest key of each rotation, per-key encode µs.
+--   run_string xrr_peer_mdata.dump_timing = true
+dump_timing = false
+
+-- Capture stamp, written at blob assembly and read back at apply. Deliberately
+-- not a manifest key, so the overlay loop can never leak it into m_data.
+local META_KEY = "__xrr_meta"
+
+-- The PSTOR codec's table recursion limit for this channel; the engine side
+-- passes the same 8. Deeper sub-tables serialise as nil, so the walk stops too.
+local MAX_DEPTH = 8
+
+-- CTime is the one userdata class vanilla supports inside m_data, and it rides
+-- marshal's __persist (_G.script). The PSTOR codec drops userdata silently, so
+-- encode it to the same seven components marshal does and rebuild on apply.
+local CTIME_TAG = "__xrr_ctime"
+local ctime_mt
+
+local function is_ctime(v)
+	if type(v) ~= "userdata" then
+		return false
+	end
+	if not ctime_mt then
+		ctime_mt = getmetatable(game.CTime())
+	end
+	return getmetatable(v) == ctime_mt
+end
+
+local function encode_value(v, depth)
+	if is_ctime(v) then
+		return { [CTIME_TAG] = utils_data.CTime_to_table(v) }
+	end
+	if type(v) ~= "table" or depth <= 0 then
+		return v
+	end
+	local out = {}
+	for k, sub in pairs(v) do
+		local kt = type(k)
+		if kt == "string" or kt == "number" then
+			out[k] = encode_value(sub, depth - 1)
+		end
+	end
+	return out
+end
+
+local function decode_value(v, depth)
+	if type(v) ~= "table" then
+		return v
+	end
+	if v[CTIME_TAG] then
+		return utils_data.CTime_from_table(v[CTIME_TAG])
+	end
+	if depth <= 0 then
+		return v
+	end
+	local out = {}
+	for k, sub in pairs(v) do
+		out[k] = decode_value(sub, depth - 1)
+	end
+	return out
+end
+
+-- Fire every registered save_state callback, then return a table holding only
+-- the manifest keys. No Lua caller: the engine harvests and ships the result.
+function xrr_peer_mdata_collect(reason)
+	local m = alife_storage_manager.get_state()
+	SendScriptCallback("save_state", m)
+
+	local out, names = {}, {}
+	for _, key in ipairs(manifest) do
+		local v = m[key]
+		if v ~= nil then
+			out[key] = encode_value(v, MAX_DEPTH)
+			names[#names + 1] = key
+		end
+	end
+	out[META_KEY] = xrr_peer_mdata_stamp(reason)
+	names[#names + 1] = META_KEY
+
+	if dump_keys then
+		printf("[xrRazom][PeerMData] collected: %s", table.concat(names, ", "))
+	end
+	return out
+end
+
+-- The manifest as a flat array. No Lua caller: the engine reads it once when
+-- the rotation arms.
+function xrr_peer_mdata_manifest()
+	return manifest
+end
+
+-- One manifest key's current value, encoded as collect() would, read from live
+-- m_data with no save_state fire — so it only tracks a mod that aliases its
+-- live table into m_data (haru_skills does); one that rebuilds it inside
+-- save_state stays frozen at the last fire. No Lua caller.
+function xrr_peer_mdata_live_key(key)
+	local v = alife_storage_manager.get_state()[key]
+	if v == nil then
+		return nil
+	end
+	return encode_value(v, MAX_DEPTH)
+end
+
+-- One save_state fire for a first-time peer, establishing the aliasing
+-- live_key() depends on. No Lua caller.
+function xrr_peer_mdata_prime()
+	SendScriptCallback("save_state", alife_storage_manager.get_state())
+end
+
+-- ⚠ game.get_game_time() dereferences a missing level, and the session-end
+-- harvest can fire between worlds — hence the level.present() gate; apply()
+-- treats a missing stamp as "no age known".
+function xrr_peer_mdata_stamp(reason)
+	local stamp = { reason = reason or "?" }
+	if level.present() then
+		stamp.at = utils_data.CTime_to_table(game.get_game_time())
+	end
+	return stamp
+end
+
+-- Overlay the restored manifest keys onto the live m_data, then fire every
+-- registered load_state callback against it. Returns the restored key count.
+function xrr_peer_mdata_apply(surrogate)
+	local m = alife_storage_manager.get_state()
+
+	local meta = surrogate[META_KEY]
+	if meta and meta.at then
+		local age = game.get_game_time():diffSec(utils_data.CTime_from_table(meta.at))
+		printf("[xrRazom][PeerMData] blob captured '%s', game-age %ss",
+			tostring(meta.reason), tostring(math.floor(age)))
+	end
+
+	-- Harvest first: load_state callbacks assign straight through (`x =
+	-- m_data.x`), so firing them against a peer's never-populated m_data would
+	-- nil the live state a non-manifest mod holds instead of leaving it alone.
+	SendScriptCallback("save_state", m)
+
+	local n = 0
+	for _, key in ipairs(manifest) do
+		local v = surrogate[key]
+		if v ~= nil then
+			m[key] = decode_value(v, MAX_DEPTH)
+			n = n + 1
+		end
+	end
+	SendScriptCallback("load_state", m)
+	return n
+end
+
+_G.xrr_peer_mdata_collect  = xrr_peer_mdata_collect
+_G.xrr_peer_mdata_apply    = xrr_peer_mdata_apply
+_G.xrr_peer_mdata_manifest = xrr_peer_mdata_manifest
+_G.xrr_peer_mdata_live_key = xrr_peer_mdata_live_key
+_G.xrr_peer_mdata_prime    = xrr_peer_mdata_prime
+_G.xrr_peer_mdata_stamp    = xrr_peer_mdata_stamp
+
+-- Shared with xrr_world_mdata, which must encode identically.
+_G.xrr_mdata_encode = encode_value
+_G.xrr_mdata_decode = decode_value

@@ -1,0 +1,28 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+  Разом нас багато. (Together we are many.)
+
+  haru_skills.creature_on_before_hit writes the LOCAL player's skill store and
+  scales melee by the local strength stat, so under xrr_patch_common's before-hit
+  identity swap a peer's melee would feed the HOST's skills. Decline peer hits
+  until that XP can be routed to the peer that earned it.
+]]
+
+function on_game_start()
+    local orig = haru_skills and haru_skills.creature_on_before_hit
+    if type(orig) ~= "function" then return end
+
+    local function wrapped(npc, shit, bone_id, flags)
+        local drafts = shit and shit.draftsman
+        if drafts and XrrPlayers():IsPlayerDummy(drafts:id()) then return end
+        return orig(npc, shit, bone_id, flags)
+    end
+
+    -- The registry keys on the function VALUE; the module-field write is inert.
+    haru_skills.creature_on_before_hit = wrapped
+    UnregisterScriptCallback("npc_on_before_hit", orig)
+    RegisterScriptCallback("npc_on_before_hit", wrapped)
+    UnregisterScriptCallback("monster_on_before_hit", orig)
+    RegisterScriptCallback("monster_on_before_hit", wrapped)
+    log("[xrRazom][skills] haru_skills: peer hits declined")
+end

@@ -1,0 +1,93 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+  Разом нас багато. (Together we are many.)
+
+  Difficulty (diff_game / diff_eco + trader condition) is host-owned session
+  state: the host re-pushes JOIN_DIFFICULTY to peers on any local change, and
+  the vanilla difficulty UI is locked read-only on connected peers.
+]]
+
+local _installed = false
+
+-- Vanilla setters captured at module load (base scripts load before xrRazom).
+local orig_set_game = game_difficulties and game_difficulties.set_game_factor
+local orig_set_eco  = game_difficulties and game_difficulties.set_eco_factor
+
+-- One options Apply fires one setter per changed factor plus on_option_change —
+-- debounce to a single send.
+local _dirty_at = nil
+local FLUSH_DELAY_MS = 250
+
+local function is_session_peer()
+    return XrrIsConnected and XrrIsConnected()
+end
+
+local function is_session_host()
+    return XrrIsHosted and XrrIsHosted()
+end
+
+local function mark_dirty()
+    _dirty_at = time_global()
+end
+
+-- From-host bypass for xrr_net_client.OnJoinDifficulty: the peer-side setter
+-- gate below must not eat the host's own values.
+function set_game_factor_from_host(key, val)
+    if orig_set_game then orig_set_game(key, val) end
+end
+
+function set_eco_factor_from_host(key, val)
+    if orig_set_eco then orig_set_eco(key, val) end
+end
+
+local function wrapped_set_game(key, val)
+    if is_session_peer() then return end  -- host-owned: drop peer-local writes
+    orig_set_game(key, val)
+    if is_session_host() then mark_dirty() end
+end
+
+local function wrapped_set_eco(key, val)
+    if is_session_peer() then return end
+    orig_set_eco(key, val)
+    if is_session_host() then mark_dirty() end
+end
+
+-- Fires once per options/MCM Apply; covers the trader condition slider,
+-- which writes the alife state directly (no setter).
+local function on_option_change()
+    if is_session_host() then mark_dirty() end
+end
+
+local function actor_on_update()
+    if not _dirty_at then return end
+    if time_global() - _dirty_at < FLUSH_DELAY_MS then return end
+    _dirty_at = nil
+    if is_session_host() then
+        XrrNet():ResyncDifficulty()
+        log("[xrRazom] difficulty: host settings changed — re-pushed to peers")
+    end
+end
+
+-- Peer UI lock: the two difficulty panels stay visible but read-only.
+-- ui_options only, because ui_mcm has no such groups.
+local function lock_difficulty_panel(curr_tree)
+    return (curr_tree.id == "gameplay_diff" or curr_tree.id == "economy_diff")
+           and is_session_peer()
+end
+
+-- Self-applied via on_game_start.
+function on_game_start()
+    if _installed then return end
+    if not (orig_set_game and orig_set_eco) then
+        log("[xrRazom] difficulty: game_difficulties setters missing — patch skipped")
+        return
+    end
+    game_difficulties.set_game_factor = wrapped_set_game
+    game_difficulties.set_eco_factor  = wrapped_set_eco
+    xrr_ui_option_lock.install(ui_options, "UIOptions", lock_difficulty_panel,
+                               "ui_xrr_diff_host_owned")
+    RegisterScriptCallback("on_option_change", on_option_change)
+    RegisterScriptCallback("actor_on_update", actor_on_update)
+    _installed = true
+    log("[xrRazom] difficulty: session-rule patch installed (host push + peer block)")
+end

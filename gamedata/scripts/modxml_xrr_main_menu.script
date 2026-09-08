@@ -1,0 +1,74 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+  Разом нас багато. (Together we are many.)
+
+  Module: main-menu seams. Injects the Connect button into the shniaga button
+  lists and hands each freshly built menu to xrr_menu, which owns the behaviour.
+  Injection rather than a whole-file copy of ui_mm_main_16.xml: at top mod
+  priority in GAMMA a copy silently discards another mod's menu skin.
+
+  The file name is load-bearing: dxml_core globs modxml_*.script at the
+  $game_scripts$ root and calls on_xml_read on each.
+]]
+
+-- The callback fires once per file under the ASPECT-RESOLVED outer name, with
+-- every #include expanded: 16:9 asks for ui_mm_main_16.xml, 4:3 and 21:9 for
+-- ui_mm_main.xml, so matching only the _16 name would silently skip them.
+local FILES = {
+    [ [[ui\ui_mm_main_16.xml]] ] = true,
+    [ [[ui\ui_mm_main.xml]]    ] = true,
+}
+
+-- menu_main_logout is absent on purpose (InitShniaga never reads it); the
+-- in-game lists (menu_main_single*, menu_main_mm) must not offer Connect.
+local LISTS = { "menu_main", "menu_main_last_save" }
+
+local BTN = { name = "btn",
+              attr = { name = "btn_multiplayer", caption = "ui_xrr_connect" } }
+
+-- Anchored on btn_quit rather than an index, so another mod inserting its own
+-- button does not move ours. dxml's insertElementBefore cannot be used: it
+-- appends to the parent element table instead of its .kids list, so the node
+-- never reaches the serializer.
+local function inject_list(xml_obj, list_name)
+    local list = xml_obj:query(list_name)[1]
+    if not list then return false end
+
+    local pos, already_there
+    xml_obj:iterateChildren(list, function(v, i)
+        local el = xml_obj:getElement(v)
+        local name = el and el.attr and el.attr.name
+        if name == "btn_multiplayer" then
+            already_there = true
+            return true
+        end
+        if name == "btn_quit" then pos = i end
+    end)
+    -- A stale deployed copy of the old whole-file XML still carries the button.
+    if already_there then return false end
+
+    xml_obj:insertElement(BTN, list, pos)
+    return true
+end
+
+-- A module function, not a closure: the callback registry keys on the function
+-- object.
+function inject_button(xml_file_name, xml_obj)
+    if not FILES[xml_file_name] then return end
+
+    local injected = 0
+    for _, list_name in ipairs(LISTS) do
+        if inject_list(xml_obj, list_name) then injected = injected + 1 end
+    end
+    if injected > 0 then
+        log("[xrRazom] menu: injected btn_multiplayer into " .. xml_file_name)
+    end
+end
+
+function on_xml_read()
+    -- Vanilla exe / xrRazom dll absent: nothing to connect with, so ship no button.
+    if not get_console_cmd(0, "xrr_player_name") then return end
+
+    RegisterScriptCallback("on_xml_read", inject_button)
+    RegisterScriptCallback("main_menu_on_init", xrr_menu.on_main_menu_init)
+end

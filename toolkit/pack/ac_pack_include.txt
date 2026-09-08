@@ -1,0 +1,21 @@
+# Elenco file relativi alla root MMX-Net da includere nel pack aggiornamento.
+# Una riga = un percorso relativo. # e ; = commento.
+# I file root (ac_version.json, bridge, launcher, …) sono già inclusi da PackService.
+# File assenti nella build vengono SKIP (non bloccano il pack).
+
+# Overlay gamedata “nostre parti” (estendi quando aggiungi contenuti coop)
+gamedata/configs/axr_options.ltx
+
+# Riparazione install incomplete amici: script xrRazom minimi + release + stack Steam net
+# (solo se presenti nella build Logan; non redistribuiscono Anomaly intero / db)
+xrRazom-release.txt
+gamedata/scripts/xrr_core.script
+gamedata/scripts/xrr_net_client.script
+gamedata/scripts/xrr_net_server.script
+gamedata/scripts/xrr_callbacks.script
+bin/steam_api64.dll
+bin/GameNetworkingSockets.dll
+
+# Esempi futuri:
+# gamedata/scripts/ac_custom.script
+# gamedata/configs/misc/ac_items.ltx

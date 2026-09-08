@@ -1,0 +1,91 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+  Разом нас багато. (Together we are many.)
+
+  Host-authoritative fast-travel / backpack-travel options and the group-action
+  session rules: rides the MCM authority overlay (same C++ map, keys under
+  "options/" so the domains can't collide — modxml_xrr_mcm_authority serves the
+  peer reads). Static path list; travel modules re-read on the on_option_change
+  the delta handler already fires.
+]]
+
+local PREFIX = "options/"
+
+local DECLARED = {
+    "gameplay/fast_travel/state",
+    "gameplay/fast_travel/on_combat",
+    "gameplay/fast_travel/on_overweight",
+    "gameplay/fast_travel/on_damage",
+    "gameplay/fast_travel/on_emission",
+    "gameplay/fast_travel/long_names",
+    "gameplay/fast_travel/visit_message",
+    "gameplay/fast_travel/time",
+    "gameplay/backpack_travel/state",
+    "gameplay/backpack_travel/on_combat",
+    "gameplay/backpack_travel/on_overweight",
+    "gameplay/backpack_travel/on_damage",
+    "gameplay/backpack_travel/on_emission",
+    "gameplay/backpack_travel/time",
+}
+
+local _installed = false
+local _dirty_at  = nil
+local FLUSH_DELAY_MS = 250
+
+local function may_push()
+    return not (XrrIsConnected and XrrIsConnected())
+end
+
+local function push(path)
+    return xrr_mcm_authority.push_authored(ui_options.get, path, PREFIX .. path)
+end
+
+-- The xrRazom session rules are console-backed and their options page is
+-- appended without re-running init_opt_coder, so ui_options.get cannot reach
+-- them — push them by cvar name. Read back by xrr_group_action.
+local function push_session_rules()
+    local net = XrrNet()
+    local r = tonumber(get_console_cmd(0, "xrr_gather_radius"))
+    if r then net:McmAuthoritySetNumber(PREFIX .. "xrrazom/xrr_session/gather_radius", r) end
+    net:McmAuthoritySetBool(PREFIX .. "xrrazom/xrr_session/party_fast_travel",
+                            get_console_cmd(1, "xrr_party_fast_travel") and true or false)
+end
+
+-- Cheap: 16 pushes, C++ no-ops unchanged values before flushing a delta.
+local function collect()
+    for _, path in ipairs(DECLARED) do push(path) end
+    push_session_rules()
+    XrrNet():McmAuthorityFlush()
+end
+
+-- on_option_change carries no argument, so an unrelated Apply (video, sound,
+-- keybinds) fires it just as often as a travel one. Defer like the sibling
+-- authorities instead of sweeping all 16 keys inline every time.
+local function on_option_change()
+    _dirty_at = time_global()
+end
+
+local function actor_on_update()
+    if not _dirty_at then return end
+    if time_global() - _dirty_at < FLUSH_DELAY_MS then return end
+    _dirty_at = nil
+    if may_push() then collect() end
+end
+
+local function should_lock(curr_tree)
+    if not (XrrIsConnected and XrrIsConnected()) then return false end
+    return curr_tree.id == "fast_travel" or curr_tree.id == "backpack_travel"
+end
+
+-- Entry point (xrr_callbacks.on_game_start), after xrr_mcm_authority.
+function apply()
+    if _installed then return end
+    if not XrrNet then return end
+    _installed = true
+
+    if may_push() then collect() end
+    RegisterScriptCallback("on_option_change", on_option_change)
+    RegisterScriptCallback("actor_on_update", actor_on_update)
+    xrr_ui_option_lock.install(ui_options, "UIOptions", should_lock, "ui_xrr_travel_host_owned")
+    log("[xrRazom] travel settings authority: installed")
+end

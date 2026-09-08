@@ -1,0 +1,27 @@
+--[[
+  xrRazom — STALKER Anomaly Co-op
+  Разом нас багато. (Together we are many.)
+
+  Module: release_item_manager (base game) — un-mark an item a peer picked up.
+
+  The tracker releases anything left free-standing past the MCM threshold. A
+  peer's ground pickup reaches the host as a reparent, so no engine take
+  callback fires and the id stays marked: the item sits in the peer's inventory
+  while the host still counts it as litter. Why the vanilla take contracts
+  cannot carry this is in xrr_host_on_peer_item_take (xrr_net_server).
+
+  Host-only in effect — nothing emits xrr_on_peer_item_take on a peer. This
+  module's peer-side half (gating the release timer for a session) is in
+  xrr_patch_client.apply().
+]]
+
+local function on_peer_item_take(avatar_id, item_id)
+    if release_item_manager and release_item_manager.unmark_item then
+        release_item_manager.unmark_item(item_id)
+    end
+end
+
+function on_game_start()
+    RegisterScriptCallback("xrr_on_peer_item_take", on_peer_item_take)
+    log("[xrRazom][release] peer pickups now un-mark the aged-item tracker")
+end
