@@ -1,12 +1,12 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.1.7",
+    "Version":  "0.1.8",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "Cleanup legacy AnomalyCoop-* dopo Apply Update e a fine Installer",
+    "Notes":  "Steam HOST/PLAY = applaunch 41700 + Launch Options bridge %command% (presence CoP, Join≠vanilla)",
     "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
-    "PackageSha256":  "2194a5cd14c6474fb355ceab0fd7b96487abd01f4676bf8507526c88879b73ee",
-    "PublishedUtc":  "2026-09-08T18:47:56.9618203Z",
+    "PackageSha256":  "2423eccb93320cf3965cc25f4fcccbbb4914256f9ba1683746c70fa06723d350",
+    "PublishedUtc":  "2026-09-08T19:42:02.3812733Z",
     "MinLauncherVersion":  "0.1.0"
 }
