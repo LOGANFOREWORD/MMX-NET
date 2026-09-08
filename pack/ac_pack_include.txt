@@ -1,0 +1,14 @@
+# Elenco file relativi alla root MMX-Net da includere nel pack aggiornamento.
+# Una riga = un percorso relativo. # e ; = commento.
+# I file root (ac_version.json, bridge, launcher, …) sono già inclusi da PackService.
+# File assenti nella build vengono SKIP (non bloccano il pack).
+
+gamedata/configs/axr_options.ltx
+
+xrRazom-release.txt
+gamedata/scripts/xrr_core.script
+gamedata/scripts/xrr_net_client.script
+gamedata/scripts/xrr_net_server.script
+gamedata/scripts/xrr_callbacks.script
+bin/steam_api64.dll
+bin/GameNetworkingSockets.dll
