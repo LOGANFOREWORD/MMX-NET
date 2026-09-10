@@ -1,8 +1,8 @@
 {
   "Name": "MMX-Net",
-  "Version": "0.1.23",
+  "Version": "0.1.24",
   "Channel": "dev",
   "Protocol": "89",
   "Engine": "ST",
-  "Notes": "PLAY join-ready \u002B OSPITA host (user/DEVKIT); StartGame accende host; bridge Steam CoP; map marks peer"
+  "Notes": "fix CTD post-splash: pack ui_mcm.script \u002B guard ui_main_menu; health FATAL se manca MCM"
 }
