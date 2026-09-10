@@ -1,12 +1,12 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.1.21",
+    "Version":  "0.1.22",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "Fix bridge Steam CoP: no start orfano, Join Game = Anomaly + overlay",
+    "Notes":  "Lounge launcher user, bridge Steam CoP, map marks peer, feed MMX-NET pubblico",
     "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
-    "PackageSha256":  "9651cc6127d060f982a5e787d25c4f9275ecfdc92e4942f65345b7a6dd9b05d1",
-    "PublishedUtc":  "2026-09-08T23:47:19.0877424Z",
+    "PackageSha256":  "2df2b6bd8aa2f82fe62abb4899201d40f111cc99d57be85db84bdaca4dc9e7bc",
+    "PublishedUtc":  "2026-09-10T16:52:49.0146371Z",
     "MinLauncherVersion":  "0.1.0"
 }

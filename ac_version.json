@@ -1,8 +1,8 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.1.21",
+    "Version":  "0.1.22",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "Fix bridge Steam CoP: no start orfano, Join Game = Anomaly + overlay"
+    "Notes":  "Lounge launcher user, bridge Steam CoP, map marks peer, feed MMX-NET pubblico"
 }
