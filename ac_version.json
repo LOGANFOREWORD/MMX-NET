@@ -1,8 +1,8 @@
-{
-  "Name": "MMX-Net",
-  "Version": "0.1.25",
-  "Channel": "dev",
-  "Protocol": "89",
-  "Engine": "ST",
-  "Notes": "fix CTD post-splash: pack ui_mcm.script \u002B guard ui_main_menu; health FATAL se manca MCM"
+﻿{
+    "Name":  "MMX-Net",
+    "Version":  "0.1.25",
+    "Channel":  "dev",
+    "Protocol":  "89",
+    "Engine":  "ST",
+    "Notes":  "Steam overlay+Join: Launch Options prima di avviare Steam; bridge sync; MessageBox restart una tantum; MCM CTD fix"
 }
