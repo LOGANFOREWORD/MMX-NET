@@ -10,8 +10,7 @@ Repo PUBBLICA MMX-NET: nessun PAT.
   Dopo CARICA: push automatico se PublishTarget e' il clone feed,
   oppure toolkit\push_update_feed.ps1
 
-Launcher: se updateFeedUrl punta ancora a MMX-NET-feed,
-all'avvio migra a MMX-NET e salva ac_config.
+Launcher: URL legacy *-feed vengono migrati a MMX-NET all'avvio.
 
 Solo LOGANFOREWORD puo' pushare. Vedi FEED_PRIVATO_AMICI.md
 

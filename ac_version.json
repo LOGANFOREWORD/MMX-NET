@@ -1,8 +1,8 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.1.22",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "Lounge launcher user, bridge Steam CoP, map marks peer, feed MMX-NET pubblico"
+{
+  "Name": "MMX-Net",
+  "Version": "0.1.23",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "PLAY join-ready \u002B OSPITA host (user/DEVKIT); StartGame accende host; bridge Steam CoP; map marks peer"
 }

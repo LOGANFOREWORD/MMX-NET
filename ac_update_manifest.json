@@ -1,12 +1,12 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.1.22",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "Lounge launcher user, bridge Steam CoP, map marks peer, feed MMX-NET pubblico",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
-    "PackageSha256":  "2df2b6bd8aa2f82fe62abb4899201d40f111cc99d57be85db84bdaca4dc9e7bc",
-    "PublishedUtc":  "2026-09-10T16:52:49.0146371Z",
-    "MinLauncherVersion":  "0.1.0"
+{
+  "Name": "MMX-Net",
+  "Version": "0.1.23",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "PLAY join-ready \u002B OSPITA host (user/DEVKIT); StartGame accende host; bridge Steam CoP; map marks peer",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
+  "PackageSha256": "6e56e2ad7c9b18fb7fa34376e8232b823ed39b8ca7426fd49abc793c1f6a3cc8",
+  "PublishedUtc": "2026-09-10T17:30:16.1898715Z",
+  "MinLauncherVersion": "0.1.0"
 }
