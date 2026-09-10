@@ -1,12 +1,12 @@
 {
   "Name": "MMX-Net",
-  "Version": "0.1.24",
+  "Version": "0.1.25",
   "Channel": "dev",
   "Protocol": "89",
   "Engine": "ST",
   "Notes": "fix CTD post-splash: pack ui_mcm.script \u002B guard ui_main_menu; health FATAL se manca MCM",
   "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
-  "PackageSha256": "2d3b8cf21707c9acdc417f9ad240f330762e0c12f6099eee3c3ce1b74d59c9da",
-  "PublishedUtc": "2026-09-10T17:48:59.4096599Z",
+  "PackageSha256": "c6bc517414a0ff5ca1a2a2cbdf3360682baacb1855c4b2c9afb7b1cfc16774df",
+  "PublishedUtc": "2026-09-10T17:49:22.3410764Z",
   "MinLauncherVersion": "0.1.0"
 }
