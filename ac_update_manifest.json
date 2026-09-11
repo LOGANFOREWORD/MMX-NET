@@ -1,12 +1,12 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.1.43",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "Amici: FATAL spiega Full.2=vanilla; serve xrRazom Full Bundle; MCM feed-first 0.1.42+",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.43",
-    "PackageSha256":  "3dedac5c4caa4f7cfd4d24c5de6162310673ae905ebd822d94da16c12593bb7c",
-    "PublishedUtc":  "2026-09-11T22:07:22.8625433Z",
-    "MinLauncherVersion":  "0.1.0"
+{
+  "Name": "MMX-Net",
+  "Version": "0.1.44",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "Amici: FATAL spiega Full.2=vanilla; serve xrRazom Full Bundle; MCM feed-first 0.1.42\u002B",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.44",
+  "PackageSha256": "169be68dfaca4e41ac07e89fe53582e91e64443b9d9643f76f984504396e7dd3",
+  "PublishedUtc": "2026-09-11T22:09:30.2419116Z",
+  "MinLauncherVersion": "0.1.0"
 }
