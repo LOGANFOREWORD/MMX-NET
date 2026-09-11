@@ -1,8 +1,8 @@
-{
-  "Name": "MMX-Net",
-  "Version": "0.1.29",
-  "Channel": "dev",
-  "Protocol": "89",
-  "Engine": "ST",
-  "Notes": "Feed SHA coerente; lingue; CD key suppress; no desktop uninstall shortcut"
+﻿{
+    "Name":  "MMX-Net",
+    "Version":  "0.1.30",
+    "Channel":  "dev",
+    "Protocol":  "89",
+    "Engine":  "ST",
+    "Notes":  "Join FATAL se Launch Options senza bridge; CD key watchdog; PackageUrl ?v=; bridge+launcher gia nel pack"
 }
