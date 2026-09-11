@@ -1,12 +1,12 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.1.28",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "Feed SHA coerente; lingue; CD key suppress; no desktop uninstall shortcut",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.28",
-    "PackageSha256":  "459d599f150704f0260a219502d7a1ba01223a40aa7d57be3a596dd978efdacb",
-    "PublishedUtc":  "2026-09-11T07:36:31.3199237Z",
-    "MinLauncherVersion":  "0.1.0"
+{
+  "Name": "MMX-Net",
+  "Version": "0.1.29",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "Feed SHA coerente; lingue; CD key suppress; no desktop uninstall shortcut",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
+  "PackageSha256": "bd1dbf73a3b1828fbe8a353d30d4cbb07384b7750eb49e31a992fc8bad09430b",
+  "PublishedUtc": "2026-09-11T07:52:38.8651733Z",
+  "MinLauncherVersion": "0.1.0"
 }
