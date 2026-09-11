@@ -1,8 +1,8 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.1.36",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "Fix amici: authority scripts + HEALTH Join trust; extras MCM sul feed; bridge Join-\u003eAnomaly"
+{
+  "Name": "MMX-Net",
+  "Version": "0.1.37",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "Fix amici: authority scripts \u002B HEALTH Join trust; extras MCM sul feed; bridge Join-\u003EAnomaly"
 }
