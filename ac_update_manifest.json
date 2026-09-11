@@ -1,12 +1,12 @@
 {
   "Name": "MMX-Net",
-  "Version": "0.1.39",
+  "Version": "0.1.40",
   "Channel": "dev",
   "Protocol": "89",
   "Engine": "ST",
   "Notes": "Fix amici: authority scripts \u002B HEALTH Join trust; extras MCM sul feed; bridge Join-\u003EAnomaly",
-  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.39",
-  "PackageSha256": "2c178912dad9944fae7a017ef93557875f3dd39b1c00eb9d1c08cbf9d51a6ded",
-  "PublishedUtc": "2026-09-11T19:02:52.9590367Z",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.40",
+  "PackageSha256": "d9fd07669cc5a94ac9706f450984693ada4d6435b347ae010c1a681e41c69d82",
+  "PublishedUtc": "2026-09-11T20:24:15.5537713Z",
   "MinLauncherVersion": "0.1.0"
 }
