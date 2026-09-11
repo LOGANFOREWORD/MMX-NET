@@ -1,12 +1,12 @@
 {
   "Name": "MMX-Net",
-  "Version": "0.1.31",
+  "Version": "0.1.32",
   "Channel": "dev",
   "Protocol": "89",
   "Engine": "ST",
   "Notes": "Join FATAL se Launch Options senza bridge; CD key watchdog; PackageUrl ?v=; bridge\u002Blauncher gia nel pack",
-  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
-  "PackageSha256": "9ea2bbf219e225ee4bc303eb7ccb6a7a8a8345f1c3a6bacdb54ae63197f480fd",
-  "PublishedUtc": "2026-09-11T09:09:59.8428947Z",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.32",
+  "PackageSha256": "2a939e1368c007e84fdbc7f5384670fa87b959b54b663e33b64f1a7eb0ae2cb0",
+  "PublishedUtc": "2026-09-11T10:24:10.5167710Z",
   "MinLauncherVersion": "0.1.0"
 }
