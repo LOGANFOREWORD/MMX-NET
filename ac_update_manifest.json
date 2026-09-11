@@ -6,7 +6,7 @@
   "Engine": "ST",
   "Notes": "Fix amici: authority scripts \u002B HEALTH Join trust; extras MCM sul feed; bridge Join-\u003EAnomaly",
   "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.39",
-  "PackageSha256": "92544be971832b569092a2dbd1d7305c2feab6e4cd557b4aac434842a77f5abb",
-  "PublishedUtc": "2026-09-11T18:55:58.4954442Z",
+  "PackageSha256": "2c178912dad9944fae7a017ef93557875f3dd39b1c00eb9d1c08cbf9d51a6ded",
+  "PublishedUtc": "2026-09-11T19:02:52.9590367Z",
   "MinLauncherVersion": "0.1.0"
 }
