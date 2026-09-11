@@ -1,12 +1,12 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.1.27",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "Pack fix: modxml_xrr_main_menu (+ option lock/group_action) — Connect to Session nel menu amici",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
-    "PackageSha256":  "2d6dc1ad5b54c6f07ddfa0ed7eaf1f60ec74f357d206a4bd46e5ec0435d0f979",
-    "PublishedUtc":  "2026-09-11T04:38:27.6935869Z",
-    "MinLauncherVersion":  "0.1.0"
+{
+  "Name": "MMX-Net",
+  "Version": "0.1.27",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "Pack fix: modxml_xrr_main_menu (\u002B option lock/group_action) \u00E2\u20AC\u201D Connect to Session nel menu amici",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
+  "PackageSha256": "b6bf98f35492c62ea9eac2ce56fbad58ecb313eaefa637b9d6ff7b78dbcf8f3f",
+  "PublishedUtc": "2026-09-11T07:15:43.8605452Z",
+  "MinLauncherVersion": "0.1.0"
 }

@@ -1,6 +1,18 @@
-﻿MMX-Net update feed (amici)
-===========================
-Versione: 0.1.25
-Dopo AGGIORNA: fai PLAY una volta (scrive Launch Options CoP → bridge).
-Se Join apre ancora Call of Pripyat vanilla: chiudi Steam a mano, riapri, PLAY, poi Join.
-Overlay = Anomaly avviato via Steam -applaunch (processo figlio), non avvio diretto.
+MMX-Net — feed aggiornamenti
+================================
+
+URL da mettere in ac_config.json → updateFeedUrl (amici):
+https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/
+
+Repo PUBBLICA MMX-NET: nessun PAT.
+  Un token «che non scade mai» NON serve e NON va messo nello zip.
+  Write solo owner LOGANFOREWORD.
+  Dopo CARICA: push automatico se PublishTarget e' il clone feed,
+  oppure toolkit\push_update_feed.ps1
+
+Launcher: URL legacy *-feed vengono migrati a MMX-NET all'avvio.
+
+Solo LOGANFOREWORD puo' pushare. Vedi FEED_PRIVATO_AMICI.md
+
+Il launcher utente all'avvio (checkUpdatesOnStart: true) mostra il popup
+se ac_update_manifest.json ha Version maggiore della locale.
