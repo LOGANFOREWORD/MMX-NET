@@ -1,8 +1,8 @@
-{
-  "Name": "MMX-Net",
-  "Version": "0.1.27",
-  "Channel": "dev",
-  "Protocol": "89",
-  "Engine": "ST",
-  "Notes": "Pack fix: modxml_xrr_main_menu (\u002B option lock/group_action) \u00E2\u20AC\u201D Connect to Session nel menu amici"
+﻿{
+    "Name":  "MMX-Net",
+    "Version":  "0.1.28",
+    "Channel":  "dev",
+    "Protocol":  "89",
+    "Engine":  "ST",
+    "Notes":  "Feed SHA coerente; lingue; CD key suppress; no desktop uninstall shortcut"
 }
