@@ -1,0 +1,18 @@
+﻿{
+    "Name":  "MMX-Net Extras",
+    "PublishedUtc":  "2026-09-11T18:26:08.4675493Z",
+    "Packages":  [
+                     {
+                         "Id":  "mcm",
+                         "Name":  "Anomaly Mod Configuration Menu (MCM)",
+                         "Version":  "1.6.0",
+                         "PackageUrl":  "extras/mcm.zip",
+                         "PackageSha256":  "3d974eb937ee1d2539d32493de20b460a8b31d079db99a8dc13feb3dd5f1fbba",
+                         "ModDbPageUrl":  "https://www.moddb.com/mods/stalker-anomaly/addons/modular-configuration-menu",
+                         "ModDbDownloadUrl":  "https://www.moddb.com/addons/start/208560",
+                         "ModDbMirrorUrl":  "https://www.moddb.com/downloads/mirror/208560/134/5e053f1e967905aef6e83b93f7a1e3bf/",
+                         "GitHubUrl":  "https://github.com/RAX-Anomaly/Anomaly-Mod-Configuration-Menu",
+                         "Notes":  "Opzionale. Upstream ModDB/GitHub. Mirror one-shot ModDB scadono; feed MMX-NET e la fonte runtime preferita."
+                     }
+                 ]
+}

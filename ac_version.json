@@ -1,8 +1,8 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.1.35",
+    "Version":  "0.1.36",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "HEALTH onesto: engine xrRazom + Join runtime (no falso PASS Launch Options); pack include dxml_core per Connect"
+    "Notes":  "Fix amici: authority scripts + HEALTH Join trust; extras MCM sul feed; bridge Join-\u003eAnomaly"
 }
