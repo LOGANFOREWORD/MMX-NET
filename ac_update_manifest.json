@@ -1,12 +1,12 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.1.25",
+    "Version":  "0.1.26",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "Steam overlay+Join: Launch Options prima di avviare Steam; bridge sync; MessageBox restart una tantum; MCM CTD fix",
+    "Notes":  "P0 coop: session/rejoin soft-exit + pending TTL; alife_release double-free/host-owned; Steam MessageBox only if Join opens vanilla; peer stash release via client despawn",
     "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
-    "PackageSha256":  "9a0e91d7a8fe29a7d99fb646e3a14be8cd591a17ebbefc3ac5f41edb44197874",
-    "PublishedUtc":  "2026-09-10T18:06:05.8057323Z",
+    "PackageSha256":  "5b627b150d293f5f57c3e5a467b7d33f2f9248838c8db3a4b9405596a5d2647a",
+    "PublishedUtc":  "2026-09-11T03:48:30.8024663Z",
     "MinLauncherVersion":  "0.1.0"
 }

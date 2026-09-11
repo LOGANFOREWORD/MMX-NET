@@ -1,8 +1,8 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.1.25",
+    "Version":  "0.1.26",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "Steam overlay+Join: Launch Options prima di avviare Steam; bridge sync; MessageBox restart una tantum; MCM CTD fix"
+    "Notes":  "P0 coop: session/rejoin soft-exit + pending TTL; alife_release double-free/host-owned; Steam MessageBox only if Join opens vanilla; peer stash release via client despawn"
 }
