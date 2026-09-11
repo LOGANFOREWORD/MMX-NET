@@ -1,8 +1,8 @@
-{
-  "Name": "MMX-Net",
-  "Version": "0.1.34",
-  "Channel": "dev",
-  "Protocol": "89",
-  "Engine": "ST",
-  "Notes": "Uninstaller aggiornato (lista file \u002B icona MMX-NET) nel pack; FDD ~0.5MB (serve .NET 9 Desktop Runtime per disinstallare)"
+﻿{
+    "Name":  "MMX-Net",
+    "Version":  "0.1.35",
+    "Channel":  "dev",
+    "Protocol":  "89",
+    "Engine":  "ST",
+    "Notes":  "HEALTH onesto: engine xrRazom + Join runtime (no falso PASS Launch Options); pack include dxml_core per Connect"
 }

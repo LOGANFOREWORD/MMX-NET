@@ -1,12 +1,12 @@
-{
-  "Name": "MMX-Net",
-  "Version": "0.1.34",
-  "Channel": "dev",
-  "Protocol": "89",
-  "Engine": "ST",
-  "Notes": "Uninstaller aggiornato (lista file \u002B icona MMX-NET) nel pack; FDD ~0.5MB (serve .NET 9 Desktop Runtime per disinstallare)",
-  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.34",
-  "PackageSha256": "e315ba4a7d58614559930f3e39c673105d03ca5379c3c339eb859ed5a6763121",
-  "PublishedUtc": "2026-09-11T11:05:38.5889220Z",
-  "MinLauncherVersion": "0.1.0"
+﻿{
+    "Name":  "MMX-Net",
+    "Version":  "0.1.35",
+    "Channel":  "dev",
+    "Protocol":  "89",
+    "Engine":  "ST",
+    "Notes":  "HEALTH onesto: engine xrRazom + Join runtime (no falso PASS Launch Options); pack include dxml_core per Connect",
+    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.35",
+    "PackageSha256":  "6ef0869852c5ad24eca09bbf1bb696fea0ae5391a668c7679ace8eea0fa6ab25",
+    "PublishedUtc":  "2026-09-11T11:59:36.6774430Z",
+    "MinLauncherVersion":  "0.1.0"
 }
