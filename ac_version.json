@@ -1,8 +1,8 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.1.26",
+    "Version":  "0.1.27",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "P0 coop: session/rejoin soft-exit + pending TTL; alife_release double-free/host-owned; Steam MessageBox only if Join opens vanilla; peer stash release via client despawn"
+    "Notes":  "Pack fix: modxml_xrr_main_menu (+ option lock/group_action) — Connect to Session nel menu amici"
 }

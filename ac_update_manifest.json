@@ -1,12 +1,12 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.1.26",
+    "Version":  "0.1.27",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "P0 coop: session/rejoin soft-exit + pending TTL; alife_release double-free/host-owned; Steam MessageBox only if Join opens vanilla; peer stash release via client despawn",
+    "Notes":  "Pack fix: modxml_xrr_main_menu (+ option lock/group_action) — Connect to Session nel menu amici",
     "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip",
-    "PackageSha256":  "5b627b150d293f5f57c3e5a467b7d33f2f9248838c8db3a4b9405596a5d2647a",
-    "PublishedUtc":  "2026-09-11T03:48:30.8024663Z",
+    "PackageSha256":  "2d6dc1ad5b54c6f07ddfa0ed7eaf1f60ec74f357d206a4bd46e5ec0435d0f979",
+    "PublishedUtc":  "2026-09-11T04:38:27.6935869Z",
     "MinLauncherVersion":  "0.1.0"
 }
