@@ -1,12 +1,12 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.1.44",
+    "Version":  "0.1.46",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "Amici: pack installa ui_options_modded_exes*; Addons/installer applicano xrRazom Full Bundle zip; MCM feed-first",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.44",
-    "PackageSha256":  "117ce124a0520ffd5fa25d95b77c995aad0dce51a4d5a3d73a245173c8ca0ac9",
-    "PublishedUtc":  "2026-09-11T22:46:10.4479673Z",
+    "Notes":  "Rename overlay xrr_* → mmx_net_* (engine-safe); LegacyCleanup rimuove vecchi xrr; API engine xrr_player_name invariata",
+    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.46",
+    "PackageSha256":  "d0ba11f61a5f5cc67906e21fd2d77bc355db42b6c14d0fd69b6f8d3b4a9d2993",
+    "PublishedUtc":  "2026-09-12T02:14:48.6088847Z",
     "MinLauncherVersion":  "0.1.0"
 }
