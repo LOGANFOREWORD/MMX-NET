@@ -1,12 +1,12 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.1.46",
+    "Version":  "0.1.47",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "Rename overlay xrr_* → mmx_net_* (engine-safe); LegacyCleanup rimuove vecchi xrr; API engine xrr_player_name invariata",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.46",
-    "PackageSha256":  "d0ba11f61a5f5cc67906e21fd2d77bc355db42b6c14d0fd69b6f8d3b4a9d2993",
-    "PublishedUtc":  "2026-09-12T02:14:48.6088847Z",
+    "Notes":  "Riallineamento post-rename; overlay xrr_*; no mmx_net. Brand log/UI MMX-Net.",
+    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.47",
+    "PackageSha256":  "c7b69bd4906da9b56e40517f3e0418c613e29162c80084c965097b8023c46ed9",
+    "PublishedUtc":  "2026-09-12T07:06:47.2071084Z",
     "MinLauncherVersion":  "0.1.0"
 }

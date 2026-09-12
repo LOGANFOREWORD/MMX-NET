@@ -1,8 +1,8 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.1.46",
+    "Version":  "0.1.47",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "Rename overlay xrr_* → mmx_net_* (engine-safe); LegacyCleanup rimuove vecchi xrr; API engine xrr_player_name invariata"
+    "Notes":  "Riallineamento post-rename; overlay xrr_*; no mmx_net. Brand log/UI MMX-Net."
 }
