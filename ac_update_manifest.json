@@ -1,12 +1,22 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.1.47",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "Riallineamento post-rename; overlay xrr_*; no mmx_net. Brand log/UI MMX-Net.",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.47",
-    "PackageSha256":  "c7b69bd4906da9b56e40517f3e0418c613e29162c80084c965097b8023c46ed9",
-    "PublishedUtc":  "2026-09-12T07:06:47.2071084Z",
-    "MinLauncherVersion":  "0.1.0"
+{
+  "Name": "MMX-Net",
+  "Version": "0.1.49C",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "\u2022 Controllo salute pi\u00F9 chiaro, con RIPARA STEAM se serve.\n\u2022 PLAY bloccato se c\u2019\u00E8 un errore grave.\n\u2022 Prima di entrare: controllo semplice e leggibile.\n\u2022 Home: copia sessione, avviso se c\u2019\u00E8 un aggiornamento, chip Host.\n\u2022 Dopo AGGIORNA: controllo file overlay.\n\u2022 Musica nel launcher (si spegne al PLAY).\n\u2022 Menu di gioco con immagini nuove.",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.49C",
+  "PackageSha256": "31298698d1d8de3d44b37d24f5ee2846ba18668eac9698861bd121a4724a2848",
+  "PublishedUtc": "2026-09-13T19:13:50.0110442Z",
+  "MinLauncherVersion": "0.1.0",
+  "OverlayKeySha256": {
+    "ac_version.json": "07cad7d844693ce7250826d09d8dee224e9dffe4913d0dff2af8e7a82eb82706",
+    "ac_steam_cop_bridge.cmd": "105b7eb2a1aaf1db840a84548e0e3161c02f561540068a50177ce58d71579184",
+    "ac_steam_launch.args": "55bfade880b8e6e24cd369f7d3d04611fdb5e44f60084c1e520690f04413fb54",
+    "gamedata\\configs\\axr_options.ltx": "07a0e104a91cb494c2d0fe7a6da809ed130ba4f520d2253513010446b54dd2a7",
+    "gamedata\\scripts\\xrr_core.script": "3e06e686f9043b56d7d0daa5d83403efa206157b1d8b7ed28a62acf601fead3d",
+    "gamedata\\scripts\\xrr_net_client.script": "9ee6074878c78a0881349d95ad09a59ff51c6ed5ec3cbaceea6c204f1141ead1",
+    "gamedata\\scripts\\xrr_net_server.script": "0b8fc02bb27b21b00253f94001b9ff53a4201dbd1ca99c4952861cb929f7e44a",
+    "gamedata\\scripts\\xrr_callbacks.script": "3dae743c1fe76b84ff4bb650467b45bbdd0670139cdcc60eec02d02a758f23b5"
+  }
 }

@@ -1,8 +1,8 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.1.47",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "Riallineamento post-rename; overlay xrr_*; no mmx_net. Brand log/UI MMX-Net."
+{
+  "Name": "MMX-Net",
+  "Version": "0.1.49C",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "\u2022 Controllo salute pi\u00F9 chiaro, con RIPARA STEAM se serve.\n\u2022 PLAY bloccato se c\u2019\u00E8 un errore grave.\n\u2022 Prima di entrare: controllo semplice e leggibile.\n\u2022 Home: copia sessione, avviso se c\u2019\u00E8 un aggiornamento, chip Host.\n\u2022 Dopo AGGIORNA: controllo file overlay.\n\u2022 Musica nel launcher (si spegne al PLAY).\n\u2022 Menu di gioco con immagini nuove."
 }
