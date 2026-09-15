@@ -1,22 +1,22 @@
 {
   "Name": "MMX-Net",
-  "Version": "0.1.54",
+  "Version": "0.1.56",
   "Channel": "dev",
   "Protocol": "89",
   "Engine": "ST",
   "Notes": "\u00E2\u20AC\u00A2 Controllo salute pi\u00C3\u00B9 chiaro, con RIPARA STEAM se serve.\n\u00E2\u20AC\u00A2 PLAY bloccato se c\u00E2\u20AC\u2122\u00C3\u00A8 un errore grave.\n\u00E2\u20AC\u00A2 Prima di entrare: controllo semplice e leggibile.\n\u00E2\u20AC\u00A2 Home: copia sessione, avviso se c\u00E2\u20AC\u2122\u00C3\u00A8 un aggiornamento, chip Host.\n\u00E2\u20AC\u00A2 Dopo AGGIORNA: controllo file overlay.\n\u00E2\u20AC\u00A2 Musica nel launcher (si spegne al PLAY).\n\u00E2\u20AC\u00A2 Menu di gioco con immagini nuove.\n\u00E2\u20AC\u00A2 Fix HEALTH: niente PROBLEM falso su ac_version dopo AGGIORNA/install.",
-  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.54",
-  "PackageSha256": "27374dd568860382d1960a715c3f642c286b8480743b87e1f73159c8490dfdc0",
-  "PublishedUtc": "2026-09-13T22:03:46.4113590Z",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.56",
+  "PackageSha256": "9dbc6857c29c9ca419e58a38ef9d50cd2c611cc47632678000e82eb1c9eea6c6",
+  "PublishedUtc": "2026-09-15T16:27:54.3527174Z",
   "MinLauncherVersion": "0.1.0",
   "OverlayKeySha256": {
-    "ac_version.json": "4e17eb596f36cadc83b7cc99cee0e2902ea4eb9be720e1f646a7b6c74d2e5317",
+    "ac_version.json": "0c18e247aa4a6da0062b3e8e8b62298166d4aff1e367f2520cd8e2cdeeee7418",
     "ac_steam_cop_bridge.cmd": "105b7eb2a1aaf1db840a84548e0e3161c02f561540068a50177ce58d71579184",
     "ac_steam_launch.args": "55bfade880b8e6e24cd369f7d3d04611fdb5e44f60084c1e520690f04413fb54",
-    "gamedata\\configs\\axr_options.ltx": "07a0e104a91cb494c2d0fe7a6da809ed130ba4f520d2253513010446b54dd2a7",
-    "gamedata\\scripts\\xrr_core.script": "3e06e686f9043b56d7d0daa5d83403efa206157b1d8b7ed28a62acf601fead3d",
-    "gamedata\\scripts\\xrr_net_client.script": "9ee6074878c78a0881349d95ad09a59ff51c6ed5ec3cbaceea6c204f1141ead1",
-    "gamedata\\scripts\\xrr_net_server.script": "0b8fc02bb27b21b00253f94001b9ff53a4201dbd1ca99c4952861cb929f7e44a",
-    "gamedata\\scripts\\xrr_callbacks.script": "3dae743c1fe76b84ff4bb650467b45bbdd0670139cdcc60eec02d02a758f23b5"
+    "gamedata\\configs\\axr_options.ltx": "6031bb00343dc62d224a405d348f71d793b363e985c251cd97f1ff42de1d888d",
+    "gamedata\\scripts\\MMX_NET_core.script": "a77c723ab7202a77066b87019496a34741a5bbcd1af5a2c537649d5fd4aba3a6",
+    "gamedata\\scripts\\MMX_NET_net_client.script": "fbb80d8303f665c4ea65521d743a24680553cea34df30cd664b1891b9db87c36",
+    "gamedata\\scripts\\MMX_NET_net_server.script": "6ceb48612d84a96eaa65d031af10c4d50ef197abd68f797b820ce89af6d7f9dd",
+    "gamedata\\scripts\\MMX_NET_callbacks.script": "54b9c2fbb6bc6880235811c26129190e25280cc5bc3e8437c14ab58bb34b37f8"
   }
 }
