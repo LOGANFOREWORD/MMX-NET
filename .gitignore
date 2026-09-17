@@ -58,4 +58,7 @@ desktop.ini
 !/ac-update.zip
 !/ac_update_manifest.json
 !/ac_version.json
+!/ac_extras_manifest.json
+!/extras/
+!/extras/*.zip
 !/pack/
