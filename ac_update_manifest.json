@@ -1,23 +1,23 @@
 {
-    "Name":  "MMX-Net",
-    "Version":  "0.1.87",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "* Fix Settings in-game: keybind mmx_lobby_code non iniettato (hang UIOptions); path Options come Anomaly Xrrazom.\n* Join soft-timeout half-open (25s) + tip peer stuck (xrRazom-like); no EndSession se GNS gia connesso.\n* Serve Base Coop (zip MMX-Net-Base-Coop) + MCM: AGGIORNA da solo non basta.\n* Addons -\u003e Installa base coop se HEALTH FATAL su xrr_player_name.\n* Addons -\u003e Installa MCM se manca ui_mcm / MCM incompleto.\n* Fix CTD menu/inventory: currency + MMX_NET_send_money.\n* Controllo salute piu chiaro, RIPARA STEAM se serve; PLAY apre CTA se FATAL.\n* Musica launcher; menu di gioco con immagini nuove.",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.87",
-    "PackageSha256":  "afdbba66c22a218ddf3f0310acc12260924fa673908c1d62c458ecdec66bfd03",
-    "PublishedUtc":  "2026-09-28T22:01:55.5129685Z",
-    "MinLauncherVersion":  "0.1.0",
-    "OverlayKeySha256":  {
-                             "ac_version.json":  "40690832c006512bd658489abadf6a2a3d1a43b5b64dfd4098ab8920450b3566",
-                             "ac_steam_cop_bridge.cmd":  "105b7eb2a1aaf1db840a84548e0e3161c02f561540068a50177ce58d71579184",
-                             "ac_steam_launch.args":  "55bfade880b8e6e24cd369f7d3d04611fdb5e44f60084c1e520690f04413fb54",
-                             "gamedata\\scripts\\MMX_NET_core.script":  "19ab99066e655a551f445837cb4ecc1abc76bee3b50e5870078439f040989e82",
-                             "gamedata\\scripts\\MMX_NET_net_client.script":  "1366ce680545c41cdd1bac3efdfcd70067492503c9ce8d71b76b9361fd292120",
-                             "gamedata\\scripts\\MMX_NET_net_server.script":  "5a9a4fcccf898fa5773397d86401c9f7a2ad4e39fe182be39a7757e6e300853b",
-                             "gamedata\\scripts\\MMX_NET_callbacks.script":  "1cf3bac60921d96afe3d24cb3670145b1f47a12557d00e985273b6b11468a634",
-                             "gamedata\\scripts\\MMX_NET_menu.script":  "dccea62321049b5288034cd4493bd42dd0e111b3a2db7ee5a789636c973afe3e",
-                             "gamedata\\scripts\\MMX_NET_join_code.script":  "3f8fe52113ab418b8fbefd1e7f85b6431c86ef5f5f91379ee8fc24a3c71f7a9c"
-                         }
+  "Name": "MMX-Net",
+  "Version": "0.1.88",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "* Fix Settings in-game: keybind mmx_lobby_code non iniettato (hang UIOptions); path Options come Anomaly Xrrazom.\n* Join soft-timeout half-open (25s) \u002B tip peer stuck (xrRazom-like); no EndSession se GNS gia connesso.\n* Serve Base Coop (zip MMX-Net-Base-Coop) \u002B MCM: AGGIORNA da solo non basta.\n* Addons -\u003E Installa base coop se HEALTH FATAL su xrr_player_name.\n* Addons -\u003E Installa MCM se manca ui_mcm / MCM incompleto.\n* Fix CTD menu/inventory: currency \u002B MMX_NET_send_money.\n* Controllo salute piu chiaro, RIPARA STEAM se serve; PLAY apre CTA se FATAL.\n* Musica launcher; menu di gioco con immagini nuove.",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.88",
+  "PackageSha256": "f8df433c62b98a67c0b1672a64f92b22d4f5e166206585a069beabcc239fd49d",
+  "PublishedUtc": "2026-09-28T22:04:15.1178435Z",
+  "MinLauncherVersion": "0.1.0",
+  "OverlayKeySha256": {
+    "ac_version.json": "62f4ded87c4df3aa81f2bcf6f9544c3c3f9ae01de9b0701127fdf9a6477c0e79",
+    "ac_steam_cop_bridge.cmd": "105b7eb2a1aaf1db840a84548e0e3161c02f561540068a50177ce58d71579184",
+    "ac_steam_launch.args": "55bfade880b8e6e24cd369f7d3d04611fdb5e44f60084c1e520690f04413fb54",
+    "gamedata\\scripts\\MMX_NET_core.script": "19ab99066e655a551f445837cb4ecc1abc76bee3b50e5870078439f040989e82",
+    "gamedata\\scripts\\MMX_NET_net_client.script": "1366ce680545c41cdd1bac3efdfcd70067492503c9ce8d71b76b9361fd292120",
+    "gamedata\\scripts\\MMX_NET_net_server.script": "5a9a4fcccf898fa5773397d86401c9f7a2ad4e39fe182be39a7757e6e300853b",
+    "gamedata\\scripts\\MMX_NET_callbacks.script": "1cf3bac60921d96afe3d24cb3670145b1f47a12557d00e985273b6b11468a634",
+    "gamedata\\scripts\\MMX_NET_menu.script": "dccea62321049b5288034cd4493bd42dd0e111b3a2db7ee5a789636c973afe3e",
+    "gamedata\\scripts\\MMX_NET_join_code.script": "3f8fe52113ab418b8fbefd1e7f85b6431c86ef5f5f91379ee8fc24a3c71f7a9c"
+  }
 }

@@ -1,26 +1,26 @@
 {
-    "Name":  "MMX-Net Extras",
-    "PublishedUtc":  "2026-09-28T22:01:55.4395214Z",
-    "Packages":  [
-                     {
-                         "Id":  "mcm",
-                         "Name":  "Anomaly Mod Configuration Menu (MCM)",
-                         "Version":  "1.6.0",
-                         "PackageUrl":  "extras/mcm.zip",
-                         "PackageSha256":  "eccb39326e6302af9b3b31fe39467afb206305c21aa99974f8ec1c9eb255945d",
-                         "ModDbPageUrl":  "https://www.moddb.com/mods/stalker-anomaly/addons/anomaly-mod-configuration-menu",
-                         "ModDbDownloadUrl":  "https://www.moddb.com/addons/start/208560",
-                         "ModDbMirrorUrl":  "https://www.moddb.com/downloads/mirror/208560/134/5e053f1e967905aef6e83b93f7a1e3bf/",
-                         "GitHubUrl":  "https://github.com/RAX-Anomaly/Anomaly-Mod-Configuration-Menu",
-                         "Notes":  "Opzionale. Upstream ModDB/GitHub. Feed MMX-NET fonte runtime preferita."
-                     },
-                     {
-                         "Id":  "essentials",
-                         "Name":  "MMX-Net Essentials (QoL / anti-crash)",
-                         "Version":  "0.1.0",
-                         "PackageUrl":  "extras/essentials.zip",
-                         "PackageSha256":  "43ae09a4910c7801119b6a96636f3d396a9fe5f4528332bd3a899040f1986460",
-                         "Notes":  "Opzionale. Consigliato ma non obbligatorio al Join."
-                     }
-                 ]
+  "Name": "MMX-Net Extras",
+  "PublishedUtc": "2026-09-28T22:04:15.0303510Z",
+  "Packages": [
+    {
+      "Id": "mcm",
+      "Name": "Anomaly Mod Configuration Menu (MCM)",
+      "Version": "1.6.0",
+      "PackageUrl": "extras/mcm.zip",
+      "PackageSha256": "eccb39326e6302af9b3b31fe39467afb206305c21aa99974f8ec1c9eb255945d",
+      "ModDbPageUrl": "https://www.moddb.com/mods/stalker-anomaly/addons/anomaly-mod-configuration-menu",
+      "ModDbDownloadUrl": "https://www.moddb.com/addons/start/208560",
+      "ModDbMirrorUrl": "https://www.moddb.com/downloads/mirror/208560/134/5e053f1e967905aef6e83b93f7a1e3bf/",
+      "GitHubUrl": "https://github.com/RAX-Anomaly/Anomaly-Mod-Configuration-Menu",
+      "Notes": "Opzionale. Upstream ModDB/GitHub. Mirror one-shot ModDB scadono; feed MMX-NET e\u0027 la fonte runtime preferita."
+    },
+    {
+      "Id": "essentials",
+      "Name": "MMX-Net Essentials Survival (anti-crash / QoL)",
+      "Version": "0.1.0",
+      "PackageUrl": "extras/essentials.zip",
+      "PackageSha256": "43ae09a4910c7801119b6a96636f3d396a9fe5f4528332bd3a899040f1986460",
+      "Notes": "Opzionale Survival. Consigliato ma non obbligatorio al Join. Overlay Core resta in AGGIORNA. Stesso essentials.zip."
+    }
+  ]
 }

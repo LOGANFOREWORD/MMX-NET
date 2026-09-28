@@ -1,8 +1,8 @@
 {
-    "Name":  "MMX-Net",
-    "Version":  "0.1.87",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "* Fix Settings in-game: keybind mmx_lobby_code non iniettato (hang UIOptions); path Options come Anomaly Xrrazom.\n* Join soft-timeout half-open (25s) + tip peer stuck (xrRazom-like); no EndSession se GNS gia connesso.\n* Serve Base Coop (zip MMX-Net-Base-Coop) + MCM: AGGIORNA da solo non basta.\n* Addons -\u003e Installa base coop se HEALTH FATAL su xrr_player_name.\n* Addons -\u003e Installa MCM se manca ui_mcm / MCM incompleto.\n* Fix CTD menu/inventory: currency + MMX_NET_send_money.\n* Controllo salute piu chiaro, RIPARA STEAM se serve; PLAY apre CTA se FATAL.\n* Musica launcher; menu di gioco con immagini nuove."
+  "Name": "MMX-Net",
+  "Version": "0.1.88",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "* Fix Settings in-game: keybind mmx_lobby_code non iniettato (hang UIOptions); path Options come Anomaly Xrrazom.\n* Join soft-timeout half-open (25s) \u002B tip peer stuck (xrRazom-like); no EndSession se GNS gia connesso.\n* Serve Base Coop (zip MMX-Net-Base-Coop) \u002B MCM: AGGIORNA da solo non basta.\n* Addons -\u003E Installa base coop se HEALTH FATAL su xrr_player_name.\n* Addons -\u003E Installa MCM se manca ui_mcm / MCM incompleto.\n* Fix CTD menu/inventory: currency \u002B MMX_NET_send_money.\n* Controllo salute piu chiaro, RIPARA STEAM se serve; PLAY apre CTA se FATAL.\n* Musica launcher; menu di gioco con immagini nuove."
 }
