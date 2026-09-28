@@ -1,23 +1,23 @@
 {
   "Name": "MMX-Net",
-  "Version": "0.1.75",
+  "Version": "0.1.76",
   "Channel": "dev",
   "Protocol": "89",
   "Engine": "ST",
   "Notes": "\u2022 Serve Base Coop (zip MMX-Net-Base-Coop) \u002B MCM: AGGIORNA da solo non basta.\n\u2022 Addons \u2192 Installa base coop se HEALTH FATAL su xrr_player_name.\n\u2022 Addons \u2192 Installa MCM se manca ui_mcm / MCM incompleto.\n\u2022 Fix CTD menu amico: pack include MMX_NET_currency \u002B MMX_NET_patch_currency (prima mancavano nello zip).\n\u2022 Controllo salute pi\u00F9 chiaro, con RIPARA STEAM se serve.\n\u2022 PLAY apre CTA se FATAL (base coop / MCM / Steam).\n\u2022 Dopo AGGIORNA: controllo file overlay (.new / AV).\n\u2022 Musica nel launcher (si spegne al PLAY).\n\u2022 Menu di gioco con immagini nuove.\n\u2022 Fix CTD inventory: nodo MMX_NET_send_money in ui_MMX_NET_inventory.xml.",
-  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.75",
-  "PackageSha256": "683761bd47932c051953a17b84653348b77ceaee84e506c836b2d0fcd53241a9",
-  "PublishedUtc": "2026-09-28T17:54:08.1583811Z",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.1.76",
+  "PackageSha256": "1fc2610d7b690fa25b3952cb3124398dc14ebd608f020c97bb5f289ba9028fb2",
+  "PublishedUtc": "2026-09-28T18:58:52.5134482Z",
   "MinLauncherVersion": "0.1.0",
   "OverlayKeySha256": {
-    "ac_version.json": "352b7b8a5732fd82fb07a50438189056d8900a05a1dbdb0112530adaa533f332",
+    "ac_version.json": "1350df056a2082bbeb8ec6161018cb7d5be9d32ae7074c3a2345fffb2a5003b6",
     "ac_steam_cop_bridge.cmd": "105b7eb2a1aaf1db840a84548e0e3161c02f561540068a50177ce58d71579184",
     "ac_steam_launch.args": "55bfade880b8e6e24cd369f7d3d04611fdb5e44f60084c1e520690f04413fb54",
     "gamedata\\scripts\\MMX_NET_core.script": "19ab99066e655a551f445837cb4ecc1abc76bee3b50e5870078439f040989e82",
     "gamedata\\scripts\\MMX_NET_net_client.script": "78b95b6d76f103564203620f4a662e3ab7c74761818bfeed07ba0f4f736c3bc0",
     "gamedata\\scripts\\MMX_NET_net_server.script": "56e4671b592693509163db27a77b9b20ecbbba1015793ffbbcf87e6bd6a39afc",
     "gamedata\\scripts\\MMX_NET_callbacks.script": "1cf3bac60921d96afe3d24cb3670145b1f47a12557d00e985273b6b11468a634",
-    "gamedata\\scripts\\MMX_NET_menu.script": "60cb54c8461a17c376d77732c0748997a9bc019f8f226f016ab71a163e75ed18",
+    "gamedata\\scripts\\MMX_NET_menu.script": "ca6f9ebdc4aac4208e67491b4171968245b8149fd50b2dc405b720f7cf0221c6",
     "gamedata\\scripts\\MMX_NET_join_code.script": "3f8fe52113ab418b8fbefd1e7f85b6431c86ef5f5f91379ee8fc24a3c71f7a9c"
   }
 }
