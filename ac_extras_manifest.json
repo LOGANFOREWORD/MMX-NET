@@ -1,6 +1,6 @@
 {
   "Name": "MMX-Net Extras",
-  "PublishedUtc": "2026-09-28T19:32:43.9488795Z",
+  "PublishedUtc": "2026-09-28T19:50:00.7430960Z",
   "Packages": [
     {
       "Id": "mcm",
@@ -19,7 +19,7 @@
       "Name": "MMX-Net Essentials Survival (anti-crash / QoL)",
       "Version": "0.1.0",
       "PackageUrl": "extras/essentials.zip",
-      "PackageSha256": "c7c6fa12d5cd814e785098c75a94ff6356bfb4c6922b98e9705134fdc550756c",
+      "PackageSha256": "43ae09a4910c7801119b6a96636f3d396a9fe5f4528332bd3a899040f1986460",
       "Notes": "Opzionale Survival. Consigliato ma non obbligatorio al Join. Overlay Core resta in AGGIORNA. Stesso essentials.zip."
     }
   ]
