@@ -1,6 +1,6 @@
 {
   "Name": "MMX-Net Extras",
-  "PublishedUtc": "2026-10-01T14:48:51.1688683Z",
+  "PublishedUtc": "2026-10-01T19:24:00.1423110Z",
   "Packages": [
     {
       "Id": "mcm",
@@ -15,12 +15,108 @@
       "Notes": "Opzionale. Upstream ModDB/GitHub. Mirror one-shot ModDB scadono; feed MMX-NET e\u0027 la fonte runtime preferita."
     },
     {
-      "Id": "essentials",
-      "Name": "MMX-Net Essentials Survival (anti-crash / QoL)",
+      "Id": "mmx-core",
+      "Name": "MMX - Core [Anomaly] (MMX-Net / Logan)",
       "Version": "0.1.0",
-      "PackageUrl": "extras/essentials.zip",
-      "PackageSha256": "f6c1c4b5e14daaa2ad59f93fd1209d8a429a20d50313cf74348ea233eb64d091",
-      "Notes": "Opzionale Survival. Consigliato ma non obbligatorio al Join. Overlay Core resta in AGGIORNA. Stesso essentials.zip."
+      "PackageUrl": "extras/mmx-core.zip",
+      "PackageSha256": "fd3c3a4b474e526b27f8cbf20b3e3a0426a8f4f857592fe09a4a5bf3ce067ad9",
+      "Notes": "Essenziale auto-install. Fix Anomaly MMX. Ex Essentials Survival. Non Base Coop / non overlay MMX_NET."
+    },
+    {
+      "Id": "fdda",
+      "Name": "FDDA Redone (lizzardman)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/fdda.zip",
+      "PackageSha256": "1f7a53f9d128aa04a82481977cc8c4a9b59569634a6e8bcc90b585b0796dbab4",
+      "Notes": "Animazioni FDDA Redone. Autore: lizzardman."
+    },
+    {
+      "Id": "backpack",
+      "Name": "Backpack / Zaino (FDDA Redone)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/backpack.zip",
+      "PackageSha256": "e8b9d97e27da701e8e3ee03929ae678ffd111134420ad3044fd3d2c78a514045",
+      "Notes": "Modulo backpack di FDDA Redone (lizzardman) \u002B patch OuterEater."
+    },
+    {
+      "Id": "footsteps",
+      "Name": "Another Footsteps and Backpack Sounds for Anomaly (UltimateDunkel)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/footsteps.zip",
+      "PackageSha256": "28596e04a2af0706cde053be65e7e9aba4ec131dd130ec4cd680a6f71d565736",
+      "Notes": "Credit: UltimateDunkel \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/another-footsteps-and-backpack-sounds-for-anomaly-made-by-ultimatedunkel-030"
+    },
+    {
+      "Id": "immersive-skinning",
+      "Name": "Immersive Skinning (Utjan)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/immersive-skinning.zip",
+      "PackageSha256": "4c687e21fc8b422403322c9565aa687b4d6a6d54c3a5365c5e253bc6de702e98",
+      "Notes": "Credit: Utjan \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/immersive-skinning"
+    },
+    {
+      "Id": "pda-taskboard",
+      "Name": "Custom iTheon\u0027s PDA Taskboard (lizzardman (base iTheon))",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/pda-taskboard.zip",
+      "PackageSha256": "7514fedc2cd0023a2ac68ef8f2c76cd2baf79ad5983bee41b7bd3001b42f301d",
+      "Notes": "Credit: lizzardman (base iTheon) \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/custom-itheons-pda-taskboard"
+    },
+    {
+      "Id": "outfit-animations",
+      "Name": "Outfit Animations (lizzardman)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/outfit-animations.zip",
+      "PackageSha256": "ea7ebb17dae0319af7341325f8316580572de7ff9b559e7b663f6ae48bfe6d20",
+      "Notes": "Credit: lizzardman \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/outfit-animations-v099"
+    },
+    {
+      "Id": "headgear-animations",
+      "Name": "Headgear Animations (lizzardman)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/headgear-animations.zip",
+      "PackageSha256": "f5429907f2a6fdf717688fd1ee7cd6ee5cf034980f31434bbcc29ca144a330cd",
+      "Notes": "Credit: lizzardman \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/headgear-animations"
+    },
+    {
+      "Id": "fdda-enhanced",
+      "Name": "FDDA Enhanced Animations Enhanced (lizzardman)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/fdda-enhanced.zip",
+      "PackageSha256": "c8217298f038b4a061c32217e46da7989a39bfc3dd767af36c6a9ae48ed0d364",
+      "Notes": "Credit: lizzardman \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/fdda-enhanced-animations-enhanced"
+    },
+    {
+      "Id": "weapon-inertia-expanded",
+      "Name": "Weapon Inertia Expanded (lizzardman)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/weapon-inertia-expanded.zip",
+      "PackageSha256": "debb906170a9238150e61360ff6d729978430ab81837d04b4f474956d7282b15",
+      "Notes": "Credit: lizzardman \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/weapon-inertia-expanded"
+    },
+    {
+      "Id": "thap-small",
+      "Name": "T.H.A.P. Small Re-Rework (Max_im16)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/thap-small.zip",
+      "PackageSha256": "9faa7904d91181f9297ba74d922254508337d2b553be584515c5427011a77567",
+      "Notes": "Credit: Max_im16 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/thap-small-re-rework"
+    },
+    {
+      "Id": "npc-wound-tweak",
+      "Name": "NPC Wound Tweak (lizzardman)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/npc-wound-tweak.zip",
+      "PackageSha256": "cab1691470b1475bbe23b22bdcfaf2aa14b94977698aeb75267182a1b0f00e7a",
+      "Notes": "Credit: lizzardman \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/npc-wound-tweak"
+    },
+    {
+      "Id": "npc-anim-overhaul",
+      "Name": "NPC Animation Overhaul Part 1 (leer_h)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/npc-anim-overhaul.zip",
+      "PackageSha256": "6bc1f3e854ff43bbbe19559fc032fc5f9cd42c370b772abe497c6b7965b19651",
+      "Notes": "Credit: leer_h \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/npc-animation-overhaul-part-1v10"
     }
   ]
 }
