@@ -61,4 +61,6 @@ desktop.ini
 !/ac_extras_manifest.json
 !/extras/
 !/extras/*.zip
+# Zip ModDB oltre limite GitHub 100MB (amici: drop / APRI MOD DB)
+/extras/thap-rework.zip
 !/pack/
