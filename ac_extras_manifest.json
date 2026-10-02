@@ -1,6 +1,6 @@
 {
   "Name": "MMX-Net Extras",
-  "PublishedUtc": "2026-10-02T20:07:01.1702032Z",
+  "PublishedUtc": "2026-10-02T21:25:31.2087887Z",
   "Packages": [
     {
       "Id": "mcm",
@@ -67,7 +67,7 @@
       "Name": "Custom iTheon\u0027s PDA Taskboard (lizzardman (base iTheon))",
       "Version": "1.0.0",
       "PackageUrl": "extras/pda-taskboard.zip",
-      "PackageSha256": "49c704d63b3b9ae7e7206d54d6adff6f58ceeff7f37acdf584f629ad6fcac354",
+      "PackageSha256": "faf3d3a0a1cd620ca2c899b5bd8f2f146b852098f4ce92a45fd6e62b2d1d0e31",
       "Notes": "Credit: lizzardman (base iTheon) \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/custom-itheons-pda-taskboard"
     },
     {
@@ -131,7 +131,7 @@
       "Name": "NPC Animation Overhaul Part 1 (leer_h)",
       "Version": "1",
       "PackageUrl": "extras/npc-anim-overhaul.zip",
-      "PackageSha256": "c3fca4127d0205cc526bbb80fcc3d85b7a3bec0be4471f128c768a09adb2ed2f",
+      "PackageSha256": "76f6df1a9b0da8771e4f7b3078d0f5bd0458e9277b4514d5e6dfcb1e52637176",
       "Notes": "Credit: leer_h \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/npc-animation-overhaul-part-1v10"
     },
     {
@@ -271,12 +271,60 @@
       "Notes": "Credit: Norfair_ix \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/anomaly-pda-extended"
     },
     {
+      "Id": "boomsticks-and-sharpsticks",
+      "Name": "Boomsticks and Sharpsticks (Mich_Cartman)",
+      "Version": "1",
+      "PackageUrl": "extras/boomsticks-and-sharpsticks.zip",
+      "PackageSha256": "25cc68633b7ee24c55ee7a3dd3bca0056caeac0653c91476411a1e5ead078f4e",
+      "Notes": "Credit: Mich_Cartman \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/boomsticks-and-sharpsticks"
+    },
+    {
+      "Id": "modern-ui",
+      "Name": "Modern UI v1.0.0 (tkcrits)",
+      "Version": "1",
+      "PackageUrl": "extras/modern-ui.zip",
+      "PackageSha256": "e5274a446559f3cb7acf9f536578d8de50af8c46d59b3f87445e0a3a6fa6a6da",
+      "Notes": "Credit: tkcrits \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/modern-ui-v100"
+    },
+    {
       "Id": "groks-body-health-redux",
       "Name": "Grok\u0027s Body Health System Redux (Grokitach)",
       "Version": "1.0.0",
       "PackageUrl": "extras/groks-body-health-redux.zip",
       "PackageSha256": "cfd873ed02151121f660c717d0905e612c1706224ae62e8c09f810e174a3f81b",
       "Notes": "Credit: Grokitach \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/100-groks-body-health-system-redux-for-151"
+    },
+    {
+      "Id": "modern-ui-grok-bhs-patch",
+      "Name": "Modern UI \u0026 Grok\u0027s BHS Redux Patch (modsgroup30940)",
+      "Version": "1",
+      "PackageUrl": "extras/modern-ui-grok-bhs-patch.zip",
+      "PackageSha256": "0e5fc2466345f18d0dc453e15b1050803ae1435d19d5afd63f8c76d85687a844",
+      "Notes": "Credit: modsgroup30940 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/modern-ui-groks-body-health-system-redux-patch"
+    },
+    {
+      "Id": "mark-switch",
+      "Name": "Mark Switch (party_50)",
+      "Version": "1",
+      "PackageUrl": "extras/mark-switch.zip",
+      "PackageSha256": "d5b32947d6d5ba499bf37dd855643140c60e73c406a2fcd6b10e8badf671d22a",
+      "Notes": "Credit: party_50 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/mark-switch"
+    },
+    {
+      "Id": "modular-attachment-system",
+      "Name": "Modular Attachment System (party_50)",
+      "Version": "1",
+      "PackageUrl": "extras/modular-attachment-system.zip",
+      "PackageSha256": "9dafcb58844089e691425b64aab6a11ff0ff4ea87a87856cfa88620b660f384a",
+      "Notes": "Credit: party_50 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/modular-attachment-system"
+    },
+    {
+      "Id": "shader-3d-scopes",
+      "Name": "Shader 3D Scopes (party_50)",
+      "Version": "1",
+      "PackageUrl": "extras/shader-3d-scopes.zip",
+      "PackageSha256": "578a3af981be2ed76ecd1cdba0110ec5eaee675ad7fcdfcc6fa2c36d0c48487f",
+      "Notes": "Credit: party_50 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/shader-3d-scopes"
     },
     {
       "Id": "mas-bas",
@@ -327,11 +375,75 @@
       "Notes": "Credit: gwnf5066 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/quick-action-wheels-overhaul-10"
     },
     {
+      "Id": "zone-tweaks-collection",
+      "Name": "Zone Tweaks Collection (SkyKi)",
+      "Version": "1",
+      "PackageUrl": "extras/zone-tweaks-collection.zip",
+      "PackageSha256": "e39b63ad2474e4633201d6fd05ed92f856dfbaf282ff4e148dc82381e49347f1",
+      "Notes": "Credit: SkyKi \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/zone-tweaks-collection"
+    },
+    {
+      "Id": "move-effects-true-prone",
+      "Name": "MoveEffects \u0026 AlmostTrueProne BETA Up.5 (Wang_Laoshi)",
+      "Version": "1",
+      "PackageUrl": "extras/move-effects-true-prone.zip",
+      "PackageSha256": "ec5a3bce6f10f18888d1a81e4c634d6bddadeba051ddda2a74947a832a9ab840",
+      "Notes": "Credit: Wang_Laoshi \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/move-effects-true-prone"
+    },
+    {
+      "Id": "fire-mode-check",
+      "Name": "FireModeCheck (Ishmaeel)",
+      "Version": "1",
+      "PackageUrl": "extras/fire-mode-check.zip",
+      "PackageSha256": "9c71a3e4fcafca0f7e750a5a9bbb743dc9b693015bbe3cc30f583bc62ed408aa",
+      "Notes": "Credit: Ishmaeel \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/firemodecheck"
+    },
+    {
+      "Id": "ready-or-not-fire-mode-hud",
+      "Name": "Ready Or Not Fire Mode Check HUD (Spuchel)",
+      "Version": "1",
+      "PackageUrl": "extras/ready-or-not-fire-mode-hud.zip",
+      "PackageSha256": "40984e0014e6489a2370f2f080edb2c9667882e4fcc43820a06eeb29a542aed8",
+      "Notes": "Credit: Spuchel \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/ready-or-not-fire-mode-check-hud-skin-for-firemodecheck-by-ishmaeel"
+    },
+    {
+      "Id": "animated-npc-healing",
+      "Name": "Animated NPC Healing (1.1) (leer_h)",
+      "Version": "1",
+      "PackageUrl": "extras/animated-npc-healing.zip",
+      "PackageSha256": "97b0c7fc09ff5792c9de2ef70990a4bb0a96e0c79c9c5a1ef29d4136d8ef556a",
+      "Notes": "Credit: leer_h \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/animated-npc-healing10"
+    },
+    {
+      "Id": "quick-sprint-dash",
+      "Name": "Quick Sprint / Dash v0.1.3 (Befon_Kongo)",
+      "Version": "1",
+      "PackageUrl": "extras/quick-sprint-dash.zip",
+      "PackageSha256": "b732ff549795ed53e962266b546d3c402282b19c78ead4d550dac00eca4ed6fc",
+      "Notes": "Credit: Befon_Kongo \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/quick-sprint-dash-v0-1-3"
+    },
+    {
+      "Id": "smooth-scrolling",
+      "Name": "Smooth Scrolling (piscopancer)",
+      "Version": "1",
+      "PackageUrl": "extras/smooth-scrolling.zip",
+      "PackageSha256": "0576ca68476e3299f2b4cf68cb98a4ac07faa4a5f586bf225ea7f433c9d7950a",
+      "Notes": "Credit: piscopancer \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/smooth-scrolling"
+    },
+    {
+      "Id": "upgradeable-detectors",
+      "Name": "[DLTX] Upgradeable Detectors 4.2 (Sen_NZ)",
+      "Version": "1",
+      "PackageUrl": "extras/upgradeable-detectors.zip",
+      "PackageSha256": "0e83bb182af98de326a927a06649329dbbae7a70cfaaaea334901b2ac7f898ca",
+      "Notes": "Credit: Sen_NZ \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/upgradeable-detectors"
+    },
+    {
       "Id": "aydins-bare-bars",
       "Name": "Aydin\u0027s Bare Bars 1.0 (aytabag)",
-      "Version": "1.0.0",
+      "Version": "1",
       "PackageUrl": "extras/aydins-bare-bars.zip",
-      "PackageSha256": "8c227f945db3cdf5ee8bb3ff42ffb1f03b550d9e317fe57cb6a9ed926e9411ed",
+      "PackageSha256": "143a5a3c8381682e1f8154ab2332d7ab62cfafb51a1dfcaf4569462de8529d68",
       "Notes": "Credit: aytabag \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/aydins-bare-bars-10"
     }
   ]
