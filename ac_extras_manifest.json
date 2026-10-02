@@ -1,274 +1,274 @@
 {
-  "Name": "MMX-Net Extras",
-  "PublishedUtc": "2026-10-02T18:42:05.0650006Z",
-  "Packages": [
-    {
-      "Id": "mcm",
-      "Name": "Anomaly Mod Configuration Menu (MCM)",
-      "Version": "1.6.0",
-      "PackageUrl": "extras/mcm.zip",
-      "PackageSha256": "eccb39326e6302af9b3b31fe39467afb206305c21aa99974f8ec1c9eb255945d",
-      "ModDbPageUrl": "https://www.moddb.com/mods/stalker-anomaly/addons/anomaly-mod-configuration-menu",
-      "ModDbDownloadUrl": "https://www.moddb.com/addons/start/208560",
-      "ModDbMirrorUrl": "https://www.moddb.com/downloads/mirror/208560/134/5e053f1e967905aef6e83b93f7a1e3bf/",
-      "GitHubUrl": "https://github.com/RAX-Anomaly/Anomaly-Mod-Configuration-Menu",
-      "Notes": "Opzionale. Upstream ModDB/GitHub. Mirror one-shot ModDB scadono; feed MMX-NET e\u0027 la fonte runtime preferita."
-    },
-    {
-      "Id": "mmx-core",
-      "Name": "MMX - Core [Anomaly] (MMX-Net / Logan)",
-      "Version": "0.1.4",
-      "PackageUrl": "extras/mmx-core.zip",
-      "PackageSha256": "521943a62104dd80b3ca4cfc1c36164d9edace05b32beaf3acf15523f33ee2bd",
-      "Notes": "Essenziale auto-install. Fix Anomaly MMX. Ex Essentials Survival. Non Base Coop / non overlay MMX_NET."
-    },
-    {
-      "Id": "fdda",
-      "Name": "FDDA Redone (lizzardman)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/fdda.zip",
-      "PackageSha256": "7091d2a841ac7fa2b082cfbee6cad10220ef88b9e86cc5afb9cc2375b3571883",
-      "Notes": "Animazioni FDDA Redone. Autore: lizzardman."
-    },
-    {
-      "Id": "backpack",
-      "Name": "Backpack / Zaino (FDDA Redone)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/backpack.zip",
-      "PackageSha256": "5159398253e7224b5533a58b18462200d668eb3626fe1a3fe98313c8aade7f89",
-      "Notes": "Modulo backpack di FDDA Redone (lizzardman) \u002B patch OuterEater."
-    },
-    {
-      "Id": "footsteps",
-      "Name": "Another Footsteps and Backpack Sounds for Anomaly (UltimateDunkel)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/footsteps.zip",
-      "PackageSha256": "28596e04a2af0706cde053be65e7e9aba4ec131dd130ec4cd680a6f71d565736",
-      "Notes": "Credit: UltimateDunkel \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/another-footsteps-and-backpack-sounds-for-anomaly-made-by-ultimatedunkel-030"
-    },
-    {
-      "Id": "immersive-skinning",
-      "Name": "Immersive Skinning (Utjan)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/immersive-skinning.zip",
-      "PackageSha256": "4c687e21fc8b422403322c9565aa687b4d6a6d54c3a5365c5e253bc6de702e98",
-      "Notes": "Credit: Utjan \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/immersive-skinning"
-    },
-    {
-      "Id": "fix-all-ladders",
-      "Name": "Fix All Ladders - Dismount System (Jack_Harris)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/fix-all-ladders.zip",
-      "PackageSha256": "3c5adcf788cb7e8af0c59f1aa1f5cf1ae61d15bb024067a1619f1805d21bd61f",
-      "Notes": "Credit: Jack_Harris \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/fix-all-ladders-dismount-system"
-    },
-    {
-      "Id": "pda-taskboard",
-      "Name": "Custom iTheon\u0027s PDA Taskboard (lizzardman (base iTheon))",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/pda-taskboard.zip",
-      "PackageSha256": "49c704d63b3b9ae7e7206d54d6adff6f58ceeff7f37acdf584f629ad6fcac354",
-      "Notes": "Credit: lizzardman (base iTheon) \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/custom-itheons-pda-taskboard"
-    },
-    {
-      "Id": "outfit-animations",
-      "Name": "Outfit Animations (lizzardman)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/outfit-animations.zip",
-      "PackageSha256": "cac0383a70f80a0ede70dd2dc7b5cec3c6d7ea89d46276d2bf52406a5ceba176",
-      "Notes": "Credit: lizzardman \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/outfit-animations-v099"
-    },
-    {
-      "Id": "headgear-animations",
-      "Name": "Headgear Animations (lizzardman)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/headgear-animations.zip",
-      "PackageSha256": "74169b907fdd3ccf2e8b7dcc492e2ec5f956516c79776b4ef54fe31b0a284892",
-      "Notes": "Credit: lizzardman \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/headgear-animations"
-    },
-    {
-      "Id": "body-search-anim",
-      "Name": "Body Search Animation (lizzardman)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/body-search-anim.zip",
-      "PackageSha256": "982cc11c3d2702a0f3a092f6402c7d2360a11f9af9ec20a868e357bc9748d973",
-      "Notes": "Credit: lizzardman \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/body-search-animation-v121"
-    },
-    {
-      "Id": "fdda-enhanced",
-      "Name": "FDDA Enhanced Animations Enhanced (lizzardman)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/fdda-enhanced.zip",
-      "PackageSha256": "bd5bf71308303880f275932f42a42f84cd43ab36dd944cb3f8cad18b531099be",
-      "Notes": "Credit: lizzardman \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/fdda-enhanced-animations-enhanced"
-    },
-    {
-      "Id": "weapon-inertia-expanded",
-      "Name": "Weapon Inertia Expanded (lizzardman)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/weapon-inertia-expanded.zip",
-      "PackageSha256": "5c55fc2c7ed9014c95b07f268f776ae25225e6eed6b591407dc313939abdf617",
-      "Notes": "Credit: lizzardman \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/weapon-inertia-expanded"
-    },
-    {
-      "Id": "thap-small",
-      "Name": "T.H.A.P. Small Re-Rework (Max_im16)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/thap-small.zip",
-      "PackageSha256": "a5c7ba9e98cdbe894fd435158afea5ee0366be6b4669659f37b34a840ff3d8bb",
-      "Notes": "Credit: Max_im16 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/thap-small-re-rework"
-    },
-    {
-      "Id": "npc-wound-tweak",
-      "Name": "NPC Wound Tweak (lizzardman)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/npc-wound-tweak.zip",
-      "PackageSha256": "7c12dd4a612b46fdd5c2f5fa4fa3801466468e832b7192f992f97770f408945e",
-      "Notes": "Credit: lizzardman \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/npc-wound-tweak"
-    },
-    {
-      "Id": "npc-anim-overhaul",
-      "Name": "NPC Animation Overhaul Part 1 (leer_h)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/npc-anim-overhaul.zip",
-      "PackageSha256": "c3fca4127d0205cc526bbb80fcc3d85b7a3bec0be4471f128c768a09adb2ed2f",
-      "Notes": "Credit: leer_h \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/npc-animation-overhaul-part-1v10"
-    },
-    {
-      "Id": "you-are-not-suppressed",
-      "Name": "You are (not) suppressed (R1nk1)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/you-are-not-suppressed.zip",
-      "PackageSha256": "dab324c59206e67fa600f4ec81494753a640ffbb33b50e8d1657b9897b263966",
-      "Notes": "Credit: R1nk1 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/you-are-not-suppressed-by-r1nk1"
-    },
-    {
-      "Id": "handling-ergonomics",
-      "Name": "Handling as Ergonomics Redone [UPDATE 3] (SkyKi)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/handling-ergonomics.zip",
-      "PackageSha256": "ead087a8e41d6a5bcf19445b2ff0f8ebb83338a66f6b25835df84c54b2d4b731",
-      "Notes": "Credit: SkyKi \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/handling-as-ergonomics-redone"
-    },
-    {
-      "Id": "death-animations",
-      "Name": "Death Animations [DLTX] (SuperStalker114514)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/death-animations.zip",
-      "PackageSha256": "a41628ec3dcd3be5fd1cd60f7f35230780454afe1e4f4dae87a864ffd34d0142",
-      "Notes": "Credit: SuperStalker114514 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/death-animationsdltx153"
-    },
-    {
-      "Id": "r1-echo-zone-anomalies",
-      "Name": "R1 Echo Zone: Anomalies -beta (R1nk1)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/r1-echo-zone-anomalies.zip",
-      "PackageSha256": "b0bdf5a1ad58315a67141e5dee08a6ecfd6938dc4ff119fed875fda88cfa14f5",
-      "Notes": "Credit: R1nk1 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/r1-echo-zone-anomalies-beta-by-r1nk1"
-    },
-    {
-      "Id": "glowstick-reanimated",
-      "Name": "Glowstick Reanimated v1.4 (lizzardman)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/glowstick-reanimated.zip",
-      "PackageSha256": "45582c03c798c1c17becdeb9d4e5fe0387ccf86a478ea887278afc34db7f72dc",
-      "Notes": "Credit: lizzardman \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/glowstick-reanimated-v11"
-    },
-    {
-      "Id": "thap-rework",
-      "Name": "T.H.A.P. Rework 2.3 (IENCE)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/thap-rework.zip",
-      "PackageSha256": "c8259b217aa19017c71fadf95236b04d2e61be1cb006fbcd416bb7b4ea7cf054",
-      "Notes": "Credit: IENCE \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/thap-rework"
-    },
-    {
-      "Id": "self-kill",
-      "Name": "Self-Kill (VodoXleb)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/self-kill.zip",
-      "PackageSha256": "189205ee56531a5537a51d51fdb647d8a6d531afd6857183373360027fc6547d",
-      "Notes": "Credit: VodoXleb \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/modded-exes-wct-requiredself-kill-12"
-    },
-    {
-      "Id": "gunslinger-controller",
-      "Name": "Gunslinger Controller (TheMrDemonized)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/gunslinger-controller.zip",
-      "PackageSha256": "070a7f24442722284ca70d7dd68a706488eb47c1cda9f2c500e3fb365da1c1f4",
-      "Notes": "Credit: TheMrDemonized \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/dltx-and-wct-required-gunslinger-controller"
-    },
-    {
-      "Id": "water-flask-rework",
-      "Name": "Water Flask Rework (Apathy_Knight)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/water-flask-rework.zip",
-      "PackageSha256": "1f020d40d2abd6437a935577db5a1c8947852ce8d3301c2c47372063d983ac01",
-      "Notes": "Credit: Apathy_Knight \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/water-flask-rework"
-    },
-    {
-      "Id": "new-walk-run-anim",
-      "Name": "New Walk \u0026 Run Animation (Diazzer)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/new-walk-run-anim.zip",
-      "PackageSha256": "04b98bba52270883abb796f20134b293b5fb780538cc37dc057dbe7b53cc120f",
-      "Notes": "Credit: Diazzer \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/new-walk-run-animation"
-    },
-    {
-      "Id": "mmx-backpack-gate",
-      "Name": "MMX Zaino Gate (MMX-Net / Logan)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/mmx-backpack-gate.zip",
-      "PackageSha256": "bd45966b6d15588d4e1ba0e19164dde43889cb736ef68da6589d147a62392b02",
-      "Notes": "Credit: MMX-Net / Logan \u2014 first-party MMX"
-    },
-    {
-      "Id": "mmx-pda",
-      "Name": "MMX-PDA (MMX)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/mmx-pda.zip",
-      "PackageSha256": "958f0292c96ed70168564f6dd143754646586037eb8bbdc712426572128bc90f",
-      "Notes": "Credit: MMX \u2014 first-party MMX"
-    },
-    {
-      "Id": "pda-vibrate",
-      "Name": "PDA Vibrate (ModDB)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/pda-vibrate.zip",
-      "PackageSha256": "8d5ff3e158e2b731b4eb31b23a9fb427e697610843b346420ed474178735f2f5",
-      "Notes": "Credit: ModDB \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/pda-vibrate"
-    },
-    {
-      "Id": "ragdoll-preset-dux-fvm",
-      "Name": "New Ragdoll Preset for DUX\u0026FVM (HansWursto)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/ragdoll-preset-dux-fvm.zip",
-      "PackageSha256": "f1c6a87d2aeb39469d261aac295b016916d12f004dc1831d4a575f097c299f7c",
-      "Notes": "Credit: HansWursto \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/new-ragdoll-preset-for-duxfvm"
-    },
-    {
-      "Id": "ledge-grabbing",
-      "Name": "Ledge Grabbing / Mantling (TheMrDemonized)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/ledge-grabbing.zip",
-      "PackageSha256": "436242526609b0a31870849ab271a610c74902d55fb2041b7db1f7ffa0b81420",
-      "Notes": "Credit: TheMrDemonized \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/modded-exes-ledge-grabbing-mantling"
-    },
-    {
-      "Id": "camera-inertia",
-      "Name": "Camera Reanimation Project - I.N.E.R.T.I.A. (IENCE)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/camera-inertia.zip",
-      "PackageSha256": "a8d38a180a99615676e6bf932cf46c3b35ed6efac4fb0e7b6c6d25d7a448e352",
-      "Notes": "Credit: IENCE \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/camera-reanimation-project-inertia"
-    },
-    {
-      "Id": "anomaly-pda-extended",
-      "Name": "Anomaly PDA Extended (Norfair_ix)",
-      "Version": "1.0.0",
-      "PackageUrl": "extras/anomaly-pda-extended.zip",
-      "PackageSha256": "b5f6e97027f44fd7cbf46f069c0d5eb8cad4c5aa26ccaead86ac7c62ddac6d8a",
-      "Notes": "Credit: Norfair_ix \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/anomaly-pda-extended"
-    }
-  ]
+    "Name":  "MMX-Net Extras",
+    "PublishedUtc":  "2026-10-02T18:45:30.9752869Z",
+    "Packages":  [
+                     {
+                         "Id":  "mcm",
+                         "Name":  "Anomaly Mod Configuration Menu (MCM)",
+                         "Version":  "1.6.0",
+                         "PackageUrl":  "extras/mcm.zip",
+                         "PackageSha256":  "eccb39326e6302af9b3b31fe39467afb206305c21aa99974f8ec1c9eb255945d",
+                         "ModDbPageUrl":  "https://www.moddb.com/mods/stalker-anomaly/addons/anomaly-mod-configuration-menu",
+                         "ModDbDownloadUrl":  "https://www.moddb.com/addons/start/208560",
+                         "ModDbMirrorUrl":  "https://www.moddb.com/downloads/mirror/208560/134/5e053f1e967905aef6e83b93f7a1e3bf/",
+                         "GitHubUrl":  "https://github.com/RAX-Anomaly/Anomaly-Mod-Configuration-Menu",
+                         "Notes":  "Opzionale. Upstream ModDB/GitHub. Mirror one-shot ModDB scadono; feed MMX-NET e\u0027 la fonte runtime preferita."
+                     },
+                     {
+                         "Id":  "mmx-core",
+                         "Name":  "MMX - Core [Anomaly] (MMX-Net / Logan)",
+                         "Version":  "0.1.4",
+                         "PackageUrl":  "extras/mmx-core.zip",
+                         "PackageSha256":  "b0796b3650ebab40b97ab8d111f124af4ae8f44b918984556fb872045c343d12",
+                         "Notes":  "Essenziale auto-install. Fix Anomaly MMX. Ex Essentials Survival. Non Base Coop / non overlay MMX_NET."
+                     },
+                     {
+                         "Id":  "fdda",
+                         "Name":  "FDDA Redone (lizzardman)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/fdda.zip",
+                         "PackageSha256":  "7091d2a841ac7fa2b082cfbee6cad10220ef88b9e86cc5afb9cc2375b3571883",
+                         "Notes":  "Animazioni FDDA Redone. Autore: lizzardman."
+                     },
+                     {
+                         "Id":  "backpack",
+                         "Name":  "Backpack / Zaino (FDDA Redone)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/backpack.zip",
+                         "PackageSha256":  "5159398253e7224b5533a58b18462200d668eb3626fe1a3fe98313c8aade7f89",
+                         "Notes":  "Modulo backpack di FDDA Redone (lizzardman) + patch OuterEater."
+                     },
+                     {
+                         "Id":  "footsteps",
+                         "Name":  "Another Footsteps and Backpack Sounds for Anomaly (UltimateDunkel)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/footsteps.zip",
+                         "PackageSha256":  "28596e04a2af0706cde053be65e7e9aba4ec131dd130ec4cd680a6f71d565736",
+                         "Notes":  "Credit: UltimateDunkel — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/another-footsteps-and-backpack-sounds-for-anomaly-made-by-ultimatedunkel-030"
+                     },
+                     {
+                         "Id":  "immersive-skinning",
+                         "Name":  "Immersive Skinning (Utjan)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/immersive-skinning.zip",
+                         "PackageSha256":  "4c687e21fc8b422403322c9565aa687b4d6a6d54c3a5365c5e253bc6de702e98",
+                         "Notes":  "Credit: Utjan — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/immersive-skinning"
+                     },
+                     {
+                         "Id":  "fix-all-ladders",
+                         "Name":  "Fix All Ladders - Dismount System (Jack_Harris)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/fix-all-ladders.zip",
+                         "PackageSha256":  "3c5adcf788cb7e8af0c59f1aa1f5cf1ae61d15bb024067a1619f1805d21bd61f",
+                         "Notes":  "Credit: Jack_Harris — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/fix-all-ladders-dismount-system"
+                     },
+                     {
+                         "Id":  "pda-taskboard",
+                         "Name":  "Custom iTheon\u0027s PDA Taskboard (lizzardman (base iTheon))",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/pda-taskboard.zip",
+                         "PackageSha256":  "49c704d63b3b9ae7e7206d54d6adff6f58ceeff7f37acdf584f629ad6fcac354",
+                         "Notes":  "Credit: lizzardman (base iTheon) — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/custom-itheons-pda-taskboard"
+                     },
+                     {
+                         "Id":  "outfit-animations",
+                         "Name":  "Outfit Animations (lizzardman)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/outfit-animations.zip",
+                         "PackageSha256":  "cac0383a70f80a0ede70dd2dc7b5cec3c6d7ea89d46276d2bf52406a5ceba176",
+                         "Notes":  "Credit: lizzardman — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/outfit-animations-v099"
+                     },
+                     {
+                         "Id":  "headgear-animations",
+                         "Name":  "Headgear Animations (lizzardman)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/headgear-animations.zip",
+                         "PackageSha256":  "74169b907fdd3ccf2e8b7dcc492e2ec5f956516c79776b4ef54fe31b0a284892",
+                         "Notes":  "Credit: lizzardman — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/headgear-animations"
+                     },
+                     {
+                         "Id":  "body-search-anim",
+                         "Name":  "Body Search Animation (lizzardman)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/body-search-anim.zip",
+                         "PackageSha256":  "982cc11c3d2702a0f3a092f6402c7d2360a11f9af9ec20a868e357bc9748d973",
+                         "Notes":  "Credit: lizzardman — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/body-search-animation-v121"
+                     },
+                     {
+                         "Id":  "fdda-enhanced",
+                         "Name":  "FDDA Enhanced Animations Enhanced (lizzardman)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/fdda-enhanced.zip",
+                         "PackageSha256":  "bd5bf71308303880f275932f42a42f84cd43ab36dd944cb3f8cad18b531099be",
+                         "Notes":  "Credit: lizzardman — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/fdda-enhanced-animations-enhanced"
+                     },
+                     {
+                         "Id":  "weapon-inertia-expanded",
+                         "Name":  "Weapon Inertia Expanded (lizzardman)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/weapon-inertia-expanded.zip",
+                         "PackageSha256":  "5c55fc2c7ed9014c95b07f268f776ae25225e6eed6b591407dc313939abdf617",
+                         "Notes":  "Credit: lizzardman — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/weapon-inertia-expanded"
+                     },
+                     {
+                         "Id":  "thap-small",
+                         "Name":  "T.H.A.P. Small Re-Rework (Max_im16)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/thap-small.zip",
+                         "PackageSha256":  "a5c7ba9e98cdbe894fd435158afea5ee0366be6b4669659f37b34a840ff3d8bb",
+                         "Notes":  "Credit: Max_im16 — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/thap-small-re-rework"
+                     },
+                     {
+                         "Id":  "npc-wound-tweak",
+                         "Name":  "NPC Wound Tweak (lizzardman)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/npc-wound-tweak.zip",
+                         "PackageSha256":  "7c12dd4a612b46fdd5c2f5fa4fa3801466468e832b7192f992f97770f408945e",
+                         "Notes":  "Credit: lizzardman — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/npc-wound-tweak"
+                     },
+                     {
+                         "Id":  "npc-anim-overhaul",
+                         "Name":  "NPC Animation Overhaul Part 1 (leer_h)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/npc-anim-overhaul.zip",
+                         "PackageSha256":  "c3fca4127d0205cc526bbb80fcc3d85b7a3bec0be4471f128c768a09adb2ed2f",
+                         "Notes":  "Credit: leer_h — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/npc-animation-overhaul-part-1v10"
+                     },
+                     {
+                         "Id":  "you-are-not-suppressed",
+                         "Name":  "You are (not) suppressed (R1nk1)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/you-are-not-suppressed.zip",
+                         "PackageSha256":  "dab324c59206e67fa600f4ec81494753a640ffbb33b50e8d1657b9897b263966",
+                         "Notes":  "Credit: R1nk1 — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/you-are-not-suppressed-by-r1nk1"
+                     },
+                     {
+                         "Id":  "handling-ergonomics",
+                         "Name":  "Handling as Ergonomics Redone [UPDATE 3] (SkyKi)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/handling-ergonomics.zip",
+                         "PackageSha256":  "ead087a8e41d6a5bcf19445b2ff0f8ebb83338a66f6b25835df84c54b2d4b731",
+                         "Notes":  "Credit: SkyKi — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/handling-as-ergonomics-redone"
+                     },
+                     {
+                         "Id":  "death-animations",
+                         "Name":  "Death Animations [DLTX] (SuperStalker114514)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/death-animations.zip",
+                         "PackageSha256":  "a41628ec3dcd3be5fd1cd60f7f35230780454afe1e4f4dae87a864ffd34d0142",
+                         "Notes":  "Credit: SuperStalker114514 — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/death-animationsdltx153"
+                     },
+                     {
+                         "Id":  "r1-echo-zone-anomalies",
+                         "Name":  "R1 Echo Zone: Anomalies -beta (R1nk1)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/r1-echo-zone-anomalies.zip",
+                         "PackageSha256":  "b0bdf5a1ad58315a67141e5dee08a6ecfd6938dc4ff119fed875fda88cfa14f5",
+                         "Notes":  "Credit: R1nk1 — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/r1-echo-zone-anomalies-beta-by-r1nk1"
+                     },
+                     {
+                         "Id":  "glowstick-reanimated",
+                         "Name":  "Glowstick Reanimated v1.4 (lizzardman)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/glowstick-reanimated.zip",
+                         "PackageSha256":  "45582c03c798c1c17becdeb9d4e5fe0387ccf86a478ea887278afc34db7f72dc",
+                         "Notes":  "Credit: lizzardman — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/glowstick-reanimated-v11"
+                     },
+                     {
+                         "Id":  "thap-rework",
+                         "Name":  "T.H.A.P. Rework 2.3 (IENCE)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/thap-rework.zip",
+                         "PackageSha256":  "c8259b217aa19017c71fadf95236b04d2e61be1cb006fbcd416bb7b4ea7cf054",
+                         "Notes":  "Credit: IENCE — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/thap-rework"
+                     },
+                     {
+                         "Id":  "self-kill",
+                         "Name":  "Self-Kill (VodoXleb)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/self-kill.zip",
+                         "PackageSha256":  "189205ee56531a5537a51d51fdb647d8a6d531afd6857183373360027fc6547d",
+                         "Notes":  "Credit: VodoXleb — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/modded-exes-wct-requiredself-kill-12"
+                     },
+                     {
+                         "Id":  "gunslinger-controller",
+                         "Name":  "Gunslinger Controller (TheMrDemonized)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/gunslinger-controller.zip",
+                         "PackageSha256":  "070a7f24442722284ca70d7dd68a706488eb47c1cda9f2c500e3fb365da1c1f4",
+                         "Notes":  "Credit: TheMrDemonized — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/dltx-and-wct-required-gunslinger-controller"
+                     },
+                     {
+                         "Id":  "water-flask-rework",
+                         "Name":  "Water Flask Rework (Apathy_Knight)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/water-flask-rework.zip",
+                         "PackageSha256":  "1f020d40d2abd6437a935577db5a1c8947852ce8d3301c2c47372063d983ac01",
+                         "Notes":  "Credit: Apathy_Knight — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/water-flask-rework"
+                     },
+                     {
+                         "Id":  "new-walk-run-anim",
+                         "Name":  "New Walk \u0026 Run Animation (Diazzer)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/new-walk-run-anim.zip",
+                         "PackageSha256":  "04b98bba52270883abb796f20134b293b5fb780538cc37dc057dbe7b53cc120f",
+                         "Notes":  "Credit: Diazzer — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/new-walk-run-animation"
+                     },
+                     {
+                         "Id":  "mmx-backpack-gate",
+                         "Name":  "MMX Zaino Gate (MMX-Net / Logan)",
+                         "Version":  "1.1.0",
+                         "PackageUrl":  "extras/mmx-backpack-gate.zip",
+                         "PackageSha256":  "f01e53f90b8e9303b9005b58bfac1cde72f2bbcf41e01a9d687d9b2242f5ba0a",
+                         "Notes":  "Credit: MMX-Net / Logan — first-party MMX"
+                     },
+                     {
+                         "Id":  "mmx-pda",
+                         "Name":  "MMX-PDA (MMX)",
+                         "Version":  "1.0.1",
+                         "PackageUrl":  "extras/mmx-pda.zip",
+                         "PackageSha256":  "2fbdbcfac4b5575b6b12bd5ca30b0d1ba1b7b5101ff02ea4073d82242ee17d0f",
+                         "Notes":  "Credit: MMX — first-party MMX"
+                     },
+                     {
+                         "Id":  "pda-vibrate",
+                         "Name":  "PDA Vibrate (ModDB)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/pda-vibrate.zip",
+                         "PackageSha256":  "8d5ff3e158e2b731b4eb31b23a9fb427e697610843b346420ed474178735f2f5",
+                         "Notes":  "Credit: ModDB — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/pda-vibrate"
+                     },
+                     {
+                         "Id":  "ragdoll-preset-dux-fvm",
+                         "Name":  "New Ragdoll Preset for DUX\u0026FVM (HansWursto)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/ragdoll-preset-dux-fvm.zip",
+                         "PackageSha256":  "f1c6a87d2aeb39469d261aac295b016916d12f004dc1831d4a575f097c299f7c",
+                         "Notes":  "Credit: HansWursto — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/new-ragdoll-preset-for-duxfvm"
+                     },
+                     {
+                         "Id":  "ledge-grabbing",
+                         "Name":  "Ledge Grabbing / Mantling (TheMrDemonized)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/ledge-grabbing.zip",
+                         "PackageSha256":  "436242526609b0a31870849ab271a610c74902d55fb2041b7db1f7ffa0b81420",
+                         "Notes":  "Credit: TheMrDemonized — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/modded-exes-ledge-grabbing-mantling"
+                     },
+                     {
+                         "Id":  "camera-inertia",
+                         "Name":  "Camera Reanimation Project - I.N.E.R.T.I.A. (IENCE)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/camera-inertia.zip",
+                         "PackageSha256":  "a8d38a180a99615676e6bf932cf46c3b35ed6efac4fb0e7b6c6d25d7a448e352",
+                         "Notes":  "Credit: IENCE — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/camera-reanimation-project-inertia"
+                     },
+                     {
+                         "Id":  "anomaly-pda-extended",
+                         "Name":  "Anomaly PDA Extended (Norfair_ix)",
+                         "Version":  "1.0.0",
+                         "PackageUrl":  "extras/anomaly-pda-extended.zip",
+                         "PackageSha256":  "b5f6e97027f44fd7cbf46f069c0d5eb8cad4c5aa26ccaead86ac7c62ddac6d8a",
+                         "Notes":  "Credit: Norfair_ix — ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/anomaly-pda-extended"
+                     }
+                 ]
 }
