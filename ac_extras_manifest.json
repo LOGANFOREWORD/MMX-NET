@@ -1,6 +1,6 @@
 {
   "Name": "MMX-Net Extras",
-  "PublishedUtc": "2026-10-02T14:04:30.1376348Z",
+  "PublishedUtc": "2026-10-02T14:48:13.3035656Z",
   "Packages": [
     {
       "Id": "mcm",
@@ -135,6 +135,14 @@
       "Notes": "Credit: leer_h \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/npc-animation-overhaul-part-1v10"
     },
     {
+      "Id": "you-are-not-suppressed",
+      "Name": "You are (not) suppressed (R1nk1)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/you-are-not-suppressed.zip",
+      "PackageSha256": "c03dede6cf68862f5be45a6bcea1173a2c3f0f1e56a8f85e2d75d801f11c748b",
+      "Notes": "Credit: R1nk1 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/you-are-not-suppressed-by-r1nk1"
+    },
+    {
       "Id": "handling-ergonomics",
       "Name": "Handling as Ergonomics Redone [UPDATE 3] (SkyKi)",
       "Version": "1.0.0",
@@ -219,7 +227,7 @@
       "Name": "MMX-PDA (MMX)",
       "Version": "1.0.0",
       "PackageUrl": "extras/mmx-pda.zip",
-      "PackageSha256": "99a50f389471efe87cbb880e9457c008c0fcef01ca7814bb9dd25c2d92d7c8e4",
+      "PackageSha256": "f2c8aa4e4fc6214fe1fc0ac0b4c907968735915af7df8ef25da2265e2fb67ca7",
       "Notes": "Credit: MMX \u2014 first-party MMX"
     },
     {
@@ -259,7 +267,7 @@
       "Name": "Anomaly PDA Extended (Norfair_ix)",
       "Version": "1.0.0",
       "PackageUrl": "extras/anomaly-pda-extended.zip",
-      "PackageSha256": "def8439e603f71410829360dba154f0ecad1ed9045309eadef55a42b6bef4548",
+      "PackageSha256": "b5f6e97027f44fd7cbf46f069c0d5eb8cad4c5aa26ccaead86ac7c62ddac6d8a",
       "Notes": "Credit: Norfair_ix \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/anomaly-pda-extended"
     }
   ]
