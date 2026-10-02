@@ -1,6 +1,6 @@
 {
   "Name": "MMX-Net Extras",
-  "PublishedUtc": "2026-10-02T14:48:13.3035656Z",
+  "PublishedUtc": "2026-10-02T16:07:15.5561454Z",
   "Packages": [
     {
       "Id": "mcm",
@@ -35,7 +35,7 @@
       "Name": "Backpack / Zaino (FDDA Redone)",
       "Version": "1.0.0",
       "PackageUrl": "extras/backpack.zip",
-      "PackageSha256": "573fe50cdf07f89320d2d06347bf7cd3d31135b827fffcf50d8bd7ed3e4a819e",
+      "PackageSha256": "88ae6df2892b1c4435acba19a3a0a8fb9e9fe67409479c7c66ffed982f6196d1",
       "Notes": "Modulo backpack di FDDA Redone (lizzardman) \u002B patch OuterEater."
     },
     {
@@ -139,7 +139,7 @@
       "Name": "You are (not) suppressed (R1nk1)",
       "Version": "1.0.0",
       "PackageUrl": "extras/you-are-not-suppressed.zip",
-      "PackageSha256": "c03dede6cf68862f5be45a6bcea1173a2c3f0f1e56a8f85e2d75d801f11c748b",
+      "PackageSha256": "dab324c59206e67fa600f4ec81494753a640ffbb33b50e8d1657b9897b263966",
       "Notes": "Credit: R1nk1 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/you-are-not-suppressed-by-r1nk1"
     },
     {
@@ -227,7 +227,7 @@
       "Name": "MMX-PDA (MMX)",
       "Version": "1.0.0",
       "PackageUrl": "extras/mmx-pda.zip",
-      "PackageSha256": "f2c8aa4e4fc6214fe1fc0ac0b4c907968735915af7df8ef25da2265e2fb67ca7",
+      "PackageSha256": "a8212471e0d9c8be361a9fdaff56909e5dde52aab3318d3052cd27995829c003",
       "Notes": "Credit: MMX \u2014 first-party MMX"
     },
     {
