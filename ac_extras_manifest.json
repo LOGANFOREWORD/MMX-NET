@@ -1,13 +1,13 @@
 ﻿{
     "Name":  "MMX-Net Extras",
-    "PublishedUtc":  "2026-10-03T20:21:09.4764852Z",
+    "PublishedUtc":  "2026-10-03T20:27:23.1173905Z",
     "Packages":  [
                      {
                          "Id":  "mmx-core",
                          "Name":  "MMX - Core [Anomaly] (MMX-Net / Logan)",
                          "Version":  "0.1.16",
                          "PackageUrl":  "extras/mmx-core.zip",
-                         "PackageSha256":  "5335ccbfd817ec16bfbfffa377febcdf2d9288940c12ae09f50e2d2b14ce0e8b",
+                         "PackageSha256":  "73ac04f905a63c59de4f85174babf96e9053b6f9300c3cb6d653ce79c2ffca65",
                          "Notes":  "Essenziale auto-install. Fix Anomaly MMX. Ex Essentials Survival. Non Base Coop / non overlay MMX_NET."
                      }
                  ]
