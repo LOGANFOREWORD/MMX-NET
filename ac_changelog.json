@@ -1,0 +1,141 @@
+﻿{
+    "Schema":  1,
+    "Releases":  [
+                     {
+                         "Version":  "0.2.1003",
+                         "AddedIt":  [
+
+                                     ],
+                         "AddedEn":  [
+
+                                     ],
+                         "RemovedIt":  [
+
+                                       ],
+                         "RemovedEn":  [
+
+                                       ],
+                         "ReworkIt":  [
+
+                                      ],
+                         "ReworkEn":  [
+
+                                      ],
+                         "FixIt":  [
+                                       "Weather Expansion: stub/partial in extras non bloccano più il download ModDB (size gate)",
+                                       "Coda profilo: niente wait browser 4 min su pack ModDB (no loop INSTALLA) — usa INSTALLA singolo o drop zip",
+                                       "Annulla sul dialog download ModDB/coda: CancellationToken + bottone non più disabilitato in prep",
+                                       "UI download: MB/% / coda / fase senza placeholder {0}"
+                                   ],
+                         "FixEn":  [
+                                       "Weather Expansion: stub/partial extras no longer block ModDB download (size gate)",
+                                       "Profile queue: no 4-min browser wait on ModDB packs (no INSTALLA loop) — use single INSTALLA or drop zip",
+                                       "Cancel on ModDB/queue download dialog: CancellationToken + button no longer disabled during prep",
+                                       "Download UI: MB/% / queue / phase without {0} placeholder"
+                                   ]
+                     },
+                     {
+                         "Version":  "0.1.976",
+                         "AddedIt":  [
+                                         "Popup Changelog launcher (novità strutturate per versione, distinto dal toast AGGIORNA MOD)",
+                                         "Coda UpdateQueue: job launcher e aggiornamenti mod senza race parallele"
+                                     ],
+                         "AddedEn":  [
+                                         "Launcher Changelog popup (structured per-version notes, separate from AGGIORNA MOD toast)",
+                                         "UpdateQueue: launcher jobs and mod updates without parallel races"
+                                     ],
+                         "RemovedIt":  [
+
+                                       ],
+                         "RemovedEn":  [
+
+                                       ],
+                         "ReworkIt":  [
+                                          "MMX-Creator solo DEVKIT (tile Workshop); USER riceve solo popup/toast Aggiorna mod",
+                                          "Policy font: fonts.ltx join-critical invariato; Elegant/cosmetic solo in Core locale",
+                                          "Sync first-party: MMX Core, Zaino Gate, PDA via extras / Creator",
+                                          "Pulsanti UI rettangolari (meno pill) su dialog e chrome principali"
+                                      ],
+                         "ReworkEn":  [
+                                          "MMX-Creator DEVKIT-only (Workshop tile); USER gets mod update popup/toast only",
+                                          "Font policy: join-critical fonts.ltx unchanged; Elegant/cosmetic only in local Core",
+                                          "First-party sync: MMX Core, Backpack Gate, PDA via extras / Creator",
+                                          "Rectangular UI buttons (fewer pills) on main dialogs and chrome"
+                                      ],
+                         "FixIt":  [
+                                       "Loop popup aggiornamento mod: forceShow non bypassa più gli id già visti in sessione",
+                                       "Settings in-game: keybind mmx_lobby_code non iniettato (hang UIOptions)",
+                                       "Join soft-timeout half-open + tip peer stuck; no EndSession se GNS già connesso",
+                                       "CTD menu/inventory: currency + MMX_NET_send_money"
+                                   ],
+                         "FixEn":  [
+                                       "Mod update popup loop: forceShow no longer bypasses session-seen ids",
+                                       "In-game Settings: mmx_lobby_code keybind not injected (UIOptions hang)",
+                                       "Join soft-timeout half-open + stuck peer tip; no EndSession if GNS already connected",
+                                       "Menu/inventory CTD: currency + MMX_NET_send_money"
+                                   ]
+                     },
+                     {
+                         "Version":  "0.1.975",
+                         "AddedIt":  [
+                                         "MMX-Creator (DEVKIT): importa, metadata, pack/publish extras senza bump ac_version",
+                                         "Toast e popup «Aggiorna mod» per pack extras già installati"
+                                     ],
+                         "AddedEn":  [
+                                         "MMX-Creator (DEVKIT): import, metadata, pack/publish extras without bumping ac_version",
+                                         "Toast and popup «Update mod» for already-installed extras packs"
+                                     ],
+                         "RemovedIt":  [
+
+                                       ],
+                         "RemovedEn":  [
+
+                                       ],
+                         "ReworkIt":  [
+                                          "Core / Zaino Gate / PDA seedati nello store Creator first-party",
+                                          "Organizator: priorità UI e badge aggiornamento senza toccare load order engine"
+                                      ],
+                         "ReworkEn":  [
+                                          "Core / Backpack Gate / PDA seeded into first-party Creator store",
+                                          "Organizator: UI priority and update badge without touching engine load order"
+                                      ],
+                         "FixIt":  [
+                                       "HEALTH e Addons: CTA Base Coop / MCM se FATAL o incompleti",
+                                       "Musica launcher e menu di gioco con asset aggiornati"
+                                   ],
+                         "FixEn":  [
+                                       "HEALTH and Addons: Base Coop / MCM CTA when FATAL or incomplete",
+                                       "Launcher music and in-game menu with updated assets"
+                                   ]
+                     },
+                     {
+                         "Version":  "0.1.973",
+                         "AddedIt":  [
+
+                                     ],
+                         "AddedEn":  [
+
+                                     ],
+                         "RemovedIt":  [
+
+                                       ],
+                         "RemovedEn":  [
+
+                                       ],
+                         "ReworkIt":  [
+                                          "Allineamento note pubbliche / path Options vanilla (niente brand vietati in changelog)"
+                                      ],
+                         "ReworkEn":  [
+                                          "Public notes alignment / vanilla Options path (no forbidden brands in changelog)"
+                                      ],
+                         "FixIt":  [
+                                       "Stabilità Join e marker Modded Exes post-AGGIORNA",
+                                       "Controllo salute più chiaro; RIPARA STEAM se serve; PLAY apre CTA se FATAL"
+                                   ],
+                         "FixEn":  [
+                                       "Join stability and Modded Exes markers after AGGIORNA",
+                                       "Clearer health check; RIPARA STEAM when needed; PLAY opens CTA on FATAL"
+                                   ]
+                     }
+                 ]
+}
