@@ -1,12 +1,12 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.2.1003",
+    "Version":  "0.2.1004",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "* Weather Expansion: stub/partial extras non bloccano ModDB; coda profilo senza wait browser 4 min.\n* Annulla download ModDB/coda funzionante (CancellationToken + UI).\n* UI download MB/% / coda / fase senza {0}.\n* Amico: AGGIORNA -\u003e cancella stub weather -\u003e INSTALLA Weather Expansion.",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.2.1003",
-    "PackageSha256":  "5c67af10bbc5ba32ec31b9d95fb8255da320c11c81636c8e3c86f08976807228",
-    "PublishedUtc":  "2026-10-03T20:27:23.4807695Z",
+    "Notes":  "* Annulla download ModDB/coda: CTS + bottone attivo in prep + svuota job rimanenti in coda.\n* Weather Expansion: stub/partial extras non bloccano ModDB; coda profilo senza wait browser 4 min.\n* UI download MB/% / coda / fase senza {0}.\n* Amico: AGGIORNA → Annulla funziona anche a metà coda.",
+    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.2.1004",
+    "PackageSha256":  "456d6d097384cc426e094d5b0ebd07fabc2dea08de8269bfdfea7a7be6973175",
+    "PublishedUtc":  "2026-10-03T20:31:05.2327582Z",
     "MinLauncherVersion":  "0.1.0"
 }

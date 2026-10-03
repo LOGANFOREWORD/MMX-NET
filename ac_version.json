@@ -1,8 +1,8 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.2.1003",
+    "Version":  "0.2.1004",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "* Weather Expansion: stub/partial extras non bloccano ModDB; coda profilo senza wait browser 4 min.\n* Annulla download ModDB/coda funzionante (CancellationToken + UI).\n* UI download MB/% / coda / fase senza {0}.\n* Amico: AGGIORNA -> cancella stub weather -> INSTALLA Weather Expansion."
+    "Notes":  "* Annulla download ModDB/coda: CTS + bottone attivo in prep + svuota job rimanenti in coda.\n* Weather Expansion: stub/partial extras non bloccano ModDB; coda profilo senza wait browser 4 min.\n* UI download MB/% / coda / fase senza {0}.\n* Amico: AGGIORNA → Annulla funziona anche a metà coda."
 }

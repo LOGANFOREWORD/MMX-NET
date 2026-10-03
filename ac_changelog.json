@@ -2,6 +2,33 @@
     "Schema":  1,
     "Releases":  [
                      {
+                         "Version":  "0.2.1004",
+                         "AddedIt":  [
+
+                                     ],
+                         "AddedEn":  [
+
+                                     ],
+                         "RemovedIt":  [
+
+                                       ],
+                         "RemovedEn":  [
+
+                                       ],
+                         "ReworkIt":  [
+
+                                      ],
+                         "ReworkEn":  [
+
+                                      ],
+                         "FixIt":  [
+                                       "Annulla ModDB/coda: oltre al CTS/UI, svuota i job rimanenti in coda (niente download successivi dopo Annulla)"
+                                   ],
+                         "FixEn":  [
+                                       "ModDB/queue Cancel: besides CTS/UI, clear remaining queue jobs (no further downloads after Cancel)"
+                                   ]
+                     },
+                     {
                          "Version":  "0.2.1003",
                          "AddedIt":  [
 
