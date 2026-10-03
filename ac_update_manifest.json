@@ -1,12 +1,23 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.2.1004",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "* Annulla download ModDB/coda: CTS + bottone attivo in prep + svuota job rimanenti in coda.\n* Weather Expansion: stub/partial extras non bloccano ModDB; coda profilo senza wait browser 4 min.\n* UI download MB/% / coda / fase senza {0}.\n* Amico: AGGIORNA poi Annulla funziona anche a meta coda.",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.2.1004",
-    "PackageSha256":  "456d6d097384cc426e094d5b0ebd07fabc2dea08de8269bfdfea7a7be6973175",
-    "PublishedUtc":  "2026-10-03T20:31:05.2327582Z",
-    "MinLauncherVersion":  "0.1.0"
+{
+  "Name": "MMX-Net",
+  "Version": "0.2.1005",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "* Annulla download ModDB/coda: CTS \u002B bottone attivo in prep \u002B svuota job rimanenti in coda.\n* Weather Expansion: stub/partial extras non bloccano ModDB; coda profilo senza wait browser 4 min.\n* UI download MB/% / coda / fase senza {0}.\n* Amico: AGGIORNA poi Annulla funziona anche a meta coda.",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.2.1005",
+  "PackageSha256": "6791b230d37ecb5e841b06a517c73e6b676e85e48cddde1a8cc938d66ec27101",
+  "PublishedUtc": "2026-10-03T20:34:07.5393689Z",
+  "MinLauncherVersion": "0.1.0",
+  "OverlayKeySha256": {
+    "ac_version.json": "f68aa7bd340c5384342e810aa5d701211d6bd7bba9ccfe03c6894abc8d2f2db7",
+    "ac_steam_cop_bridge.cmd": "105b7eb2a1aaf1db840a84548e0e3161c02f561540068a50177ce58d71579184",
+    "ac_steam_launch.args": "55bfade880b8e6e24cd369f7d3d04611fdb5e44f60084c1e520690f04413fb54",
+    "gamedata\\scripts\\MMX_NET_core.script": "a5ab077df716b05c8d05ff439d83528667401611c16dc627c7afc8d8f2b0f58f",
+    "gamedata\\scripts\\MMX_NET_net_client.script": "aeeccde2bdc9a9038a15d52f62c4d2bc5fe5d4f5f07c4bddc3f053d5ac48a3e4",
+    "gamedata\\scripts\\MMX_NET_net_server.script": "1f56a6887266e52dcff3ce70baf1b333ff081bd7742fa7bee6f849f5969ba7a1",
+    "gamedata\\scripts\\MMX_NET_callbacks.script": "735b3f04722999ac5dd4477a592fc6ec9f8b26dee3cbee4be25414c11ac23065",
+    "gamedata\\scripts\\MMX_NET_menu.script": "40bd215f48c82efa1985250d2ba6ef93f66124e136cd9e094203ca7ef3f20a66",
+    "gamedata\\scripts\\MMX_NET_join_code.script": "7d4a00100adfdd3cd04574cf70216ffe4a7c40eb9f2fa5082276225137a3e11d"
+  }
 }
