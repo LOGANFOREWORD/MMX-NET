@@ -1,6 +1,6 @@
 {
   "Name": "MMX-Net Extras",
-  "PublishedUtc": "2026-10-03T17:22:31.1974711Z",
+  "PublishedUtc": "2026-10-03T19:26:12.9351668Z",
   "Packages": [
     {
       "Id": "mcm",
@@ -20,8 +20,8 @@
       "Name": "MMX - Core [Anomaly] (MMX-Net / Logan)",
       "Version": "0.1.16",
       "PackageUrl": "extras/mmx-core.zip",
-      "PackageSha256": "ccd3d8e24e0c618c88fa3f884834d456c35f4345af08ad318ca2fd495a203450",
-      "PackageSizeBytes": 795131,
+      "PackageSha256": "b3ceedbc4f957d8b0f4122ec69ded0d3c1fb6af2380758deb130e7249c97c769",
+      "PackageSizeBytes": 803221,
       "Notes": "Essenziale auto-install. Fix Anomaly MMX. Ex Essentials Survival. Non Base Coop / non overlay MMX_NET."
     },
     {
@@ -29,8 +29,8 @@
       "Name": "FDDA Redone (lizzardman)",
       "Version": "1.0.0",
       "PackageUrl": "extras/fdda.zip",
-      "PackageSha256": "45d6d11e56a55bd2142f9b29fda1c919c809a893440a21110d86728025f7f482",
-      "PackageSizeBytes": 29568,
+      "PackageSha256": "6fbc5475d4f7f1a5b507a4610132b4a83d5e8990822d4556ccc122338b9a1083",
+      "PackageSizeBytes": 29800,
       "Notes": "Animazioni FDDA Redone. Autore: lizzardman."
     },
     {
@@ -38,8 +38,8 @@
       "Name": "Backpack / Zaino (FDDA Redone)",
       "Version": "1.0.0",
       "PackageUrl": "extras/backpack.zip",
-      "PackageSha256": "82ee1d00e796ef9b6f8761b6475ef8d667d61b6b5310ee5e87ad60275856f3b9",
-      "PackageSizeBytes": 19371,
+      "PackageSha256": "c9dd9cf863217ba7476c55b270852639236b08bbc22f571e8ef414693d4ab4bc",
+      "PackageSizeBytes": 19992,
       "Notes": "Modulo backpack di FDDA Redone (lizzardman) \u002B patch OuterEater."
     },
     {
@@ -128,8 +128,8 @@
       "Name": "T.H.A.P. Small Re-Rework (Max_im16)",
       "Version": "1.0.0",
       "PackageUrl": "extras/thap-small.zip",
-      "PackageSha256": "75f6e7c9c7b631f496c7a6adf702331ee1a84d3295d9656782f814de6cae2950",
-      "PackageSizeBytes": 1311,
+      "PackageSha256": "bc892f074bdfe103472b064e135e3410b19ba5179ac925f0d3de8e4aec561791",
+      "PackageSizeBytes": 1316,
       "Notes": "Credit: Max_im16 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/thap-small-re-rework"
     },
     {
@@ -189,10 +189,10 @@
     {
       "Id": "glowstick-reanimated",
       "Name": "Glowstick Reanimated v1.4 (lizzardman)",
-      "Version": "1.0.0",
+      "Version": "1",
       "PackageUrl": "extras/glowstick-reanimated.zip",
-      "PackageSha256": "f938c5af30b229c1f2e43e09b461753452f8dd2924d9173ec679cc01312c9c2b",
-      "PackageSizeBytes": 388,
+      "PackageSha256": "aa74e146992befcb87e4f5765b93b7e53564a1408959a9553e6bd95726176887",
+      "PackageSizeBytes": 63927,
       "Notes": "Credit: lizzardman \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/glowstick-reanimated-v11"
     },
     {
@@ -333,10 +333,10 @@
     {
       "Id": "3dss-vanilla-stack",
       "Name": "3DSS Vanilla Stack (party_50 \u00B7 MsPizza727 (bundle MMX))",
-      "Version": "1.0.0",
+      "Version": "1",
       "PackageUrl": "extras/3dss-vanilla-stack.zip",
-      "PackageSha256": "a95d626571130e987b5f107e2a4a0d9acd1eec263db856758083aefdde260b11",
-      "PackageSizeBytes": 43591592,
+      "PackageSha256": "e27cf60d684e02f21359c086774b07b9aea394553b0a02d6366ad093d8f303cc",
+      "PackageSizeBytes": 43514499,
       "Notes": "Credit: party_50 \u00B7 MsPizza727 (bundle MMX) \u2014 ModDB: "
     },
     {
@@ -506,8 +506,8 @@
       "Name": "Aydin\u0027s Bare Bars 1.0 (aytabag)",
       "Version": "1",
       "PackageUrl": "extras/aydins-bare-bars.zip",
-      "PackageSha256": "73b08d43db2dff096f9b3e2aba3cd6e8d40f2fc030f84e7e9301f0e8b008730e",
-      "PackageSizeBytes": 183534,
+      "PackageSha256": "444e25059d66112915c6e91901bf2ccecd02c8c8e58f164645f013aabbb11d71",
+      "PackageSizeBytes": 183622,
       "Notes": "Credit: aytabag \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/aydins-bare-bars-10"
     },
     {
@@ -542,8 +542,8 @@
       "Name": "Utjan\u0027s Item UI Improvements (Utjan)",
       "Version": "1",
       "PackageUrl": "extras/utjans-item-ui-improvements.zip",
-      "PackageSha256": "cf34f764146f1fcdcc40ab5c33b6f98f982fb135315655e6dca4e0138abc101c",
-      "PackageSizeBytes": 57717,
+      "PackageSha256": "e85c725abd35cd6b49b8fbb9c0bb0a8d26a9484e40ab72c2bd385628116297ca",
+      "PackageSizeBytes": 58080,
       "Notes": "Credit: Utjan \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/utjans-item-ui-improvements"
     },
     {
@@ -560,8 +560,8 @@
       "Name": "FDDA Enhanced animations - Medical / EXO ANIMS (Mirrowel)",
       "Version": "1",
       "PackageUrl": "extras/fdda-medical-exo-anims.zip",
-      "PackageSha256": "604628b0ce3ded77e7a6da97d33353499d2dfde5834823d4eec30aa72031fdf4",
-      "PackageSizeBytes": 9778465,
+      "PackageSha256": "03d551fb31ba3c4524b70054f60f71307991382ade3c47381a3e3d9201427be6",
+      "PackageSizeBytes": 9778912,
       "Notes": "Credit: Mirrowel \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/fdda-enhanced-animations-medical-exo-anims"
     },
     {
@@ -569,8 +569,8 @@
       "Name": "SquareDOV - Square \u0026 Customizable Minimap (Strogglet15)",
       "Version": "1",
       "PackageUrl": "extras/squaredov.zip",
-      "PackageSha256": "f3ab2a70748cc93bac54a4e3c8cba2d995920ed7600e016368abd4ecac906ede",
-      "PackageSizeBytes": 359846,
+      "PackageSha256": "e30cea26d7046b0a09eb6186e871befa9307952a036e4d3fd1501fe1fc6755b2",
+      "PackageSizeBytes": 330686,
       "Notes": "Credit: Strogglet15 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/squaredov"
     },
     {
@@ -621,10 +621,10 @@
     {
       "Id": "rpd-reanimation",
       "Name": "RPD Reanimation (NickolasNikova (orig.) \u00B7 Grokitach (ModDB))",
-      "Version": "1.0.0",
+      "Version": "1",
       "PackageUrl": "extras/rpd-reanimation.zip",
-      "PackageSha256": "1c5ab5511647696a3135bc0c311a384a43bd1c802bf832be63ff00a2d90dd752",
-      "PackageSizeBytes": 279,
+      "PackageSha256": "7fe15314737299b659dacb66e1c64183d59b0aa676e649f0b6d7a5f6775f2ec8",
+      "PackageSizeBytes": 3272,
       "Notes": "Credit: NickolasNikova (orig.) \u00B7 Grokitach (ModDB) \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/rpd-reanimation-by-nickolasnikova"
     },
     {
@@ -639,10 +639,10 @@
     {
       "Id": "mmx-economy",
       "Name": "MMX-Economy (MMX-Net / Logan)",
-      "Version": "0.4.5",
+      "Version": "0.4.6",
       "PackageUrl": "extras/mmx-economy.zip",
-      "PackageSha256": "e258120ad119bae07e1a5a87ff6b85cea0941122ff8428556904d4cd3922c7ee",
-      "PackageSizeBytes": 481,
+      "PackageSha256": "3e9e13ce8e674ba9d58e4dcdf880896e14f9e7e7eb99f9ad83c7647bc2ef65c1",
+      "PackageSizeBytes": 497,
       "Notes": "Credit: MMX-Net / Logan \u2014 first-party MMX"
     },
     {
@@ -650,7 +650,7 @@
       "Name": "MMX-More Animations For Anomaly 1.5.3 for Coop Sync (MMX-Net / Logan)",
       "Version": "0.1.0-mvp",
       "PackageUrl": "extras/mmx-more-animations-coop-sync.zip",
-      "PackageSha256": "98f2a41c19295d499de96db1d7cdd033cbfba46573351f09125ff039aa752ff2",
+      "PackageSha256": "20f20c3a9e22ce6d5e75dd57dad4c662a93b7238d77f24ad141c0e7e57252a56",
       "PackageSizeBytes": 4983,
       "Notes": "Credit: MMX-Net / Logan \u2014 ModDB: "
     },
