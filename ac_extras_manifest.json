@@ -1,6 +1,6 @@
 ﻿{
     "Name":  "MMX-Net Extras",
-    "PublishedUtc":  "2026-10-05T15:48:56.0824984Z",
+    "PublishedUtc":  "2026-10-05T16:22:30.3759650Z",
     "Packages":  [
                      {
                          "Id":  "mmx-core",
@@ -9,6 +9,24 @@
                          "PackageUrl":  "extras/mmx-core.zip",
                          "PackageSha256":  "18981923237882d2a3817f6b59638c8309dca7855652caf9633422a4aceef10b",
                          "Notes":  "Essenziale auto-install. Fix Anomaly MMX. Ex Essentials Survival. Non Base Coop / non overlay MMX_NET."
+                     },
+                     {
+                         "Id":  "weapon-fix-extended",
+                         "Name":  "Weapon Fix - Extended",
+                         "Version":  "0.2.1010",
+                         "PackageUrl":  "https://github.com/LOGANFOREWORD/MMX-NET/releases/download/wfe-0.2.1010/weapon-fix-extended.zip",
+                         "PackageSha256":  "df71a43ddb161e192e0982c871bf0da7407c3e6b1b5f149b6257ab095b1941bc",
+                         "PackageSizeBytes":  1911331297,
+                         "Notes":  "Bundle WFE slim+soft; \u003e100MB -\u003e GitHub Release asset (max 2GB). Non raw/blob."
+                     },
+                     {
+                         "Id":  "mmx-quality-of-life",
+                         "Name":  "MMX-QualityOfLife (MMX-Net / Logan (bundle); Body Search: lizzardman)",
+                         "Version":  "0.2.3",
+                         "PackageUrl":  "https://github.com/LOGANFOREWORD/MMX-NET/releases/download/wfe-0.2.1010/mmx-quality-of-life.zip",
+                         "PackageSha256":  "450020ad7cf21ea23959288bb4b28e2a20f7d451f7128f631e6ecad55054331c",
+                         "PackageSizeBytes":  140543233,
+                         "Notes":  "Credit: MMX-Net / Logan (bundle); Body Search: lizzardman - feed via GitHub Release asset (wfe-0.2.1010)."
                      }
                  ]
 }

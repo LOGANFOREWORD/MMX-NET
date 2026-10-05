@@ -1,9 +1,9 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.2.1009",
+    "Version":  "0.2.1011",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "* Fix loop AGGIORNA stessa Version (niente re-offer 0.2.x â†’ 0.2.x).\n* MinLauncher pin 0.1.0 per amici.\n* Annulla download ModDB/coda: CTS + bottone attivo in prep + svuota job rimanenti in coda.\n* Weather Expansion: stub/partial extras non bloccano ModDB; coda profilo senza wait browser 4 min.\n* UI download MB/% / coda / fase senza {0}.\n* Amico: AGGIORNA poi Annulla funziona anche a meta coda.",
+    "Notes":  "* Stamp ac_launcher_last_run.json avanzato SOLO se FailedCount==0 (Ensure ok). Su FAIL pack: no bump versioni / FailKey+HardFails â†’ retry al prossimo avvio.\n* Ordine sync: Ensure PRIMA, prune (incl. slim migrate WFE) SOLO dopo Ensure ok â€” mai prune-then-fail.\n* Popup FAIL: Â«WFE non installata, riprovo al prossimo avvioÂ»; Â«installate YÂ» conta solo successi.\n* MMX-Base PackList allineato al set attivo Logan (seed ModOrganizerLiteService).\n* Post-AGGIORNA + primo avvio: sync pack gestiti weapon-fix-extended + mmx-quality-of-life (prune SOLO filelist pack).\n* WFE: entry feed via GitHub Release asset (zip \u003e100MB) â€” vedi docs/_stage_0.2.1010_FEED_WFE_NOTES.md.",
     "MinLauncherVersion":  "0.1.0"
 }
