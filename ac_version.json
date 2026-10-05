@@ -1,8 +1,9 @@
-{
-  "Name": "MMX-Net",
-  "Version": "0.2.1007",
-  "Channel": "dev",
-  "Protocol": "89",
-  "Engine": "ST",
-  "Notes": "* Annulla download ModDB/coda: CTS \u002B bottone attivo in prep \u002B svuota job rimanenti in coda.\n* Weather Expansion: stub/partial extras non bloccano ModDB; coda profilo senza wait browser 4 min.\n* UI download MB/% / coda / fase senza {0}.\n* Amico: AGGIORNA poi Annulla funziona anche a meta coda."
+﻿{
+    "Name":  "MMX-Net",
+    "Version":  "0.2.1007",
+    "Channel":  "dev",
+    "Protocol":  "89",
+    "Engine":  "ST",
+    "Notes":  "* Annulla download ModDB/coda: CTS + bottone attivo in prep + svuota job rimanenti in coda.\n* Weather Expansion: stub/partial extras non bloccano ModDB; coda profilo senza wait browser 4 min.\n* UI download MB/% / coda / fase senza {0}.\n* Amico: AGGIORNA poi Annulla funziona anche a meta coda.",
+    "MinLauncherVersion":  "0.1.0"
 }
