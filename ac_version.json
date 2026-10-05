@@ -1,9 +1,9 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.2.1012",
+    "Version":  "0.2.1013",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "* Stamp ac_launcher_last_run.json avanzato SOLO se FailedCount==0 (Ensure ok). Su FAIL pack: no bump versioni / FailKey+HardFails â†’ retry al prossimo avvio.\n* Ordine sync: Ensure PRIMA, prune (incl. slim migrate WFE) SOLO dopo Ensure ok â€” mai prune-then-fail.\n* Popup FAIL: Â«WFE non installata, riprovo al prossimo avvioÂ»; Â«installate YÂ» conta solo successi.\n* MMX-Base PackList allineato al set attivo Logan (seed ModOrganizerLiteService).\n* Post-AGGIORNA + primo avvio: sync pack gestiti weapon-fix-extended + mmx-quality-of-life (prune SOLO filelist pack).\n* WFE: entry feed via GitHub Release asset (zip \u003e100MB) â€” vedi docs/_stage_0.2.1010_FEED_WFE_NOTES.md.",
+    "Notes":  "* 1013 BLOCKING: ManagedPackSync prune never deletes MCM-owned or MMX-Net core overlays (ui_main_menu / ui_mm_main* / chatbox / xrr textures).\n* EnsureMcmForceLive + EnsureMmxNetCoreOverlaysLive restore missing menu/chatbox/xrr from ac-update.zip / extras/mcm.zip / options/MCM on update/Ensure (1012â†’1013 heal).\n* mmx-quality-of-life.zip rebuilt flat: \u003ccomponent\u003e/gamedata/... (no nested gamedata/\u003ccomp\u003e/gamedata); MCM/MMX core overlays stripped from QoL (SoT = mcm.zip + ac-update).\n* Assemble script scrub+unwrap guards for future rebuilds.",
     "MinLauncherVersion":  "0.1.0"
 }
