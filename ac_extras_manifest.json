@@ -1,6 +1,6 @@
 {
   "Name": "MMX-Net Extras",
-  "PublishedUtc": "2026-10-05T15:10:37.3135690Z",
+  "PublishedUtc": "2026-10-05T15:26:20.1618224Z",
   "Packages": [
     {
       "Id": "mcm",
@@ -740,8 +740,8 @@
       "Name": "MMX-Experimental \u2014 The G36 Pack (Strogglet15)",
       "Version": "1.0.0",
       "PackageUrl": "extras/mmx-experimental.zip",
-      "PackageSha256": "1492bac457d5c2c67b95a00bb062846b908466bbedb7c3c3c176908c1b12da52",
-      "PackageSizeBytes": 44286527,
+      "PackageSha256": "299faa37ab520eefbf5af13c7f8b5c8d78415a938e90d0c52e9fa34afa0eea3f",
+      "PackageSizeBytes": 56916695,
       "Notes": "Credit: Strogglet15 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/the-g36-pack-g36pack"
     }
   ]
