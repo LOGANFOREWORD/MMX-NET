@@ -1,23 +1,23 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.2.1007",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "* Annulla download ModDB/coda: CTS + bottone attivo in prep + svuota job rimanenti in coda.\n* Weather Expansion: stub/partial extras non bloccano ModDB; coda profilo senza wait browser 4 min.\n* UI download MB/% / coda / fase senza {0}.\n* Amico: AGGIORNA poi Annulla funziona anche a meta coda.",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.2.1007",
-    "PackageSha256":  "2e02cd2ad0370850c35672f2cc12918c7da678b5942ca7ed0805bbd092907b13",
-    "PublishedUtc":  "2026-10-05T15:26:20.2657710Z",
-    "MinLauncherVersion":  "0.1.0",
-    "OverlayKeySha256":  {
-                             "ac_version.json":  "c16cbcd98d04a592959e55d2f3a8a73206b8e70a5ea77e911b4efa9f11619aac",
-                             "ac_steam_cop_bridge.cmd":  "105b7eb2a1aaf1db840a84548e0e3161c02f561540068a50177ce58d71579184",
-                             "ac_steam_launch.args":  "55bfade880b8e6e24cd369f7d3d04611fdb5e44f60084c1e520690f04413fb54",
-                             "gamedata\\scripts\\MMX_NET_core.script":  "e3d505e7476e61c7583220e2302138728e68ba12bf33ad429fbfe30e7bb70cd3",
-                             "gamedata\\scripts\\MMX_NET_net_client.script":  "4f580bcd122c9107ba3acbeff0595161b638b36b45d746680fd70c21694e8094",
-                             "gamedata\\scripts\\MMX_NET_net_server.script":  "1f56a6887266e52dcff3ce70baf1b333ff081bd7742fa7bee6f849f5969ba7a1",
-                             "gamedata\\scripts\\MMX_NET_callbacks.script":  "62f6f9fa78ff1eb81a00e567d2696c03d112d90ea073a752e79d892ddfea06f1",
-                             "gamedata\\scripts\\MMX_NET_menu.script":  "137274eec28c5977b98985fa90cdc17f06bfda9733649b2a869138b0c46e982a",
-                             "gamedata\\scripts\\MMX_NET_join_code.script":  "8ee58da4e1e37550feb20754d59cf71ff640d82dfb3d06c71ce737e654e8a7a2"
-                         }
+{
+  "Name": "MMX-Net",
+  "Version": "0.2.1008",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "* Annulla download ModDB/coda: CTS \u002B bottone attivo in prep \u002B svuota job rimanenti in coda.\n* Weather Expansion: stub/partial extras non bloccano ModDB; coda profilo senza wait browser 4 min.\n* UI download MB/% / coda / fase senza {0}.\n* Amico: AGGIORNA poi Annulla funziona anche a meta coda.",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.2.1008",
+  "PackageSha256": "b198771916a9e52df5d88d70974206353f889eca4a66c6a10d928214b1f2ecd9",
+  "PublishedUtc": "2026-10-05T15:38:43.8162730Z",
+  "MinLauncherVersion": "0.1.0",
+  "OverlayKeySha256": {
+    "ac_version.json": "5953f0f2763fbcaa514a54e0d1f7a8df73f916317d6611780233ada902c573bf",
+    "ac_steam_cop_bridge.cmd": "105b7eb2a1aaf1db840a84548e0e3161c02f561540068a50177ce58d71579184",
+    "ac_steam_launch.args": "55bfade880b8e6e24cd369f7d3d04611fdb5e44f60084c1e520690f04413fb54",
+    "gamedata\\scripts\\MMX_NET_core.script": "e3d505e7476e61c7583220e2302138728e68ba12bf33ad429fbfe30e7bb70cd3",
+    "gamedata\\scripts\\MMX_NET_net_client.script": "4f580bcd122c9107ba3acbeff0595161b638b36b45d746680fd70c21694e8094",
+    "gamedata\\scripts\\MMX_NET_net_server.script": "1f56a6887266e52dcff3ce70baf1b333ff081bd7742fa7bee6f849f5969ba7a1",
+    "gamedata\\scripts\\MMX_NET_callbacks.script": "62f6f9fa78ff1eb81a00e567d2696c03d112d90ea073a752e79d892ddfea06f1",
+    "gamedata\\scripts\\MMX_NET_menu.script": "137274eec28c5977b98985fa90cdc17f06bfda9733649b2a869138b0c46e982a",
+    "gamedata\\scripts\\MMX_NET_join_code.script": "8ee58da4e1e37550feb20754d59cf71ff640d82dfb3d06c71ce737e654e8a7a2"
+  }
 }
