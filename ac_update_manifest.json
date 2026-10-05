@@ -1,23 +1,23 @@
 {
-    "Name":  "MMX-Net",
-    "Version":  "0.2.1019",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "* 1019: bump CARICA (feed push dopo abort same-version su clone sync).\n* 1016: profili allineati su Home/Workshop (radio UniformGrid 4x108).\n* Bottone/testi launcher: \"Join the Zone\" (ex Connect to Session).\n* Meno cali di FPS (mmx-core: seconda bussola e script ottimizzati FRAMEDROP-001 p2).\n* Build AV-free (no avmeta). Notes ASCII (-\u003e).",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.2.1019",
-    "PackageSha256":  "24af099fc9340ea08d5fb80a3f3ba8129fc05bd275150841daf7484605cba4cf",
-    "PublishedUtc":  "2026-10-05T21:30:09.8165658Z",
-    "MinLauncherVersion":  "0.1.0",
-    "OverlayKeySha256":  {
-                             "ac_version.json":  "1d1bcf5bd06ff014b99448493cda730bbdcc071f4bfe620fef1b54813ccee486",
-                             "ac_steam_cop_bridge.cmd":  "105b7eb2a1aaf1db840a84548e0e3161c02f561540068a50177ce58d71579184",
-                             "ac_steam_launch.args":  "55bfade880b8e6e24cd369f7d3d04611fdb5e44f60084c1e520690f04413fb54",
-                             "gamedata\\scripts\\MMX_NET_core.script":  "e3d505e7476e61c7583220e2302138728e68ba12bf33ad429fbfe30e7bb70cd3",
-                             "gamedata\\scripts\\MMX_NET_net_client.script":  "4f580bcd122c9107ba3acbeff0595161b638b36b45d746680fd70c21694e8094",
-                             "gamedata\\scripts\\MMX_NET_net_server.script":  "1f56a6887266e52dcff3ce70baf1b333ff081bd7742fa7bee6f849f5969ba7a1",
-                             "gamedata\\scripts\\MMX_NET_callbacks.script":  "62f6f9fa78ff1eb81a00e567d2696c03d112d90ea073a752e79d892ddfea06f1",
-                             "gamedata\\scripts\\MMX_NET_menu.script":  "11614292e31e83cf369ee634e1c6eb75d9b5ba99425b4db86ebba85c8395f81a",
-                             "gamedata\\scripts\\MMX_NET_join_code.script":  "8ee58da4e1e37550feb20754d59cf71ff640d82dfb3d06c71ce737e654e8a7a2"
-                         }
+  "Name": "MMX-Net",
+  "Version": "0.2.1020",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "* 1019: bump CARICA (feed push dopo abort same-version su clone sync).\n* 1016: profili allineati su Home/Workshop (radio UniformGrid 4x108).\n* Bottone/testi launcher: \u0022Join the Zone\u0022 (ex Connect to Session).\n* Meno cali di FPS (mmx-core: seconda bussola e script ottimizzati FRAMEDROP-001 p2).\n* Build AV-free (no avmeta). Notes ASCII (-\u003E).",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.2.1020",
+  "PackageSha256": "be775fd568dff7c8bb3d26c8b71c2b12916e1d92ae6bb36e57a93837dc802026",
+  "PublishedUtc": "2026-10-05T21:55:50.2999914Z",
+  "MinLauncherVersion": "0.1.0",
+  "OverlayKeySha256": {
+    "ac_version.json": "0687996e45e3f60fd70482644a7db8a6ca6766071585f8c3fc15bb240b9fe547",
+    "ac_steam_cop_bridge.cmd": "105b7eb2a1aaf1db840a84548e0e3161c02f561540068a50177ce58d71579184",
+    "ac_steam_launch.args": "55bfade880b8e6e24cd369f7d3d04611fdb5e44f60084c1e520690f04413fb54",
+    "gamedata\\scripts\\MMX_NET_core.script": "e3d505e7476e61c7583220e2302138728e68ba12bf33ad429fbfe30e7bb70cd3",
+    "gamedata\\scripts\\MMX_NET_net_client.script": "4f580bcd122c9107ba3acbeff0595161b638b36b45d746680fd70c21694e8094",
+    "gamedata\\scripts\\MMX_NET_net_server.script": "1f56a6887266e52dcff3ce70baf1b333ff081bd7742fa7bee6f849f5969ba7a1",
+    "gamedata\\scripts\\MMX_NET_callbacks.script": "62f6f9fa78ff1eb81a00e567d2696c03d112d90ea073a752e79d892ddfea06f1",
+    "gamedata\\scripts\\MMX_NET_menu.script": "11614292e31e83cf369ee634e1c6eb75d9b5ba99425b4db86ebba85c8395f81a",
+    "gamedata\\scripts\\MMX_NET_join_code.script": "8ee58da4e1e37550feb20754d59cf71ff640d82dfb3d06c71ce737e654e8a7a2"
+  }
 }
