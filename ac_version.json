@@ -1,9 +1,9 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.2.1015",
+    "Version":  "0.2.1016",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "* 1015: fix DESYNC falso (Order User-band allineato in ComputeLiveStateHash -\u003e heal ac_mo_applied chiude NeedsApplyWarn).\n* AGGIORNA e icona update sempre cliccabili anche in busy.\n* Download: curl connect-timeout 20s + speed-limit 2048/60s -\u003e Riprova (exit 28).\n* Notes ASCII (1012-\u003e1013). taz-mg42 PageUrl ModDB corretto.",
+    "Notes":  "* 1016: profili allineati su Home/Workshop (radio UniformGrid 4x108).\n* Bottone/testi launcher: \"Join the Zone\" (ex Connect to Session).\n* Meno cali di FPS (mmx-core: seconda bussola e script ottimizzati FRAMEDROP-001 p2).\n* Build AV-free (no avmeta). Notes ASCII (-\u003e).",
     "MinLauncherVersion":  "0.1.0"
 }
