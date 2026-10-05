@@ -5,14 +5,7 @@ URL da mettere in ac_config.json → updateFeedUrl (amici):
 https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/
 
 Repo PUBBLICA MMX-NET: nessun PAT.
-  Un token «che non scade mai» NON serve e NON va messo nello zip.
-  Write solo owner LOGANFOREWORD.
-  Dopo CARICA: push automatico se PublishTarget e' il clone feed,
+  Dopo CARICA: push automatico se PublishTarget è il clone feed,
   oppure toolkit\push_update_feed.ps1
 
-Launcher: URL legacy *-feed vengono migrati a MMX-NET all'avvio.
-
-Solo LOGANFOREWORD puo' pushare. Vedi FEED_PRIVATO_AMICI.md
-
-Il launcher utente all'avvio (checkUpdatesOnStart: true) mostra il popup
-se ac_update_manifest.json ha Version maggiore della locale.
+Il launcher utente (checkUpdatesOnStart) mostra AGGIORNA se Version feed > locale.

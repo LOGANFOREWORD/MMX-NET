@@ -1,6 +1,6 @@
 {
   "Name": "MMX-Net Extras",
-  "PublishedUtc": "2026-10-03T20:34:07.4198211Z",
+  "PublishedUtc": "2026-10-05T15:10:37.3135690Z",
   "Packages": [
     {
       "Id": "mcm",
@@ -18,10 +18,10 @@
     {
       "Id": "mmx-core",
       "Name": "MMX - Core [Anomaly] (MMX-Net / Logan)",
-      "Version": "0.1.16",
+      "Version": "0.1.28",
       "PackageUrl": "extras/mmx-core.zip",
-      "PackageSha256": "73460647e19b179132293870182490b73d72b6410cd666b9dd5b318dbdadb753",
-      "PackageSizeBytes": 806424,
+      "PackageSha256": "9aa68d505a0d2839688dc7cc25af6687c168380e78ffe3bce517a39eb5ba36f6",
+      "PackageSizeBytes": 3392444,
       "Notes": "Essenziale auto-install. Fix Anomaly MMX. Ex Essentials Survival. Non Base Coop / non overlay MMX_NET."
     },
     {
@@ -29,8 +29,8 @@
       "Name": "FDDA Redone (lizzardman)",
       "Version": "1.0.0",
       "PackageUrl": "extras/fdda.zip",
-      "PackageSha256": "6fbc5475d4f7f1a5b507a4610132b4a83d5e8990822d4556ccc122338b9a1083",
-      "PackageSizeBytes": 29800,
+      "PackageSha256": "c17ca2daecc7b3c50149596c6c310f495d6b5c14e201da2b340a25321d735b9c",
+      "PackageSizeBytes": 26453,
       "Notes": "Animazioni FDDA Redone. Autore: lizzardman."
     },
     {
@@ -38,8 +38,8 @@
       "Name": "Backpack / Zaino (FDDA Redone)",
       "Version": "1.0.0",
       "PackageUrl": "extras/backpack.zip",
-      "PackageSha256": "c9dd9cf863217ba7476c55b270852639236b08bbc22f571e8ef414693d4ab4bc",
-      "PackageSizeBytes": 19992,
+      "PackageSha256": "9a3ab8bc7f410160df7763b06ddf73255e27b2050360f02c0e76bd805c52baf6",
+      "PackageSizeBytes": 17841,
       "Notes": "Modulo backpack di FDDA Redone (lizzardman) \u002B patch OuterEater."
     },
     {
@@ -47,8 +47,8 @@
       "Name": "Another Footsteps and Backpack Sounds for Anomaly (UltimateDunkel)",
       "Version": "1.0.0",
       "PackageUrl": "extras/footsteps.zip",
-      "PackageSha256": "7073f7b10304ff6269923df395702a17e984ebb28a7892ced32240c450b7aa71",
-      "PackageSizeBytes": 797419,
+      "PackageSha256": "32a8502ead5853f63ce9a39cf7d8564a64c2c51b7d89606c68dbbb71a99aa1b7",
+      "PackageSizeBytes": 356549,
       "Notes": "Credit: UltimateDunkel \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/another-footsteps-and-backpack-sounds-for-anomaly-made-by-ultimatedunkel-030"
     },
     {
@@ -83,8 +83,8 @@
       "Name": "Outfit Animations (lizzardman)",
       "Version": "1",
       "PackageUrl": "extras/outfit-animations.zip",
-      "PackageSha256": "12f76ba22ccb8331654ee82d6fa90793a1a14733c6acbd74ee34549ccd315373",
-      "PackageSizeBytes": 4486216,
+      "PackageSha256": "9914a9e880ae65f4fa74369bac8ba1790c22a1d8630739f8629ddd737a078c55",
+      "PackageSizeBytes": 4486227,
       "Notes": "Credit: lizzardman \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/outfit-animations-v099"
     },
     {
@@ -110,8 +110,8 @@
       "Name": "FDDA Enhanced Animations Enhanced (lizzardman)",
       "Version": "1",
       "PackageUrl": "extras/fdda-enhanced.zip",
-      "PackageSha256": "57fb439e1250e6bb82c3df19611372d09f7c12f58deb8d1055aeb14e7fc94de8",
-      "PackageSizeBytes": 7836932,
+      "PackageSha256": "675c9ea0db0283a9a00d3fbed52b674e19778b5cb4f430f149ec90dbad7315f3",
+      "PackageSizeBytes": 7837102,
       "Notes": "Credit: lizzardman \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/fdda-enhanced-animations-enhanced"
     },
     {
@@ -119,8 +119,8 @@
       "Name": "Weapon Inertia Expanded (lizzardman)",
       "Version": "1",
       "PackageUrl": "extras/weapon-inertia-expanded.zip",
-      "PackageSha256": "50fa02855c59bfc08ee73ab74744a622b1c416cbc3c59f942d94892726856994",
-      "PackageSizeBytes": 34723,
+      "PackageSha256": "481979fd302ac6e9ee292a44ed769476ed78da3f29bca70801f31c8dfd9a7bd1",
+      "PackageSizeBytes": 34531,
       "Notes": "Credit: lizzardman \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/weapon-inertia-expanded"
     },
     {
@@ -128,8 +128,8 @@
       "Name": "T.H.A.P. Small Re-Rework (Max_im16)",
       "Version": "1.0.0",
       "PackageUrl": "extras/thap-small.zip",
-      "PackageSha256": "bc892f074bdfe103472b064e135e3410b19ba5179ac925f0d3de8e4aec561791",
-      "PackageSizeBytes": 1316,
+      "PackageSha256": "3aab9b363b179c8f4276517b1d454c5098f65f450ceb5bba74068bdb49e99619",
+      "PackageSizeBytes": 263,
       "Notes": "Credit: Max_im16 \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/thap-small-re-rework"
     },
     {
@@ -137,8 +137,8 @@
       "Name": "NPC Wound Tweak (lizzardman)",
       "Version": "1",
       "PackageUrl": "extras/npc-wound-tweak.zip",
-      "PackageSha256": "17cfdd235210b4bd664f368d44bf8415c763f289006214dee0f46ce695898d86",
-      "PackageSizeBytes": 5236,
+      "PackageSha256": "f044b58f1faace6c52c8385f876c147908ebf273dd47ea2094c502e9171fdaad",
+      "PackageSizeBytes": 5245,
       "Notes": "Credit: lizzardman \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/npc-wound-tweak"
     },
     {
@@ -146,8 +146,8 @@
       "Name": "NPC Animation Overhaul Part 1 (leer_h)",
       "Version": "1",
       "PackageUrl": "extras/npc-anim-overhaul.zip",
-      "PackageSha256": "af1286ddbdf279ff0d425adf65271a676d4233ea27806007a14e298fd554a059",
-      "PackageSizeBytes": 11206280,
+      "PackageSha256": "e770d376dd956724565426049f2670cd74ebda50fd2872becf7eb69789928718",
+      "PackageSizeBytes": 11206291,
       "Notes": "Credit: leer_h \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/npc-animation-overhaul-part-1v10"
     },
     {
@@ -155,8 +155,8 @@
       "Name": "You are (not) suppressed (R1nk1)",
       "Version": "1",
       "PackageUrl": "extras/you-are-not-suppressed.zip",
-      "PackageSha256": "dabb0f20f9ea324e82ec79ce7268c51c1edeeaa39154749135fd59ae0f9a9571",
-      "PackageSizeBytes": 31643,
+      "PackageSha256": "aeebb24714c0cb961815cdcee73326b5846bc7bf18edb9b4b617178011a887c8",
+      "PackageSizeBytes": 31652,
       "Notes": "Credit: R1nk1 \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/you-are-not-suppressed-by-r1nk1"
     },
     {
@@ -164,8 +164,8 @@
       "Name": "Handling as Ergonomics Redone [UPDATE 3] (SkyKi)",
       "Version": "1",
       "PackageUrl": "extras/handling-ergonomics.zip",
-      "PackageSha256": "ca663f61fc032bf2ddc0496a08810ea30899540c486d3a02127bd08f48680c6e",
-      "PackageSizeBytes": 6234,
+      "PackageSha256": "02b3f12b7d326572d58fe73a4351db37931dc6ddcc6dbd165b2382082232aadc",
+      "PackageSizeBytes": 6243,
       "Notes": "Credit: SkyKi \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/handling-as-ergonomics-redone"
     },
     {
@@ -173,8 +173,8 @@
       "Name": "Death Animations [DLTX] (SuperStalker114514)",
       "Version": "1",
       "PackageUrl": "extras/death-animations.zip",
-      "PackageSha256": "8c3e5b6f323610e7847ba94f49ca922f17112a42c42971047f4bc5b048f6193b",
-      "PackageSizeBytes": 1253,
+      "PackageSha256": "27cb9fda109eb0dc3d66a3c7486179bf98351c655932f45129942b0dad42989d",
+      "PackageSizeBytes": 1263,
       "Notes": "Credit: SuperStalker114514 \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/death-animationsdltx153"
     },
     {
@@ -182,8 +182,8 @@
       "Name": "R1 Echo Zone: Anomalies -beta (R1nk1)",
       "Version": "1",
       "PackageUrl": "extras/r1-echo-zone-anomalies.zip",
-      "PackageSha256": "4ad0e8bc731fee7cbc94349c51dcd2a7dba4e417c94f5c50232478cea4e69a20",
-      "PackageSizeBytes": 2825838,
+      "PackageSha256": "06c637294821e3a83677cdd851c4e35b2c2dc9c1d66b7cb506cd64c155c2407a",
+      "PackageSizeBytes": 2825848,
       "Notes": "Credit: R1nk1 \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/r1-echo-zone-anomalies-beta-by-r1nk1"
     },
     {
@@ -191,26 +191,17 @@
       "Name": "Glowstick Reanimated v1.4 (lizzardman)",
       "Version": "1",
       "PackageUrl": "extras/glowstick-reanimated.zip",
-      "PackageSha256": "aa74e146992befcb87e4f5765b93b7e53564a1408959a9553e6bd95726176887",
-      "PackageSizeBytes": 63927,
+      "PackageSha256": "d49d85635ab8126fbaa4838a48139b03231c6c20575e2e7a047b07c23671b4bf",
+      "PackageSizeBytes": 64002,
       "Notes": "Credit: lizzardman \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/glowstick-reanimated-v11"
-    },
-    {
-      "Id": "thap-rework",
-      "Name": "T.H.A.P. Rework 2.3 (IENCE)",
-      "Version": "1",
-      "PackageUrl": "extras/thap-rework.zip",
-      "PackageSha256": "oversized:3151a163:8df20ca9499a8fb",
-      "PackageSizeBytes": 827433315,
-      "Notes": "Credit: IENCE \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/thap-rework"
     },
     {
       "Id": "self-kill",
       "Name": "Self-Kill (VodoXleb)",
       "Version": "1",
       "PackageUrl": "extras/self-kill.zip",
-      "PackageSha256": "44127788a5a2c01b352a0e4b4c532242c1980818e63aab30e19cbc6ab84f1021",
-      "PackageSizeBytes": 6245,
+      "PackageSha256": "0eb940068e1485add3725cd45ad5ffa5e462de52a9af4a58bec7e5dc9c54c522",
+      "PackageSizeBytes": 6255,
       "Notes": "Credit: VodoXleb \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/modded-exes-wct-requiredself-kill-12"
     },
     {
@@ -220,7 +211,7 @@
       "PackageUrl": "extras/gunslinger-controller.zip",
       "PackageSha256": "93d74fed570b690f2d7b066cde32d4bbc0bb1791d26e5113ac8f1caf0e42ed25",
       "PackageSizeBytes": 712329,
-      "Notes": "Credit: TheMrDemonized \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/dltx-and-wct-required-gunslinger-controller"
+      "Notes": "Credit: TheMrDemonized \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/dltx-and-wct-required-gunslinger-controller"
     },
     {
       "Id": "water-flask-rework",
@@ -236,8 +227,8 @@
       "Name": "New Walk \u0026 Run Animation (Diazzer)",
       "Version": "1",
       "PackageUrl": "extras/new-walk-run-anim.zip",
-      "PackageSha256": "7cd53a73000b534ce8ba8ed934dde247e78b503e1b7a7b91ff620faa0c3e4b2e",
-      "PackageSizeBytes": 60674935,
+      "PackageSha256": "16edffe487d445dae4196fc513b4d524844aad134d447b55725be81e51962df0",
+      "PackageSizeBytes": 60674906,
       "Notes": "Credit: Diazzer \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/new-walk-run-animation"
     },
     {
@@ -245,26 +236,35 @@
       "Name": "MMX Zaino Gate (MMX-Net / Logan)",
       "Version": "1",
       "PackageUrl": "extras/mmx-backpack-gate.zip",
-      "PackageSha256": "f939fefb4868df503764b8fc049344622beba0875e49d077834f004d6284a754",
-      "PackageSizeBytes": 4698,
+      "PackageSha256": "2d8b161ef8007fee853f295cbaf6d337c1f72637d27046c0be343acbf2d071a6",
+      "PackageSizeBytes": 4710,
       "Notes": "Credit: MMX-Net / Logan \u00E2\u20AC\u201D first-party MMX"
     },
     {
       "Id": "mmx-pda",
       "Name": "MMX-PDA (MMX)",
-      "Version": "1.0.2",
+      "Version": "1",
       "PackageUrl": "extras/mmx-pda.zip",
-      "PackageSha256": "58ba8aa4f207f39942a098de5737e49022d3ded07b7ddc14f1d6b894726b4c31",
-      "PackageSizeBytes": 7011,
+      "PackageSha256": "d9db177d0ef71a03fe4dc1c1141a259e766fef891e5ab0c3f537d46c4577ecd8",
+      "PackageSizeBytes": 6914,
       "Notes": "Credit: MMX \u00E2\u20AC\u201D first-party MMX"
+    },
+    {
+      "Id": "mmx-pda-expansive",
+      "Name": "MMX-PDA-Expansive (MMX-Net / Logan (mesh APE: Norfair_ix))",
+      "Version": "0.1.2",
+      "PackageUrl": "extras/mmx-pda-expansive.zip",
+      "PackageSha256": "020ea4f0f7f38aeab2efc80cd953b93cbcd3d43590e232365db290a6ca2ca202",
+      "PackageSizeBytes": 1312263,
+      "Notes": "Credit: MMX-Net / Logan (mesh APE: Norfair_ix) \u2014 ModDB: "
     },
     {
       "Id": "ragdoll-preset-dux-fvm",
       "Name": "New Ragdoll Preset for DUX\u0026FVM (HansWursto)",
       "Version": "1",
       "PackageUrl": "extras/ragdoll-preset-dux-fvm.zip",
-      "PackageSha256": "0c082c61d88512a3b5abc7e7bad51b4a5f90ea76a348a02fcfcd464a99b39056",
-      "PackageSizeBytes": 687,
+      "PackageSha256": "b83642e2e725791f9a04ee44de07501c7bbe4b3e4fc5965e0dc204d46916ec9f",
+      "PackageSizeBytes": 697,
       "Notes": "Credit: HansWursto \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/new-ragdoll-preset-for-duxfvm"
     },
     {
@@ -272,8 +272,8 @@
       "Name": "Ledge Grabbing / Mantling (TheMrDemonized)",
       "Version": "1",
       "PackageUrl": "extras/ledge-grabbing.zip",
-      "PackageSha256": "b3ebeb75a67f5ef25c77fc201c17f6d0bc2dfe3976305bfc33b057ae1ebbc3f2",
-      "PackageSizeBytes": 823346,
+      "PackageSha256": "71de7c0c0774c5873078c28dd840cad5768678e0f717761463593f0a43dc3826",
+      "PackageSizeBytes": 823509,
       "Notes": "Credit: TheMrDemonized \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/modded-exes-ledge-grabbing-mantling"
     },
     {
@@ -281,17 +281,17 @@
       "Name": "Camera Reanimation Project - I.N.E.R.T.I.A. (IENCE)",
       "Version": "1",
       "PackageUrl": "extras/camera-inertia.zip",
-      "PackageSha256": "656b398496868e43c6a1b8f6e13f43104be7b79b1e92c1eb285ee99eb8a72ee9",
-      "PackageSizeBytes": 107693,
+      "PackageSha256": "528cb831d0b041587782af58e5027e7d865d2acc69c642fdf566dd6586fd8e54",
+      "PackageSizeBytes": 102334,
       "Notes": "Credit: IENCE \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/camera-reanimation-project-inertia"
     },
     {
       "Id": "anomaly-pda-extended",
       "Name": "Anomaly PDA Extended (Norfair_ix)",
-      "Version": "1",
+      "Version": "1.0.0",
       "PackageUrl": "extras/anomaly-pda-extended.zip",
-      "PackageSha256": "07c6357cf00c18774fe8e54ace64f96660901ac9ae2e9e54467d4b1bc6714ae6",
-      "PackageSizeBytes": 1372771,
+      "PackageSha256": "da333eb7c4443cc8d429e7660617b56621b8065a4d5c8824228ef497aaab9041",
+      "PackageSizeBytes": 435,
       "Notes": "Credit: Norfair_ix \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/anomaly-pda-extended"
     },
     {
@@ -322,6 +322,15 @@
       "Notes": "Credit: modsgroup30940 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/modern-ui-groks-body-health-system-redux-patch"
     },
     {
+      "Id": "3dss-mraa-stack",
+      "Name": "3DSS MRAA Stack (party_50 \u00B7 MsPizza727 \u00B7 _Zazquatch_ \u00B7 Napolemon (bundle MMX))",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/3dss-mraa-stack.zip",
+      "PackageSha256": "8f77a7ca279cf5172df214b550720ed9bff73a633a1478102293b02be60a3101",
+      "PackageSizeBytes": 62147461,
+      "Notes": "Credit: party_50 \u00B7 MsPizza727 \u00B7 _Zazquatch_ \u00B7 Napolemon (bundle MMX) \u00E2\u20AC\u201D first-party MMX"
+    },
+    {
       "Id": "3dss-vanilla-stack",
       "Name": "3DSS Vanilla Stack (party_50 \u00C2\u00B7 MsPizza727 (bundle MMX))",
       "Version": "1",
@@ -331,21 +340,39 @@
       "Notes": "Credit: party_50 \u00C2\u00B7 MsPizza727 (bundle MMX) \u2014 ModDB: "
     },
     {
+      "Id": "parallax-reflex-sights",
+      "Name": "Parallax Reflex Sights (party_50)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/parallax-reflex-sights.zip",
+      "PackageSha256": "dec5d0cfe26e75e6643e7647e0c7ed3439399f2e583335ebb2c41f6d6d528ed2",
+      "PackageSizeBytes": 2005032,
+      "Notes": "Credit: party_50 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/parallax-reflex-sights"
+    },
+    {
+      "Id": "mraa-14-3dss-meshes",
+      "Name": "MRAA 1.4 meshes for 3DSS MRAA (_Zazquatch_)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/mraa-14-3dss-meshes.zip",
+      "PackageSha256": "bf0bf3e88acb388eb6c753371e432c0c76e37b6887e5c487dc3de7f3b46dd8c6",
+      "PackageSizeBytes": 42813063,
+      "Notes": "Credit: _Zazquatch_ \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/mraa-14-3dss-meshes"
+    },
+    {
       "Id": "mark-switch",
       "Name": "Mark Switch (party_50)",
       "Version": "1",
       "PackageUrl": "extras/mark-switch.zip",
       "PackageSha256": "e9041b96105de48a35357b6c296d398aa868a7157f62767392b311eeac7c2a57",
       "PackageSizeBytes": 1158433,
-      "Notes": "Credit: party_50 \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/mark-switch"
+      "Notes": "Credit: party_50 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/mark-switch"
     },
     {
       "Id": "modular-attachment-system",
       "Name": "Modular Attachment System (party_50)",
       "Version": "1",
       "PackageUrl": "extras/modular-attachment-system.zip",
-      "PackageSha256": "85a177c245617e0580c5bbbf75ef42f2d407fd225ee8750077052100c53cc4b8",
-      "PackageSizeBytes": 25253,
+      "PackageSha256": "e6c6b6a071c675be8fe829440ea54707f931c2eb64f89bfe897d23445fdcc98f",
+      "PackageSizeBytes": 25263,
       "Notes": "Credit: party_50 \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/modular-attachment-system"
     },
     {
@@ -355,7 +382,7 @@
       "PackageUrl": "extras/shader-3d-scopes.zip",
       "PackageSha256": "578a3af981be2ed76ecd1cdba0110ec5eaee675ad7fcdfcc6fa2c36d0c48487f",
       "PackageSizeBytes": 1093587,
-      "Notes": "Credit: party_50 \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/shader-3d-scopes"
+      "Notes": "Credit: party_50 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/shader-3d-scopes"
     },
     {
       "Id": "mas-bas",
@@ -373,7 +400,7 @@
       "PackageUrl": "extras/3d-shader-scopes-vanilla.zip",
       "PackageSha256": "a5814f83a77857055d100e98bbcf8297b6fad3407bb803697fc3379161f83c8c",
       "PackageSizeBytes": 40267680,
-      "Notes": "Credit: MsPizza727 \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/3d-shader-scopes-vanilla"
+      "Notes": "Credit: MsPizza727 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/3d-shader-scopes-vanilla"
     },
     {
       "Id": "3dss-bas",
@@ -382,7 +409,7 @@
       "PackageUrl": "extras/3dss-bas.zip",
       "PackageSha256": "298e4fceae422d6b82c63713c03bf28386ea3279a1c4dff113edabe8d5c4fd24",
       "PackageSizeBytes": 271,
-      "Notes": "Credit: MsPizza727 \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/3dss-bas"
+      "Notes": "Credit: MsPizza727 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/3dss-bas"
     },
     {
       "Id": "thicc-russian-reticles",
@@ -391,15 +418,15 @@
       "PackageUrl": "extras/thicc-russian-reticles.zip",
       "PackageSha256": "5cd480af833e31d78ace0367413053e5255d9e3929a2d640220d393772fae8d6",
       "PackageSizeBytes": 312,
-      "Notes": "Credit: Napolemon \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/thicc-russian-reticles"
+      "Notes": "Credit: Napolemon \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/thicc-russian-reticles"
     },
     {
       "Id": "quick-action-wheels",
       "Name": "Quick Action Wheel (HarukaSai)",
       "Version": "1",
       "PackageUrl": "extras/quick-action-wheels.zip",
-      "PackageSha256": "19a533ba2a254bd75ae4fc0e0637f0be18fe557f733baffe9b3cff5ed37de9d7",
-      "PackageSizeBytes": 636037,
+      "PackageSha256": "18b21753cb6ee90db45b47607fd8924ee439adfca7c079113fc979bf18aa33b9",
+      "PackageSizeBytes": 636047,
       "Notes": "Credit: HarukaSai \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/quick-action-wheel"
     },
     {
@@ -407,8 +434,8 @@
       "Name": "Quick Action Wheels Overhaul 1.0.2 (gwnf5066)",
       "Version": "1",
       "PackageUrl": "extras/quick-action-wheels-overhaul.zip",
-      "PackageSha256": "aa34674651807b61eb48f1056fc66964a160fcaa352cf546651b3ae163e394c1",
-      "PackageSizeBytes": 629160,
+      "PackageSha256": "eadc02b86772cfdc9bb1ca2cf25400032a279a2edc7c56f9fa8aa2603fe3bc24",
+      "PackageSizeBytes": 629175,
       "Notes": "Credit: gwnf5066 \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/quick-action-wheels-overhaul-10"
     },
     {
@@ -416,8 +443,8 @@
       "Name": "Zone Tweaks Collection (SkyKi)",
       "Version": "1",
       "PackageUrl": "extras/zone-tweaks-collection.zip",
-      "PackageSha256": "595aefd4ca0e5166a387b994c2e7fca197475adf7326d4234cda15cf1c723afc",
-      "PackageSizeBytes": 197983,
+      "PackageSha256": "8aa6e220bbf80346a6bf16c109aee3cb25478982a52ec74ef16a77677c8a160e",
+      "PackageSizeBytes": 197993,
       "Notes": "Credit: SkyKi \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/zone-tweaks-collection"
     },
     {
@@ -425,8 +452,8 @@
       "Name": "MoveEffects \u0026 AlmostTrueProne BETA Up.5 (Wang_Laoshi)",
       "Version": "1",
       "PackageUrl": "extras/move-effects-true-prone.zip",
-      "PackageSha256": "b234e34245ff6e94c56e5c119674ebd86aca0ea2ef105e6bb1651ac19d682b5a",
-      "PackageSizeBytes": 302997,
+      "PackageSha256": "f2491ce1b3357203ead53c4c60ed2f2a1b42fc4f37ce7dc00a897dc761171042",
+      "PackageSizeBytes": 303008,
       "Notes": "Credit: Wang_Laoshi \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/move-effects-true-prone"
     },
     {
@@ -434,8 +461,8 @@
       "Name": "FireModeCheck (Ishmaeel)",
       "Version": "1",
       "PackageUrl": "extras/fire-mode-check.zip",
-      "PackageSha256": "96309c58eefd695eec261a368dbc18e569fb25ea16a977c42bf4c22277c3d53e",
-      "PackageSizeBytes": 71284,
+      "PackageSha256": "83c092651a6243c67602d339c0f824cbadb9745706f6f869ade124c22bc65366",
+      "PackageSizeBytes": 71294,
       "Notes": "Credit: Ishmaeel \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/firemodecheck"
     },
     {
@@ -443,8 +470,8 @@
       "Name": "Ready Or Not Fire Mode Check HUD (Spuchel)",
       "Version": "1",
       "PackageUrl": "extras/ready-or-not-fire-mode-hud.zip",
-      "PackageSha256": "a80974714e52552c6d43f7a2d47308a8f357c2ff5261a127a47ef5847323eb4a",
-      "PackageSizeBytes": 66359,
+      "PackageSha256": "77ea7676764f44a7c2455f5f745150cfa25aca5d6017a20e02087f54e263046a",
+      "PackageSizeBytes": 66369,
       "Notes": "Credit: Spuchel \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/ready-or-not-fire-mode-check-hud-skin-for-firemodecheck-by-ishmaeel"
     },
     {
@@ -454,15 +481,15 @@
       "PackageUrl": "extras/12-xrmpe-anims-gamedata.zip",
       "PackageSha256": "23d1443ac0c3034331a4439eb1c88ff6d6510cd3d9abbfe3bf4c9c29aa60ced7",
       "PackageSizeBytes": 508,
-      "Notes": "Credit: Outer-Eater \u00E2\u20AC\u201D first-party MMX"
+      "Notes": "Credit: Outer-Eater \u2014 ModDB: "
     },
     {
       "Id": "animated-npc-healing",
       "Name": "Animated NPC Healing (1.1) (leer_h)",
       "Version": "1",
       "PackageUrl": "extras/animated-npc-healing.zip",
-      "PackageSha256": "312fe57381e4533347b0edd9d12e241c65fd909a8c4b2e7418db79d331301f80",
-      "PackageSizeBytes": 341592,
+      "PackageSha256": "c39f66b5e9f35876d88c1a6d0664ddab98b485905e93cd1a4cfa64927f567094",
+      "PackageSizeBytes": 341602,
       "Notes": "Credit: leer_h \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/animated-npc-healing10"
     },
     {
@@ -470,8 +497,8 @@
       "Name": "Quick Sprint / Dash v0.1.3 (Befon_Kongo)",
       "Version": "1",
       "PackageUrl": "extras/quick-sprint-dash.zip",
-      "PackageSha256": "2c904cfa4b580f8e8e748f2c232e525d56faebb987d8b9a000a0837cdf261aa6",
-      "PackageSizeBytes": 3620,
+      "PackageSha256": "4a0ab4dc1baf69877f774f89e15c8efd32982eb1eb95aa819a643923fafd0d57",
+      "PackageSizeBytes": 3630,
       "Notes": "Credit: Befon_Kongo \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/quick-sprint-dash-v0-1-3"
     },
     {
@@ -479,8 +506,8 @@
       "Name": "Smooth Scrolling (piscopancer)",
       "Version": "1",
       "PackageUrl": "extras/smooth-scrolling.zip",
-      "PackageSha256": "d4589efa4427333c690cef4657248f8b31ec4025f4e56a7165f0ad6bd7d1d89e",
-      "PackageSizeBytes": 9127,
+      "PackageSha256": "f650382143c61ddf0ad602e63bc6d09b52539b3b919ab03e19ef7d2ff22a7e52",
+      "PackageSizeBytes": 9140,
       "Notes": "Credit: piscopancer \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/smooth-scrolling"
     },
     {
@@ -488,8 +515,8 @@
       "Name": "[DLTX] Upgradeable Detectors 4.2 (Sen_NZ)",
       "Version": "1",
       "PackageUrl": "extras/upgradeable-detectors.zip",
-      "PackageSha256": "87239a2989cc9d74d3973606b6080b1d3fd920968649bba826c76f957c933a13",
-      "PackageSizeBytes": 259928,
+      "PackageSha256": "00fcd55ca3d93f27c8bc5700d90217d899e2d01cacc895c2587f0f2deb9adef4",
+      "PackageSizeBytes": 259938,
       "Notes": "Credit: Sen_NZ \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/upgradeable-detectors"
     },
     {
@@ -497,8 +524,8 @@
       "Name": "Aydin\u0027s Bare Bars 1.0 (aytabag)",
       "Version": "1",
       "PackageUrl": "extras/aydins-bare-bars.zip",
-      "PackageSha256": "444e25059d66112915c6e91901bf2ccecd02c8c8e58f164645f013aabbb11d71",
-      "PackageSizeBytes": 183622,
+      "PackageSha256": "1380949a1d7f1a53a015702919ad4e0045782d0670d89f209c45b1ff66b70fb6",
+      "PackageSizeBytes": 183665,
       "Notes": "Credit: aytabag \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/aydins-bare-bars-10"
     },
     {
@@ -506,8 +533,8 @@
       "Name": "Sorting Plus (Anomaly 1.5.1/1.5.2) (ravenascendant)",
       "Version": "1",
       "PackageUrl": "extras/sorting-plus.zip",
-      "PackageSha256": "ac98714d4ff86e0d4698c29b6361107264e9e1d31d2e4e6eb090b97d78660be3",
-      "PackageSizeBytes": 34290,
+      "PackageSha256": "a73ce628097b4d3b333100df523f45fbb649903d9b6823377ecc2d9540315df2",
+      "PackageSizeBytes": 34294,
       "Notes": "Credit: ravenascendant \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/sorting-plus"
     },
     {
@@ -515,8 +542,8 @@
       "Name": "Seamless Inventory Sort (Map4uk)",
       "Version": "1",
       "PackageUrl": "extras/seamless-inventory-sort.zip",
-      "PackageSha256": "17205f46a693e99966c9f52a53cc1a14915e728e0930779eeebb8dc58942a419",
-      "PackageSizeBytes": 22455,
+      "PackageSha256": "2f32d431c51a5aaac843baee38607060e3ec541cf202a4d7c42e2c05a81cd9d9",
+      "PackageSizeBytes": 22477,
       "Notes": "Credit: Map4uk \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/seamless-inventory-sort"
     },
     {
@@ -526,15 +553,15 @@
       "PackageUrl": "extras/utjans-qol-bundle.zip",
       "PackageSha256": "8c3b635f90372fddd2a97179fceb4484db2069ef8ddc7d9d8401094ac0795b12",
       "PackageSizeBytes": 1162,
-      "Notes": "Credit: Utjan \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/utjans-qol-bundle"
+      "Notes": "Credit: Utjan \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/utjans-qol-bundle"
     },
     {
       "Id": "utjans-item-ui-improvements",
       "Name": "Utjan\u0027s Item UI Improvements (Utjan)",
       "Version": "1",
       "PackageUrl": "extras/utjans-item-ui-improvements.zip",
-      "PackageSha256": "e85c725abd35cd6b49b8fbb9c0bb0a8d26a9484e40ab72c2bd385628116297ca",
-      "PackageSizeBytes": 58080,
+      "PackageSha256": "ed9615fc492e722edffa8c62340ce2d4e75b29c98df9b1245a0ee8dcb6acd3c7",
+      "PackageSizeBytes": 58089,
       "Notes": "Credit: Utjan \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/utjans-item-ui-improvements"
     },
     {
@@ -542,8 +569,8 @@
       "Name": "Tactical Compass 1.1 (explorerbee)",
       "Version": "1",
       "PackageUrl": "extras/tactical-compass.zip",
-      "PackageSha256": "43916b82e9ae0492f769b80ad8d3e251a54446d0f1640c314969a60bca3b2809",
-      "PackageSizeBytes": 261161,
+      "PackageSha256": "411559851495e0e4a5d7cf2e0c5e5ad751cac4634541f1c759d4db10fe766345",
+      "PackageSizeBytes": 261212,
       "Notes": "Credit: explorerbee \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/tactical-compass"
     },
     {
@@ -551,8 +578,8 @@
       "Name": "FDDA Enhanced animations - Medical / EXO ANIMS (Mirrowel)",
       "Version": "1",
       "PackageUrl": "extras/fdda-medical-exo-anims.zip",
-      "PackageSha256": "03d551fb31ba3c4524b70054f60f71307991382ade3c47381a3e3d9201427be6",
-      "PackageSizeBytes": 9778912,
+      "PackageSha256": "6d9bb5916d3b4ce4c9e51e2b4b2ce8e0301299da17cd664d1c01c322c418a45b",
+      "PackageSizeBytes": 8955167,
       "Notes": "Credit: Mirrowel \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/fdda-enhanced-animations-medical-exo-anims"
     },
     {
@@ -560,8 +587,8 @@
       "Name": "SquareDOV - Square \u0026 Customizable Minimap (Strogglet15)",
       "Version": "1",
       "PackageUrl": "extras/squaredov.zip",
-      "PackageSha256": "e30cea26d7046b0a09eb6186e871befa9307952a036e4d3fd1501fe1fc6755b2",
-      "PackageSizeBytes": 330686,
+      "PackageSha256": "944b5f2512fb502efef3152ddbc6594444a009221a7ebb89943dd15fcf8b2fbe",
+      "PackageSizeBytes": 330589,
       "Notes": "Credit: Strogglet15 \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/squaredov"
     },
     {
@@ -569,8 +596,8 @@
       "Name": "Modular Compass \u0026 Minimap Extension (lifestorock)",
       "Version": "1",
       "PackageUrl": "extras/modular-compass-minimap.zip",
-      "PackageSha256": "8982e9bf8846520171929e86d38c2c5c73605e3d047d29c8b0ab9252f584ce04",
-      "PackageSizeBytes": 286571,
+      "PackageSha256": "1282de65415bc9582ec685cc8ab9d0edd9ea6df5ab81ca11832f02dcfa20a372",
+      "PackageSizeBytes": 286477,
       "Notes": "Credit: lifestorock \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/modular-compass-minimap-extension"
     },
     {
@@ -578,8 +605,8 @@
       "Name": "AmmoCheck Enhanced v3 REWORK (Priler)",
       "Version": "1",
       "PackageUrl": "extras/ammocheck-enhanced.zip",
-      "PackageSha256": "12894bd15bc2f403112ee8d6a2803536b141f7f644f1813a2c072fc7ac25d64b",
-      "PackageSizeBytes": 6090,
+      "PackageSha256": "5d595870abd89bc99fa55614ae0f16f6f918851deddc98286adaa5626fdfd6ca",
+      "PackageSizeBytes": 6121,
       "Notes": "Credit: Priler \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/ammocheck-enhanced"
     },
     {
@@ -589,7 +616,7 @@
       "PackageUrl": "extras/new-aim-sway.zip",
       "PackageSha256": "002317630380a6bfb606a8027cd8fa2d56ea3a9c37fd6a9be44c95fb1469b5d7",
       "PackageSizeBytes": 995,
-      "Notes": "Credit: party_50 \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/new-aim-sway"
+      "Notes": "Credit: party_50 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/new-aim-sway"
     },
     {
       "Id": "new-aim-sway-alternative",
@@ -598,7 +625,7 @@
       "PackageUrl": "extras/new-aim-sway-alternative.zip",
       "PackageSha256": "d8fe2be656ecffcd5aab0bbd97aec8f92f2d051e552e5edf6fedc29fd1a3d5e2",
       "PackageSizeBytes": 334,
-      "Notes": "Credit: hyomiru \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/new-aim-sway-alternative"
+      "Notes": "Credit: hyomiru \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/new-aim-sway-alternative"
     },
     {
       "Id": "m249-reanimation",
@@ -607,7 +634,7 @@
       "PackageUrl": "extras/m249-reanimation.zip",
       "PackageSha256": "20780f9ba6ee7ede1eaf0295dc83ea631f3f6f075bff3e45fbeaac093a04c457",
       "PackageSizeBytes": 3630,
-      "Notes": "Credit: NickolasNikova (orig.) \u00C2\u00B7 Grokitach (ModDB) \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/m249-reanimation-by-nickolasnikova"
+      "Notes": "Credit: NickolasNikova (orig.) \u00C2\u00B7 Grokitach (ModDB) \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/m249-reanimation-by-nickolasnikova"
     },
     {
       "Id": "rpd-reanimation",
@@ -616,24 +643,24 @@
       "PackageUrl": "extras/rpd-reanimation.zip",
       "PackageSha256": "7fe15314737299b659dacb66e1c64183d59b0aa676e649f0b6d7a5f6775f2ec8",
       "PackageSizeBytes": 3272,
-      "Notes": "Credit: NickolasNikova (orig.) \u00C2\u00B7 Grokitach (ModDB) \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/rpd-reanimation-by-nickolasnikova"
+      "Notes": "Credit: NickolasNikova (orig.) \u00C2\u00B7 Grokitach (ModDB) \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/rpd-reanimation-by-nickolasnikova"
     },
     {
       "Id": "bolt-collision-sounds",
       "Name": "Bolt Collision Sounds (Oleh5230 (orig.) \u00C2\u00B7 Relax_68 (ModDB))",
       "Version": "1",
       "PackageUrl": "extras/bolt-collision-sounds.zip",
-      "PackageSha256": "6bcce17746bd3f90a33f3ec8b92b954c4a76b07d15f02ceaea28d6a1b6fe89d5",
-      "PackageSizeBytes": 618751,
+      "PackageSha256": "0f915e758fee7fecf2bfd3bbac67d2bdef3c72d192542c85096923a007dac269",
+      "PackageSizeBytes": 608768,
       "Notes": "Credit: Oleh5230 (orig.) \u00C2\u00B7 Relax_68 (ModDB) \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/s2-bolt-collision-sounds"
     },
     {
       "Id": "mmx-economy",
       "Name": "MMX-Economy (MMX-Net / Logan)",
-      "Version": "0.4.6",
+      "Version": "0.5.6",
       "PackageUrl": "extras/mmx-economy.zip",
-      "PackageSha256": "3e9e13ce8e674ba9d58e4dcdf880896e14f9e7e7eb99f9ad83c7647bc2ef65c1",
-      "PackageSizeBytes": 497,
+      "PackageSha256": "eb11a0f68c266d3b03906c9d717e3b4d686ca501e36af4feaeb94a497f915e89",
+      "PackageSizeBytes": 469,
       "Notes": "Credit: MMX-Net / Logan \u00E2\u20AC\u201D first-party MMX"
     },
     {
@@ -650,9 +677,72 @@
       "Name": "wm rework 0.1.0 (Fomeron)",
       "Version": "1",
       "PackageUrl": "extras/wm-rework.zip",
-      "PackageSha256": "eef4ab3cce471a32abf8ddd36d6159ccd5e64c398c09d98fb2a9d8631be08086",
-      "PackageSizeBytes": 5299725,
+      "PackageSha256": "498d9706c841d4ab6c0f861be3b3e99caabc0db8b91f6a580c6c03a63085ae10",
+      "PackageSizeBytes": 5299756,
       "Notes": "Credit: Fomeron \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/wm-rework-010"
+    },
+    {
+      "Id": "dynamic-anomalies-overhaul",
+      "Name": "Dynamic Anomalies Overhaul (DAO) (TheMrDemonized)",
+      "Version": "1",
+      "PackageUrl": "extras/dynamic-anomalies-overhaul.zip",
+      "PackageSha256": "e15d2a457e331e7015e41ea6650f8f7accba0263885f328552f0d28b01b72fb6",
+      "PackageSizeBytes": 31190244,
+      "Notes": "Credit: TheMrDemonized \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/dynamic-anomalies-overhaul-dao-read-description-please"
+    },
+    {
+      "Id": "focus-zoom",
+      "Name": "Focus Zoom v0.41 (Minotaur21)",
+      "Version": "1",
+      "PackageUrl": "extras/focus-zoom.zip",
+      "PackageSha256": "45a8f5469214c50bdaf63866e2accd7d8e364df5d7e0c582c2d3cc0365f601ba",
+      "PackageSizeBytes": 5443,
+      "Notes": "Credit: Minotaur21 \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/focus-zoom"
+    },
+    {
+      "Id": "mraa-ppp-patch-by-viking896",
+      "Name": "MRAA PPP Patch by viking896 (viking896)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/mraa-ppp-patch-by-viking896.zip",
+      "PackageSha256": "64ff2e93b0c55ca0bb44d99477e5647e780ffd3d6367bb6544846d56c474cf30",
+      "PackageSizeBytes": 26678196,
+      "Notes": "Credit: viking896 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/mraa-ppp-patch-by-viking896"
+    },
+    {
+      "Id": "no-camera-animations-when-injured",
+      "Name": "No / Lesser Camera Animations When Injured (PsychologicalBit)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/no-camera-animations-when-injured.zip",
+      "PackageSha256": "f8d3a7b124c460a410773656a243ae2c672b8a84ba75ac6a37dec9316991ef04",
+      "PackageSizeBytes": 2879,
+      "Notes": "Credit: PsychologicalBit \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/no-camera-animations-when-injured"
+    },
+    {
+      "Id": "weapon-sway",
+      "Name": "Weapon Sway 1.11 (bvcx)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/weapon-sway.zip",
+      "PackageSha256": "33a148ab4109b728d3058027c059a6260d4f272c04ab0e9dfdf617cd8de20dd4",
+      "PackageSizeBytes": 44340,
+      "Notes": "Credit: bvcx \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/weapon-sway"
+    },
+    {
+      "Id": "lower-weapon-sprint-optimized",
+      "Name": "Lower Weapon Sprint Optimized (Spaicrab)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/lower-weapon-sprint-optimized.zip",
+      "PackageSha256": "5fede811f99b7576ec80e6e074f3748f203767541da1d6256209a346f21a99bc",
+      "PackageSizeBytes": 5519,
+      "Notes": "Credit: Spaicrab \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/lower-weapon-sprint-optimized"
+    },
+    {
+      "Id": "mmx-experimental",
+      "Name": "MMX-Experimental \u2014 The G36 Pack (Strogglet15)",
+      "Version": "1.0.0",
+      "PackageUrl": "extras/mmx-experimental.zip",
+      "PackageSha256": "1492bac457d5c2c67b95a00bb062846b908466bbedb7c3c3c176908c1b12da52",
+      "PackageSizeBytes": 44286527,
+      "Notes": "Credit: Strogglet15 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/the-g36-pack-g36pack"
     }
   ]
 }
