@@ -1,12 +1,12 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.2.1014",
+    "Version":  "0.2.1015",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "* 1014: Pre-Essenziali ModDB download + auto-install (focus-zoom, weather-expansion, dynamic-anomalies-overhaul, quality-of-life) via EnsureOptionalExtraAsync: PackList align li accoda (sorgente ModDB / bundle 7 fonti), skip feed GitHub (404), verifica pin SHA256/MD5 ModDB.\n* quality-of-life (cibi/stimpack) resta distinto da mmx-quality-of-life (nessun alias). Bulk PackList invariato (coperto da MMX-Base).\n* 1013 BLOCKING: ManagedPackSync prune never deletes MCM-owned or MMX-Net core overlays (ui_main_menu / ui_mm_main* / chatbox / xrr textures).\n* EnsureMcmForceLive + EnsureMmxNetCoreOverlaysLive restore missing menu/chatbox/xrr from ac-update.zip / extras/mcm.zip / options/MCM on update/Ensure (1012â†’1013 heal).\n* mmx-quality-of-life.zip rebuilt flat: \u003ccomponent\u003e/gamedata/... (no nested gamedata/\u003ccomp\u003e/gamedata); MCM/MMX core overlays stripped from QoL (SoT = mcm.zip + ac-update).\n* Assemble script scrub+unwrap guards for future rebuilds.",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.2.1014",
-    "PackageSha256":  "7101000d8ae7b2c344fba3b309903b2b01238324fea1e7780b6edadcd2feb97c",
-    "PublishedUtc":  "2026-10-05T18:51:59.5597883Z",
+    "Notes":  "* 1015: fix DESYNC falso (Order User-band allineato in ComputeLiveStateHash -\u003e heal ac_mo_applied chiude NeedsApplyWarn).\n* AGGIORNA e icona update sempre cliccabili anche in busy.\n* Download: curl connect-timeout 20s + speed-limit 2048/60s -\u003e Riprova (exit 28).\n* Notes ASCII (1012-\u003e1013). taz-mg42 PageUrl ModDB corretto.",
+    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.2.1015",
+    "PackageSha256":  "1399472750436bef610586db84b11b7ad6b24fa968dfebd38f6b677d592a67d9",
+    "PublishedUtc":  "2026-10-05T19:37:32.7829892Z",
     "MinLauncherVersion":  "0.1.0"
 }

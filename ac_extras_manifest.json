@@ -1,14 +1,15 @@
 ﻿{
     "Name":  "MMX-Net Extras",
-    "PublishedUtc":  "2026-10-05T18:52:19.6272978Z",
+    "PublishedUtc":  "2026-10-05T19:38:15.2465432Z",
     "Packages":  [
                      {
                          "Id":  "mmx-core",
                          "Name":  "MMX - Core [Anomaly] (MMX-Net / Logan)",
                          "Version":  "0.1.28",
                          "PackageUrl":  "extras/mmx-core.zip",
-                         "PackageSha256":  "18981923237882d2a3817f6b59638c8309dca7855652caf9633422a4aceef10b",
-                         "Notes":  "Essenziale auto-install. Fix Anomaly MMX. Ex Essentials Survival. Non Base Coop / non overlay MMX_NET."
+                         "PackageSha256":  "d9de18f673f01e0f9959f39159c3bcd89ee9459655f0f85183661e088af3e5b4",
+                         "PackageSizeBytes":  3249108,
+                         "Notes":  "Essenziale auto-install. Fix Anomaly MMX + SIG rifle fire modes LTX. Ex Essentials Survival."
                      },
                      {
                          "Id":  "weapon-fix-extended",
@@ -26,7 +27,7 @@
                          "PackageUrl":  "https://github.com/LOGANFOREWORD/MMX-NET/releases/download/wfe-0.2.1010/mmx-quality-of-life-0.2.1013.zip",
                          "PackageSha256":  "0096d02cc352058b07b907b1a82ed62cdc91c7be0540cb4299e2d72490a48f96",
                          "PackageSizeBytes":  222288978,
-                         "Notes":  "1013 marker-in-component zip; GitHub Release asset mmx-quality-of-life-0.2.1013.zip (old mmx-quality-of-life.zip kept for 1012)."
+                         "Notes":  "1013 marker-in-component zip; GitHub Release asset mmx-quality-of-life-0.2.1013.zip."
                      }
                  ]
 }
