@@ -1,9 +1,9 @@
-﻿{
+{
     "Name":  "MMX-Net",
-    "Version":  "0.2.1016",
+    "Version":  "0.2.1019",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
-    "Notes":  "* 1016: profili allineati su Home/Workshop (radio UniformGrid 4x108).\n* Bottone/testi launcher: \"Join the Zone\" (ex Connect to Session).\n* Meno cali di FPS (mmx-core: seconda bussola e script ottimizzati FRAMEDROP-001 p2).\n* Build AV-free (no avmeta). Notes ASCII (-\u003e).",
+    "Notes":  "* 1019: bump CARICA (feed push dopo abort same-version su clone sync).\n* 1016: profili allineati su Home/Workshop (radio UniformGrid 4x108).\n* Bottone/testi launcher: \"Join the Zone\" (ex Connect to Session).\n* Meno cali di FPS (mmx-core: seconda bussola e script ottimizzati FRAMEDROP-001 p2).\n* Build AV-free (no avmeta). Notes ASCII (-\u003e).",
     "MinLauncherVersion":  "0.1.0"
 }
