@@ -1,12 +1,12 @@
 ﻿{
     "Name":  "MMX-Net",
-    "Version":  "0.2.1011",
+    "Version":  "0.2.1012",
     "Channel":  "dev",
     "Protocol":  "89",
     "Engine":  "ST",
     "Notes":  "* Stamp ac_launcher_last_run.json avanzato SOLO se FailedCount==0 (Ensure ok). Su FAIL pack: no bump versioni / FailKey+HardFails â†’ retry al prossimo avvio.\n* Ordine sync: Ensure PRIMA, prune (incl. slim migrate WFE) SOLO dopo Ensure ok â€” mai prune-then-fail.\n* Popup FAIL: Â«WFE non installata, riprovo al prossimo avvioÂ»; Â«installate YÂ» conta solo successi.\n* MMX-Base PackList allineato al set attivo Logan (seed ModOrganizerLiteService).\n* Post-AGGIORNA + primo avvio: sync pack gestiti weapon-fix-extended + mmx-quality-of-life (prune SOLO filelist pack).\n* WFE: entry feed via GitHub Release asset (zip \u003e100MB) â€” vedi docs/_stage_0.2.1010_FEED_WFE_NOTES.md.",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.2.1011",
-    "PackageSha256":  "c69da0154d6b3ed5832ff3265da7fff4eb8eebdc7b09ee56425bd98858602a1b",
-    "PublishedUtc":  "2026-10-05T16:21:59.4477117Z",
+    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/ac-update.zip?v=0.2.1012",
+    "PackageSha256":  "3e139ceb094eba14895c7a7a5f01e1e3e1560d29514fba2feea92d19b2530b8d",
+    "PublishedUtc":  "2026-10-05T16:29:02.4920258Z",
     "MinLauncherVersion":  "0.1.0"
 }
