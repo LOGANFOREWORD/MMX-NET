@@ -1,6 +1,6 @@
 {
   "Name": "MMX-Net Extras",
-  "PublishedUtc": "2026-10-05T21:55:48.0403982Z",
+  "PublishedUtc": "2026-10-06T07:58:19.2830363Z",
   "Packages": [
     {
       "Id": "mcm",
@@ -20,8 +20,8 @@
       "Name": "MMX - Core [Anomaly] (MMX-Net / Logan)",
       "Version": "0.1.28",
       "PackageUrl": "extras/mmx-core.zip",
-      "PackageSha256": "826912d4a68afb3f1462a9748100cd09efedb94bb7f3e98b43857d6fd057e162",
-      "PackageSizeBytes": 3249965,
+      "PackageSha256": "9cdfd3ae8a5137d5863f31c91e55ca86c36a19ad40cb1d9158fe76912ffd1465",
+      "PackageSizeBytes": 3393965,
       "Notes": "Essenziale auto-install. Fix Anomaly MMX. Ex Essentials Survival. Non Base Coop / non overlay MMX_NET."
     },
     {
@@ -119,8 +119,8 @@
       "Name": "Weapon Inertia Expanded (lizzardman)",
       "Version": "1",
       "PackageUrl": "extras/weapon-inertia-expanded.zip",
-      "PackageSha256": "481979fd302ac6e9ee292a44ed769476ed78da3f29bca70801f31c8dfd9a7bd1",
-      "PackageSizeBytes": 34531,
+      "PackageSha256": "e403be4aad1da63f1992f0f05099765a5bcc7bc0d112607d92a34dac1eb2328e",
+      "PackageSizeBytes": 34654,
       "Notes": "Credit: lizzardman \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/weapon-inertia-expanded"
     },
     {
@@ -191,8 +191,8 @@
       "Name": "Glowstick Reanimated v1.4 (lizzardman)",
       "Version": "1",
       "PackageUrl": "extras/glowstick-reanimated.zip",
-      "PackageSha256": "d49d85635ab8126fbaa4838a48139b03231c6c20575e2e7a047b07c23671b4bf",
-      "PackageSizeBytes": 64002,
+      "PackageSha256": "b12ba22a93f51609b4b039188f58dcaf0d7a92895b862e05ae809a2677bb2d50",
+      "PackageSizeBytes": 64101,
       "Notes": "Credit: lizzardman \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/glowstick-reanimated-v11"
     },
     {
@@ -686,8 +686,8 @@
       "Name": "Dynamic Anomalies Overhaul (DAO) (TheMrDemonized)",
       "Version": "1",
       "PackageUrl": "extras/dynamic-anomalies-overhaul.zip",
-      "PackageSha256": "e15d2a457e331e7015e41ea6650f8f7accba0263885f328552f0d28b01b72fb6",
-      "PackageSizeBytes": 31190244,
+      "PackageSha256": "ec0aa5d0ff388f115f2205c0543969edb8ca311132d3549b421fc9cc33a4ea02",
+      "PackageSizeBytes": 31190118,
       "Notes": "Credit: TheMrDemonized \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/dynamic-anomalies-overhaul-dao-read-description-please"
     },
     {
@@ -740,9 +740,9 @@
       "Name": "MMX-Experimental \u2014 The G36 Pack (Strogglet15)",
       "Version": "0.1.0",
       "PackageUrl": "extras/mmx-experimental.zip",
-      "PackageSha256": "60273ca5a3ac0b77e8d50f80b898e6a587a4c47656d1530480ed26599b81e598",
-      "PackageSizeBytes": 43954985,
-      "Notes": "Credit: Strogglet15 \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/the-g36-pack-g36pack"
+      "PackageSha256": "c69426dbc318dd95ab9d33b44a4c4dd90e6c1b11c4bfdb4c56244b33adf2066b",
+      "PackageSizeBytes": 52774373,
+      "Notes": "Credit: Strogglet15 \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/the-g36-pack-g36pack"
     }
   ]
 }
