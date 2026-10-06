@@ -1,6 +1,6 @@
 {
   "Name": "MMX-Net Extras",
-  "PublishedUtc": "2026-10-06T07:58:19.2830363Z",
+  "PublishedUtc": "2026-10-06T17:16:48.5426623Z",
   "Packages": [
     {
       "Id": "mcm",
@@ -20,8 +20,8 @@
       "Name": "MMX - Core [Anomaly] (MMX-Net / Logan)",
       "Version": "0.1.28",
       "PackageUrl": "extras/mmx-core.zip",
-      "PackageSha256": "9cdfd3ae8a5137d5863f31c91e55ca86c36a19ad40cb1d9158fe76912ffd1465",
-      "PackageSizeBytes": 3393965,
+      "PackageSha256": "7600e198f7c4eddf7f5e0276a4860b9173e7d931eb2b23b515ccfc923d807319",
+      "PackageSizeBytes": 3393991,
       "Notes": "Essenziale auto-install. Fix Anomaly MMX. Ex Essentials Survival. Non Base Coop / non overlay MMX_NET."
     },
     {
@@ -740,8 +740,8 @@
       "Name": "MMX-Experimental \u2014 The G36 Pack (Strogglet15)",
       "Version": "0.1.0",
       "PackageUrl": "extras/mmx-experimental.zip",
-      "PackageSha256": "c69426dbc318dd95ab9d33b44a4c4dd90e6c1b11c4bfdb4c56244b33adf2066b",
-      "PackageSizeBytes": 52774373,
+      "PackageSha256": "52d44c7d690b5dd5a760dd0c4e5d0432d59d5eda9040357928260569c32285c5",
+      "PackageSizeBytes": 52774388,
       "Notes": "Credit: Strogglet15 \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/the-g36-pack-g36pack"
     }
   ]
