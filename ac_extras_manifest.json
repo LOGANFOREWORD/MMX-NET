@@ -734,15 +734,6 @@
       "PackageSha256": "5fede811f99b7576ec80e6e074f3748f203767541da1d6256209a346f21a99bc",
       "PackageSizeBytes": 5519,
       "Notes": "Credit: Spaicrab \u2014 ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/lower-weapon-sprint-optimized"
-    },
-    {
-      "Id": "mmx-experimental",
-      "Name": "MMX-Experimental \u2014 The G36 Pack (Strogglet15)",
-      "Version": "0.1.0",
-      "PackageUrl": "extras/mmx-experimental.zip",
-      "PackageSha256": "52d44c7d690b5dd5a760dd0c4e5d0432d59d5eda9040357928260569c32285c5",
-      "PackageSizeBytes": 52774388,
-      "Notes": "Credit: Strogglet15 \u00E2\u20AC\u201D ModDB: https://www.moddb.com/mods/stalker-anomaly/addons/the-g36-pack-g36pack"
     }
   ]
 }
