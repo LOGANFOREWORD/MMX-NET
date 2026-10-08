@@ -1,9 +1,9 @@
 {
   "Name": "MMX-Net",
-  "Version": "0.2.1022",
+  "Version": "0.2.1029",
   "Channel": "dev",
   "Protocol": "89",
   "Engine": "ST",
-  "Notes": "* 1019: bump CARICA (feed push dopo abort same-version su clone sync).\n* 1016: profili allineati su Home/Workshop (radio UniformGrid 4x108).\n* Bottone/testi launcher: \u0022Join the Zone\u0022 (ex Connect to Session).\n* Meno cali di FPS (mmx-core: seconda bussola e script ottimizzati FRAMEDROP-001 p2).\n* Build AV-free (no avmeta). Notes ASCII (-\u003E).",
+  "Notes": "* Launcher User aggiornato con le modifiche MMX Profile e Amici.\n* Aggiornate UI e localizzazioni del launcher.\n* Aggiornati menu Join the Zone e indicatori UI in gioco.\n* Aggiornato l\u0027ordine mod MMX-Net incluso nel feed.\n* Controlli pre-push del Devkit: tutte le modifiche rilevate incluse nello ZIP User.",
   "MinLauncherVersion": "0.1.0"
 }
