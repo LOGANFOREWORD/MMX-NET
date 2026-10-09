@@ -2,7 +2,7 @@ MMX-Net — feed aggiornamenti
 ================================
 
 URL da mettere in ac_config.json → updateFeedUrl (amici):
-https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET/main/
+https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/
 
 Repo PUBBLICA MMX-NET: nessun PAT.
   Un token «che non scade mai» NON serve e NON va messo nello zip.
