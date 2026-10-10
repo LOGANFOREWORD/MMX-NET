@@ -1,6 +1,6 @@
 ﻿{
     "Name":  "MMX-Net Extras",
-    "PublishedUtc":  "2026-10-10T12:20:56.0972523Z",
+    "PublishedUtc":  "2026-10-10T12:23:02.6972588Z",
     "Packages":  [
                      {
                          "Id":  "mcm",
@@ -650,9 +650,9 @@
                          "Name":  "MMX-Economy (MMX-Net / Logan)",
                          "Version":  "0.5.10",
                          "PackageUrl":  "extras/mmx-economy.zip",
-                         "PackageSha256":  "dc3942446ea99bfe7a940892d2f9539d8530c0e640d419b90638ea8c5d5ae112",
-                         "PackageSizeBytes":  568,
-                         "Notes":  "Credit: MMX-Net / Logan â€” first-party MMX"
+                         "PackageSha256":  "c02d7298fbcdb3ca58f26615882e6b935db15d2d91cc3b89736d7742c0dd74bd",
+                         "PackageSizeBytes":  28467,
+                         "Notes":  "v0.5.10: overlay trader attivi (mod_trade_\u003cbase\u003e_mmx_economy*), trade_bas rimosso, HOLD toz/glock, no german_mg."
                      },
                      {
                          "Id":  "mmx-more-animations-coop-sync",
