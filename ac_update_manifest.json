@@ -1,23 +1,12 @@
-{
-  "Name": "MMX-Net",
-  "Version": "0.2.1031",
-  "Channel": "dev",
-  "Protocol": "89",
-  "Engine": "ST",
-  "Notes": "* Launcher User aggiornato con le modifiche MMX Profile e Amici.\n* Aggiornate UI e localizzazioni del launcher.\n* Aggiornati menu Join the Zone e indicatori UI in gioco.\n* Aggiornato l\u0027ordine mod MMX-Net incluso nel feed.\n* Controlli pre-push del Devkit: tutte le modifiche rilevate incluse nello ZIP User.",
-  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/ac-update.zip?v=0.2.1031",
-  "PackageSha256": "5553258031ce31f19d5d13dafb5ae4e071363ac2e7a92d3c0e06813801b7f2ad",
-  "PublishedUtc": "2026-10-09T17:27:58.5501843Z",
-  "MinLauncherVersion": "0.1.0",
-  "OverlayKeySha256": {
-    "ac_version.json": "d33cfeb86f4358aadf6a851efd0e13c73d33b4132e86ee9e9210811944be7fff",
-    "ac_steam_cop_bridge.cmd": "105b7eb2a1aaf1db840a84548e0e3161c02f561540068a50177ce58d71579184",
-    "ac_steam_launch.args": "55bfade880b8e6e24cd369f7d3d04611fdb5e44f60084c1e520690f04413fb54",
-    "gamedata\\scripts\\MMX_NET_core.script": "e3d505e7476e61c7583220e2302138728e68ba12bf33ad429fbfe30e7bb70cd3",
-    "gamedata\\scripts\\MMX_NET_net_client.script": "4f580bcd122c9107ba3acbeff0595161b638b36b45d746680fd70c21694e8094",
-    "gamedata\\scripts\\MMX_NET_net_server.script": "1f56a6887266e52dcff3ce70baf1b333ff081bd7742fa7bee6f849f5969ba7a1",
-    "gamedata\\scripts\\MMX_NET_callbacks.script": "62f6f9fa78ff1eb81a00e567d2696c03d112d90ea073a752e79d892ddfea06f1",
-    "gamedata\\scripts\\MMX_NET_menu.script": "11614292e31e83cf369ee634e1c6eb75d9b5ba99425b4db86ebba85c8395f81a",
-    "gamedata\\scripts\\MMX_NET_join_code.script": "8ee58da4e1e37550feb20754d59cf71ff640d82dfb3d06c71ce737e654e8a7a2"
-  }
+﻿{
+    "Name":  "MMX-Net",
+    "Version":  "0.2.1034",
+    "Channel":  "dev",
+    "Protocol":  "89",
+    "Engine":  "ST",
+    "Notes":  "* Fix crash-on-spawn: sezioni arma orfane (RWAP c/k, leftover GAMMA, knife BaS, p90_gs) rimosse via DLTX.\n* Kimber: icona inventario ripristinata su ui_icon_equipment.\n* MMX-Economy 0.5.10: overlay trader attivi (rename DLTX), trade_bas rimosso; german_mg ancora esclusi.\n* Launcher User allineato a 0.2.1034.",
+    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/ac-update.zip?v=0.2.1034",
+    "PackageSha256":  "547fbeb783825bc50e3d6bde8b93900504e23e5b892485517fa557cba665e064",
+    "PublishedUtc":  "2026-10-10T12:18:35.6967188Z",
+    "MinLauncherVersion":  "0.1.0"
 }

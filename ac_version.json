@@ -1,9 +1,9 @@
-{
-  "Name": "MMX-Net",
-  "Version": "0.2.1031",
-  "Channel": "dev",
-  "Protocol": "89",
-  "Engine": "ST",
-  "Notes": "* Launcher User aggiornato con le modifiche MMX Profile e Amici.\n* Aggiornate UI e localizzazioni del launcher.\n* Aggiornati menu Join the Zone e indicatori UI in gioco.\n* Aggiornato l\u0027ordine mod MMX-Net incluso nel feed.\n* Controlli pre-push del Devkit: tutte le modifiche rilevate incluse nello ZIP User.",
-  "MinLauncherVersion": "0.1.0"
+﻿{
+    "Name":  "MMX-Net",
+    "Version":  "0.2.1034",
+    "Channel":  "dev",
+    "Protocol":  "89",
+    "Engine":  "ST",
+    "Notes":  "* Fix crash-on-spawn: sezioni arma orfane (RWAP c/k, leftover GAMMA, knife BaS, p90_gs) rimosse via DLTX.\n* Kimber: icona inventario ripristinata su ui_icon_equipment.\n* MMX-Economy 0.5.10: overlay trader attivi (rename DLTX), trade_bas rimosso; german_mg ancora esclusi.\n* Launcher User allineato a 0.2.1034.",
+    "MinLauncherVersion":  "0.1.0"
 }
