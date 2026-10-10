@@ -1,9 +1,9 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.2.1034",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "* Fix crash-on-spawn: sezioni arma orfane (RWAP c/k, leftover GAMMA, knife BaS, p90_gs) rimosse via DLTX.\n* Kimber: icona inventario ripristinata su ui_icon_equipment.\n* MMX-Economy 0.5.10: overlay trader attivi (rename DLTX), trade_bas rimosso; german_mg ancora esclusi.\n* Launcher User allineato a 0.2.1034.",
-    "MinLauncherVersion":  "0.1.0"
+{
+  "Name": "MMX-Net",
+  "Version": "0.2.1035",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "* MMX-Economy \u00E8 Essenziale nel profilo mmx-base (catalogo WorkshopEssential).\n* Overlay trader/loadout MMX-Economy attivi (DLTX mod_trade_\u003Croot\u003E_mmx_economy*).\n* Zip extras/mmx-economy.zip v0.5.10 \u002B skip install se gi\u00E0 presente.\n* Rebuild User con gate FileVersion/SHA (feed 1033 ripulito).",
+  "MinLauncherVersion": "0.1.0"
 }

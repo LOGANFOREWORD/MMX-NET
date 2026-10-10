@@ -1,12 +1,23 @@
-﻿{
-    "Name":  "MMX-Net",
-    "Version":  "0.2.1034",
-    "Channel":  "dev",
-    "Protocol":  "89",
-    "Engine":  "ST",
-    "Notes":  "* Fix crash-on-spawn: sezioni arma orfane (RWAP c/k, leftover GAMMA, knife BaS, p90_gs) rimosse via DLTX.\n* Kimber: icona inventario ripristinata su ui_icon_equipment.\n* MMX-Economy 0.5.10: overlay trader attivi (rename DLTX), trade_bas rimosso; german_mg ancora esclusi.\n* Launcher User allineato a 0.2.1034.",
-    "PackageUrl":  "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/ac-update.zip?v=0.2.1034",
-    "PackageSha256":  "547fbeb783825bc50e3d6bde8b93900504e23e5b892485517fa557cba665e064",
-    "PublishedUtc":  "2026-10-10T12:18:35.6967188Z",
-    "MinLauncherVersion":  "0.1.0"
+{
+  "Name": "MMX-Net",
+  "Version": "0.2.1035",
+  "Channel": "dev",
+  "Protocol": "89",
+  "Engine": "ST",
+  "Notes": "* MMX-Economy \u00E8 Essenziale nel profilo mmx-base (catalogo WorkshopEssential).\n* Overlay trader/loadout MMX-Economy attivi (DLTX mod_trade_\u003Croot\u003E_mmx_economy*).\n* Zip extras/mmx-economy.zip v0.5.10 \u002B skip install se gi\u00E0 presente.\n* Rebuild User con gate FileVersion/SHA (feed 1033 ripulito).",
+  "PackageUrl": "https://raw.githubusercontent.com/LOGANFOREWORD/MMX-NET-feed/main/ac-update.zip?v=0.2.1035",
+  "PackageSha256": "e3536a839bfd1c5f7feb8fcedf9df3d6252d0b9b6ab8bddd7f31b6ef31eedbe8",
+  "PublishedUtc": "2026-10-10T12:20:53.6461707Z",
+  "MinLauncherVersion": "0.1.0",
+  "OverlayKeySha256": {
+    "ac_version.json": "1bb593d52cd28b10d441c680b094140e66ab5322330480203f1a203817e8f4b3",
+    "ac_steam_cop_bridge.cmd": "105b7eb2a1aaf1db840a84548e0e3161c02f561540068a50177ce58d71579184",
+    "ac_steam_launch.args": "55bfade880b8e6e24cd369f7d3d04611fdb5e44f60084c1e520690f04413fb54",
+    "gamedata\\scripts\\MMX_NET_core.script": "e3d505e7476e61c7583220e2302138728e68ba12bf33ad429fbfe30e7bb70cd3",
+    "gamedata\\scripts\\MMX_NET_net_client.script": "4f580bcd122c9107ba3acbeff0595161b638b36b45d746680fd70c21694e8094",
+    "gamedata\\scripts\\MMX_NET_net_server.script": "1f56a6887266e52dcff3ce70baf1b333ff081bd7742fa7bee6f849f5969ba7a1",
+    "gamedata\\scripts\\MMX_NET_callbacks.script": "62f6f9fa78ff1eb81a00e567d2696c03d112d90ea073a752e79d892ddfea06f1",
+    "gamedata\\scripts\\MMX_NET_menu.script": "11614292e31e83cf369ee634e1c6eb75d9b5ba99425b4db86ebba85c8395f81a",
+    "gamedata\\scripts\\MMX_NET_join_code.script": "8ee58da4e1e37550feb20754d59cf71ff640d82dfb3d06c71ce737e654e8a7a2"
+  }
 }
